@@ -27,7 +27,7 @@ class TransactionItem extends ConsumerWidget {
       id: '0',
       title: 'Unknown',
       color: Colors.grey,
-      icon: Icons.help_outline,
+      iconCodePoint: Icons.help_outline.codePoint,
     );
 
     final String formattedDate = DateFormat('dd MMM yyyy').format(item.date);

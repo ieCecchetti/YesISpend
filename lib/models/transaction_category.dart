@@ -3,19 +3,20 @@ import 'package:flutter/material.dart';
 class TransactionCategory {
   final String id;
   final String title;
-  final IconData icon;
+  final int iconCodePoint;
   final Color color;
 
+  // Constructor with a fixed fontFamily value
   TransactionCategory({
     required this.id,
     required this.title,
-    required this.icon,
+    required this.iconCodePoint,
     required this.color,
   });
 
   @override
   String toString() {
-    return 'TransactionCategory{id: $id, title: $title, icon: $icon, color: $color}';
+    return 'TransactionCategory{id: $id, title: $title, iconCodePoint: $iconCodePoint, color: $color}';
   }
 
   // Convert a TransactionCategory into a Map
@@ -23,7 +24,7 @@ class TransactionCategory {
     return {
       'id': id,
       'title': title,
-      'icon': icon.codePoint,
+      'iconCodePoint': iconCodePoint,
       'color': color.value,
     };
   }
@@ -33,8 +34,13 @@ class TransactionCategory {
     return TransactionCategory(
       id: map['id'] as String,
       title: map['title'] as String,
-      icon: IconData(map['icon'] as int, fontFamily: 'MaterialIcons'),
+      iconCodePoint: map['iconCodePoint'] as int,
       color: Color(map['color'] as int),
     );
+  }
+
+  // Get the IconData by rebuilding it from the code point and font family
+  IconData get icon {
+    return IconData(iconCodePoint, fontFamily: 'MaterialIcons'); 
   }
 }

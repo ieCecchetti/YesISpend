@@ -6,39 +6,39 @@ final List<TransactionCategory> mockCategories = [
   TransactionCategory(
     id: 'c1',
     title: 'Groceries',
-    icon: Icons.shopping_cart,
+    iconCodePoint: Icons.shopping_cart.codePoint,
     color: Colors.green,
   ),
   TransactionCategory(
     id: 'c2',
     title: 'Sports',
-    icon: Icons.sports_tennis,
+    iconCodePoint: Icons.sports_tennis.codePoint,
     color: Colors.blue,
   ),
   TransactionCategory(
     id: 'c3',
     title: 'Taxes',
-    icon: Icons.house,
+    iconCodePoint: Icons.house.codePoint,
     color: Colors.red,
   ),
   TransactionCategory(
     id: 'c4',
     title: 'Car',
-    icon: Icons.car_crash,
+    iconCodePoint: Icons.car_crash.codePoint,
     color: Colors.yellow,
   ),
   TransactionCategory(
     id: 'c5',
     title: 'Work',
-    icon: Icons.work,
+    iconCodePoint: Icons.work.codePoint,
     color: Colors.grey,
   ),
   TransactionCategory(
-      id: 'c6',
-      title: 'Luxury',
-      icon: Icons.money,
-      color: Colors.purple,
-    ),
+    id: 'c6',
+    title: 'Luxury',
+    iconCodePoint: Icons.money.codePoint,
+    color: Colors.purple,
+  ),
 ];
 
 final List<Transaction> mockTransactions = [

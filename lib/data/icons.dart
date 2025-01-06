@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 
-final List<IconData> availableIcons = const [
+const List<IconData> availableIcons = [
   Icons.shopping_cart,
   Icons.sports,
   Icons.home,

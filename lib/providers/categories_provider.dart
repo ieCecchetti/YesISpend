@@ -40,6 +40,12 @@ class CategoriesNotifier extends StateNotifier<List<TransactionCategory>> {
 
     state = state.where((element) => element.id != category.id).toList();
   }
+
+  // Refresh (reload) the categories from db (case de-sync with db)
+  Future<void> refreshCategories() async {
+    await _initializeCategories();
+    state = state;
+  }
 }
 
 final categoriesProvider =

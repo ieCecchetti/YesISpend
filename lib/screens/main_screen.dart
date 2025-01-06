@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:monthly_count/providers/transactions_provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -8,7 +9,6 @@ import 'package:monthly_count/screens/category_screen.dart';
 import 'package:monthly_count/screens/settings_screen.dart';
 import 'package:monthly_count/screens/create_transaction_screen.dart';
 import 'package:monthly_count/screens/filter_screen.dart';
-import 'package:monthly_count/screens/privacy_screen.dart';
 
 import 'package:monthly_count/widgets/transaction_item.dart';
 import 'package:monthly_count/widgets/in_out_item.dart';
@@ -19,6 +19,7 @@ import 'package:monthly_count/widgets/day_cost_histogram.dart';
 
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
 import 'package:monthly_count/providers/settings_provider.dart';
+import 'package:monthly_count/db/db_handler.dart';
 
 class MainViewScreen extends ConsumerStatefulWidget {
   const MainViewScreen({super.key});
@@ -126,14 +127,50 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                   ),
                 );
               }
-              if (value == "Privacy") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PrivacyScreen(),
-                  ),
+              if (value == "CleanUp") {
+                // Show confirmation dialog
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Confirm Cleanup'),
+                      content: const Text(
+                          'Are you sure you want to delete all the data (transactions/categories)? This action cannot be undone.'),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () {
+                            // Cancel the operation
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            // Call the deleteAll method from DatabaseHelper to drop the database
+                            await DatabaseHelper.instance.deleteAll();
+
+                            // Refresh the transactions state
+                            ref
+                                .read(transactionsProvider.notifier)
+                                .refreshTransactions();
+
+                            // Refresh the categories state
+                            ref
+                                .read(categoriesProvider.notifier)
+                                .refreshCategories();
+
+                            // Close the dialog after the operations are done
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Confirm'),
+                        ),
+
+                      ],
+                    );
+                  },
                 );
               }
+
             },
             itemBuilder: (BuildContext context) {
               return [
@@ -146,8 +183,8 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                   child: Text("Settings"),
                 ),
                 const PopupMenuItem(
-                  value: "Privacy",
-                  child: Text("Privacy"),
+                  value: "CleanUp",
+                  child: Text("CleanUp data"),
                 ),
               ];
             },

@@ -143,7 +143,7 @@ class _CreateCategoryScreenState extends ConsumerState<CreateCategoryScreen> {
                       final newCategory = TransactionCategory(
                         id: const Uuid().v4(),
                         title: _titleController.text,
-                        icon: _selectedIcon,
+                        iconCodePoint: _selectedIcon.codePoint,
                         color: _selectedColor,
                       );
 

@@ -27,15 +27,18 @@ class DatabaseHelper {
   }
 
   Future<void> _createDB(Database db, int version) async {
+    // Create transaction_category table
     await db.execute('''
       CREATE TABLE transaction_category (
         id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
-        icon INTEGER NOT NULL,
+        iconCodePoint INTEGER NOT NULL,
         color INTEGER NOT NULL
       )
     ''');
     print('Created transaction_category table');
+
+    // Create financial_record table
     await db.execute('''
       CREATE TABLE financial_record (
         id TEXT PRIMARY KEY,
@@ -47,7 +50,20 @@ class DatabaseHelper {
         FOREIGN KEY (category_id) REFERENCES transaction_category (id) ON DELETE CASCADE
       )
     ''');
-    print('Created transaction table');
+    print('Created financial_record table');
+  }
+
+  // Delete all records and drop the database
+  Future<void> deleteAll() async {
+    final db = await instance.database;
+
+    // Delete the database file, effectively dropping all tables
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, 'monthly_count.db');
+    await deleteDatabase(path); // This deletes the whole database
+
+    // Reopen the database, which will recreate the tables
+    _database = await _initDB('monthly_count.db');
   }
 
   Future<int> insert(String table, Map<String, Object> data) async {
