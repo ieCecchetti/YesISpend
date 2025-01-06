@@ -1,0 +1,229 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f9f9f9;
+}
+
+.container {
+    max-width: 1200px;
+}
+
+.welcome-heading {
+    font-size: 2.8rem; /* Slightly larger font size for emphasis */
+    font-weight: 700; /* Bold font weight for prominence */
+    color: #34495e; /* Calm, deep blue-gray for a professional look */
+    text-align: center; /* Center-aligned for symmetry */
+    margin-bottom: 1.5rem; /* Added spacing below */
+    letter-spacing: 1px; /* Slight spacing for readability */
+    text-transform: uppercase; /* Uppercase for a strong visual impact */
+    background: linear-gradient(90deg, #6a11cb, #2575fc); /* Subtle gradient text effect */
+    -webkit-background-clip: text; /* Clip background to text for gradient effect */
+    -webkit-text-fill-color: transparent; /* Make text transparent for gradient */
+    animation: fadeIn 1.5s ease; /* Add a fade-in animation for smooth appearance */
+}
+
+/* Fade-in Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+.welcome-description {
+    font-size: 1.2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.welcome-image img {
+    display: block;
+    max-width: 300px;
+    height: auto;
+    margin: 2rem auto;
+}
+
+.cta-button {
+    display: inline-block;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #fff;
+    background-color: #e67e22;
+    border-radius: 5px;
+    text-transform: uppercase;
+    text-decoration: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.cta-button:hover {
+    transform: scale(1.05);
+    background-color: #d35400;
+}
+
+section h2, section h3 {
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.image-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 2rem 0;
+}
+
+.image-wrapper img {
+    flex: 1;
+    max-width: 50%;
+    border-radius: 8px;
+}
+
+.feature-content {
+    flex: 1;
+    padding: 1rem;
+}
+
+.feature-content h3 {
+    font-size: 1.5rem;
+    color: #34495e;
+}
+
+.feature-content p {
+    font-size: 1rem;
+    color: #7f8c8d;
+}
+
+.support {
+    background: linear-gradient(90deg, #a8edea, #fed6e3); /* Soft teal to blush gradient */
+    color: #333333; /* Dark gray for text contrast */
+    text-align: center;
+    padding: 1.5rem; /* Balanced padding for spacing */
+    margin-top: 1.5rem; /* Adequate margin for separation */
+    border-radius: 8px; /* Rounded corners for a gentle appearance */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* Subtle shadow for light depth */
+}
+
+.support a {
+    color: #336699; /* Calm blue for links */
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.support a:hover {
+    color: #555555; /* Darker gray on hover */
+    text-decoration: underline;
+}
+
+
+#support img {
+    margin: 1rem auto;
+    display: block;
+}
+
+#features {
+    background-color: #fff;
+    padding: 2rem 0;
+}
+
+.cta {
+    background: linear-gradient(to right, #e67e22, #f39c12);
+    color: #fff;
+    text-align: center;
+    padding: 2rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+}
+
+.cta h2 {
+    font-size: 2rem;
+}
+
+.cta p {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.cta a {
+    padding: 0.8rem 1.5rem;
+    background-color: #fff;
+    color: #e67e22;
+    font-weight: 500;
+    border-radius: 5px;
+    text-decoration: none;
+}
+
+.cta a:hover {
+    background-color: #f39c12;
+    color: #fff;
+}
+
+footer {
+    text-align: center;
+    padding: 1.5rem;
+    margin-top: 3rem;
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    font-size: 0.9rem;
+}
+
+footer a {
+    color: #e67e22;
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+/* Social Buttons */
+ul.social-buttons {
+    margin-bottom: 0;
+    padding: 0; 
+    list-style: none;
+}
+
+ul.social-buttons li a {
+    display: block;
+    width: 50px; 
+    height: 50px; 
+    border-radius: 50%; 
+    font-size: 24px;
+    line-height: 50px; 
+    color: #fff;
+    background-color: #222;
+    -webkit-transition: all .3s;
+    -moz-transition: all .3s;
+    transition: all .3s;
+    text-align: center; 
+}
+
+ul.social-buttons li a:hover,
+ul.social-buttons li a:focus,
+ul.social-buttons li a:active {
+    background-color: #1ee2e7;
+}
+
+/* Ensure that the icons inside are centered */
+ul.social-buttons li a i {
+    display: inline-block;
+    line-height: normal; /* Allow the icons to align properly */
+}
+
+/* Remove any focus outlines */
+.btn:focus,
+.btn:active,
+.btn.active,
+.btn:active:focus {
+    outline: 0;
+}

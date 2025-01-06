@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="LevelApp is a personal finance app that helps you track your expenses, set budgets, and improve your financial habits.">
+    <meta name="keywords" content="LevelApp, personal finance, budgeting, expense tracking, financial management">
+    <meta name="author" content="Enrico Cecchetti">
+    <meta name="robots" content="index, follow">
+    <!-- Favicon -->
+    <link rel="icon" href="./favicon_io/favicon-16x16.png" type="image/x-icon">
+    <!-- Other Metadata -->
+    <meta property="og:title" content="YesISpend - Personal Finance Simplified">
+    <meta property="og:description" content="YesISpend is a personal finance app that helps you track your expenses, set budgets, and improve your financial habits.">
+    <meta property="og:image" content="/res/yesispend/yesispend.png.jpg">
+
+    <title>YesISpend - Personal Finance Simplified</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="./projects.css">
+    <!-- External Resources -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Custom JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- Back Button -->
+        <div class="back-btn mb-3">
+            <a href="https://iececchetti.github.io/" class="text-dark"><i class="fas fa-arrow-left"></i> Navigate my website</a>
+        </div>
+
+        <!-- Welcome Section -->
+        <section>
+            <h2 class="welcome-heading">Welcome to YesISpend</h2>
+            <p class="welcome-description">
+                Imagine having your personal financial assistant right in your pocket. 
+                <strong>YesISpend</strong> is here to simplify your finances, giving you the power to track, manage, 
+                and improve your spending habits. With a sleek, intuitive interface and powerful tools, 
+                you can finally take control of your financial future.
+            </p>
+            <div class="welcome-image">
+                <img src="./images/dashboard.png" alt="LevelApp Dashboard">
+            </div>
+            <div class="text-center">
+                <a href="#features" class="cta-button">Explore other Apps</a>
+            </div>
+        </section>
+
+        <!-- Support Section -->
+        <section id="support" class="text-center">
+            <div class="support">
+                <h2>Support My Work</h2>
+                <p>If you enjoy my content, feel free to buy me a coffee!</p>
+                <a href="https://www.buymeacoffee.com/ececchetti" target="_blank">
+                    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" style="height: 60px; width: 217px;">
+                </a>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features">
+            <h2>Key Features</h2>
+            <div class="image-wrapper">
+                <img src="./images/categories.png" alt="Track Expenses">
+                <div class="feature-content">
+                    <h3>Track Your Spending</h3>
+                    <p>Monitor your expenses effortlessly. Easily categorize your spending to get a clear overview of where your money goes each month.</p>
+                </div>
+            </div>
+            <div class="image-wrapper flex-row-reverse">
+                <img src="./images/filters.png" alt="Set Budgets">
+                <div class="feature-content">
+                    <h3>Set Personalized Budgets</h3>
+                    <p>Use the transaction filter to quickly find specific expenses, making it easier to manage and review your spending history.</p>
+                </div>
+            </div>
+            <div class="image-wrapper">
+                <img src="./images/graphs.png" alt="Detailed Reports">
+                <div class="feature-content">
+                    <h3>View Detailed Reports</h3>
+                    <p>Get insights into your financial habits with detailed reports, helping you understand your spending patterns and make better financial decisions.</p>
+                </div>
+            </div>
+            <div class="image-wrapper flex-row-reverse">
+                <img src="./images/security.png" alt="Data Privacy">
+                <div class="feature-content">
+                    <h3>Data Privacy & Security</h3>
+                    <p>All your financial data is securely stored on your device, ensuring your information remains private and protected at all times.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call to Action -->
+        <section class="cta">
+            <h2>Join the Beta and Help Us Improve!</h2>
+            <p>Your feedback is essential to making this app even better. Be a part of our beta testing group and help shape the future of financial management.</p>
+            <a href="#" target="_blank">Join the Beta</a>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4">
+                        <p>&copy; eCecchetti Website 2023</p>
+                    </div>
+                    <div class="col-md-4">
+                        <ul class="list-inline social-buttons text-center justify-content-center align-items-center">
+                            <li class="list-inline-item">
+                                <a href="https://www.linkedin.com/in/enrico-cecchetti-b16663152/" aria-label="LinkedIn">
+                                    <i class="fab fa-linkedin"></i>
+                                </a>
+                            </li>
+                            <li class="list-inline-item">
+                                <a href="https://github.com/ieCecchetti" aria-label="GitHub">
+                                    <i class="fab fa-github"></i>
+                                </a>
+                            </li>
+                            <li class="list-inline-item">
+                                <a href="https://stackoverflow.com/users/23795155/cikosz" aria-label="Stack Overflow">
+                                    <i class="fab fa-stack-overflow"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <ul class="list-inline quicklinks">
+                            <li><a href="./privacy_policy/yesispend.html">Privacy Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
