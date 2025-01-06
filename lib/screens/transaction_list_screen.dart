@@ -74,9 +74,7 @@ class TransactionListScreen extends ConsumerWidget {
                   case FilterStyle.amountFilter:
                     var range = filter.value as RangeValues;
                     filterValue = 'Amount: ${range.start} - ${range.end}';
-                    break;
-                  default:
-                    filterValue = filter.value.toString();
+                          break;
                 }
 
                 return Chip(
