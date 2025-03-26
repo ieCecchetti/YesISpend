@@ -1,6 +1,9 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:monthly_count/models/transaction.dart';
 
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
 import 'package:monthly_count/widgets/information_title.dart';
@@ -30,39 +33,29 @@ class ExpenseGraphScreen extends ConsumerWidget {
     // Sort transactions by date
     transactions.sort((a, b) => a.date.compareTo(b.date));
 
-    // Filter transactions for income and expenses
-    final incomeTransactions = transactions.where((t) => t.price > 0).toList();
-    final outcomeTransactions = transactions.where((t) => t.price < 0).toList();
+    // Calculate total outcome
+    final outcomeTotal = transactions
+        .where((t) => t.price < 0)
+        .fold(0.0, (sum, t) => sum + t.price.abs());
+    final incomeTotal = transactions
+        .where((t) => t.price > 0)
+        .fold(0.0, (sum, t) => sum + t.price);
+    final maxY = incomeTotal > outcomeTotal ? incomeTotal : outcomeTotal;
 
-    // Calculate cumulative values for income and absolute expenses
-    final List<FlSpot> incomeSpots = [];
-    final List<FlSpot> outcomeSpots = [];
-    final Map<double, String> dayLabels = {};
+    // Calculate grapgh data;
+    final outcomeLineBarsData = getTransactionsLinebars(
+        transactions.where((t) => t.price < 0).toList(), Colors.redAccent);
+    final incomeLineBarsData = getTransactionsLinebars(
+        transactions.where((t) => t.price > 0).toList(), Colors.greenAccent);
+      
+    int minDate = transactions.first.date.day;
+    int maxDate = transactions.last.date.day;
+    // Extract FlSpot data from LineChartBarData if needed, or remove the variable if unused
+    List<FlSpot> lineBarsData = [
+      for (final barData in outcomeLineBarsData) ...barData.spots,
+      for (final barData in incomeLineBarsData) ...barData.spots,
+    ];
 
-    double incomeTotal = 0.0;
-    double outcomeTotal = 0.0;
-
-    // Generate spots for income transactions
-    for (final transaction in incomeTransactions) {
-      incomeTotal += transaction.price;
-      incomeSpots.add(FlSpot(
-        transaction.date.day.toDouble(),
-        incomeTotal,
-      ));
-      dayLabels[transaction.date.day.toDouble()] =
-          '${transaction.date.day}/${transaction.date.month}';
-    }
-
-    // Generate spots for outcome transactions
-    for (final transaction in outcomeTransactions) {
-      outcomeTotal += transaction.price.abs();
-      outcomeSpots.add(FlSpot(
-        transaction.date.day.toDouble(),
-        outcomeTotal,
-      ));
-      dayLabels[transaction.date.day.toDouble()] =
-          '${transaction.date.day}/${transaction.date.month}';
-    }
     return Container(
       color: Colors.blueGrey[900], // Background for the graph area
       padding: const EdgeInsets.all(16.0),
@@ -80,12 +73,13 @@ class ExpenseGraphScreen extends ConsumerWidget {
           Expanded(
             child: LineChart(
               LineChartData(
+                // dotted line grid
                 gridData: FlGridData(
                   show: true,
                   drawHorizontalLine: true,
                   drawVerticalLine: true,
                   horizontalInterval: 500,
-                  verticalInterval: 5,
+                  verticalInterval: 3,
                   getDrawingHorizontalLine: (value) {
                     return const FlLine(
                       color: Colors.white38,
@@ -101,6 +95,48 @@ class ExpenseGraphScreen extends ConsumerWidget {
                     );
                   },
                 ),
+                lineTouchData: LineTouchData(
+                  enabled: true,
+                  handleBuiltInTouches: true,
+                  touchTooltipData: LineTouchTooltipData(
+                      tooltipPadding: const EdgeInsets.all(8),
+                      getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                        return touchedSpots.map((LineBarSpot touchedSpot) {
+                          if (touchedSpot.bar.spots[touchedSpot.spotIndex].x <
+                                  minDate ||
+                              touchedSpot.bar.spots[touchedSpot.spotIndex].x >
+                                  maxDate) {
+                            // Return null for no tooltip for this specific spot
+                            return null;
+                          }
+                          // Otherwise return a tooltip item
+                          Color tooltipTextColor =
+                              touchedSpot.bar.gradient!.colors.first;
+                          return LineTooltipItem(
+                              '${touchedSpot.y}',
+                              TextStyle(
+                                  color:
+                                      tooltipTextColor) // Set the tooltip text color to match the line color
+                              );
+                        }).toList();
+                      }),
+                  getTouchedSpotIndicator:
+                      (LineChartBarData barData, List<int> spotIndexes) {
+                    return spotIndexes.map((index) {
+                      final spotX = barData.spots[index].x;
+                      if (spotX < minDate || spotX > maxDate) {
+                        // Disable interaction outside the date range
+                        return const TouchedSpotIndicatorData(
+                            FlLine(color: Colors.transparent, strokeWidth: 0),
+                            FlDotData(show: false));
+                      }
+                      // Enable interaction within the date range
+                      return const TouchedSpotIndicatorData(
+                          FlLine(color: Colors.blue, strokeWidth: 4),
+                          FlDotData(show: true));
+                    }).toList();
+                  },
+                ),
                 titlesData: FlTitlesData(
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
@@ -108,7 +144,7 @@ class ExpenseGraphScreen extends ConsumerWidget {
                       reservedSize: 40,
                       getTitlesWidget: (value, meta) {
                         return Text(
-                          '${value.toInt()}',
+                          '${value.toInt()}€',
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
@@ -122,18 +158,15 @@ class ExpenseGraphScreen extends ConsumerWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 30,
-                      interval: 5,
+                      interval: 3,
                       getTitlesWidget: (value, meta) {
-                        if (value % 5 == 0) {
-                          return Text(
-                            value.toInt().toString(),
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
+                        return Text(
+                          '${value.toInt().toString()}',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 10,
+                          ),
+                        );
                       },
                     ),
                   ),
@@ -152,50 +185,8 @@ class ExpenseGraphScreen extends ConsumerWidget {
                   ),
                 ),
                 lineBarsData: [
-                  LineChartBarData(
-                    spots: incomeSpots,
-                    isCurved: true,
-                    gradient: const LinearGradient(
-                      colors: [Colors.green, Colors.lightGreenAccent],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    dotData: const FlDotData(show: true),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.lightGreenAccent.withOpacity(0.3),
-                          Colors.transparent,
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                    barWidth: 3,
-                  ),
-                  LineChartBarData(
-                    spots: outcomeSpots,
-                    isCurved: true,
-                    gradient: const LinearGradient(
-                      colors: [Colors.redAccent, Colors.pinkAccent],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    dotData: const FlDotData(show: true),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.pinkAccent.withOpacity(0.3),
-                          Colors.transparent,
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                    barWidth: 3,
-                  ),
+                  for (final lineBar in outcomeLineBarsData) lineBar,
+                  for (final lineBar in incomeLineBarsData) lineBar,
                 ],
                 extraLinesData: ExtraLinesData(
                   horizontalLines: [
@@ -218,7 +209,9 @@ class ExpenseGraphScreen extends ConsumerWidget {
                   ],
                 ),
                 minY: 0,
-                maxY: outcomeTotal > monthlyObjective ? outcomeTotal+500 : monthlyObjective +500,
+                maxY: maxY > monthlyObjective
+                    ? maxY + 500
+                    : monthlyObjective + 500,
                 minX: 0,
                 maxX: 30,
               ),
@@ -227,6 +220,90 @@ class ExpenseGraphScreen extends ConsumerWidget {
         ],
       ),
     );
- 
+  }
+
+  List<LineChartBarData> getTransactionsLinebars(
+      List<Transaction> transactions, Color color) {
+    if (transactions.isEmpty) {
+      return [];
+    }
+
+    final List<FlSpot> zeroSpots = List.of(
+      [
+        const FlSpot(0, 0), // Starting point at zero
+        FlSpot(transactions.first.date.day.toDouble(),
+            transactions.first.price.abs().toDouble()),
+      ],
+    );
+
+    // Calculate cumulative values for income and absolute expenses
+    final List<FlSpot> spots = [];
+    final Map<double, String> dayLabels = {};
+    double total = 0.0;
+    int lastDay = transactions.last.date.day;
+    // Generate spots for outcome transactions
+    for (final transaction in transactions) {
+      total += transaction.price.abs();
+      spots.add(FlSpot(
+        transaction.date.day.toDouble(),
+        total,
+      ));
+      dayLabels[transaction.date.day.toDouble()] =
+          '${transaction.date.day}/${transaction.date.month}';
+    }
+
+    // Calculate the estimated increase in expenses
+    final estimatedIncrease = total / lastDay;
+    final List<FlSpot> projectedSpots = [];
+
+    double lastY = total;
+    for (double i = spots.last.x.toDouble() + 1; i < 30; i++) {
+      lastY += estimatedIncrease;
+      projectedSpots.add(FlSpot(i, lastY));
+    }
+
+    return [
+      getLineBarObject(zeroSpots, color,
+          barWidth: 1, isDashed: true, haveShadow: false, isTouchable: false),
+      getLineBarObject(spots, color),
+      getLineBarObject(projectedSpots, color,
+          barWidth: 2, isDashed: true, haveShadow: false, isTouchable: false),
+    ];
+  }
+
+  LineChartBarData getLineBarObject(List<FlSpot> spots, Color color,
+      {int barWidth = 3,
+      bool isDashed = false,
+      bool haveShadow = true,
+      bool isTouchable = true}) {
+    return LineChartBarData(
+      // Project zero to data
+      spots: spots,
+      isCurved: true,
+      gradient: LinearGradient(
+        colors: [
+          color.withOpacity(0.9), // Lighter or more transparent
+          color.withOpacity(0.7), // Slightly more transparent
+        ],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ),
+      dotData: FlDotData(show: isTouchable),
+      belowBarData: BarAreaData(
+        show: haveShadow,
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.1), // More transparent
+            Colors.transparent,
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      barWidth: barWidth.toDouble(), // Optionally thinner line for projection
+      dashArray: isDashed
+          ? [5, 5]
+          : null, // Make the projection line dashed only if isDashed
+    );
   }
 }

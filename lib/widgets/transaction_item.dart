@@ -36,8 +36,7 @@ class TransactionItem extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 1.0),
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        color: category.color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12.0),
+        color: Colors.white60,
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.2),
@@ -87,7 +86,7 @@ class TransactionItem extends ConsumerWidget {
           ),
           // Price
           Text(
-            '${item.price > 0 ? '+' : ''}${item.price}€',
+            '${item.price > 0 ? '+' : ''}${item.price.toStringAsFixed(2)} €',
             style: TextStyle(
               fontSize: 16.0,
               fontWeight: FontWeight.bold,

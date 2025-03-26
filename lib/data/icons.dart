@@ -30,4 +30,18 @@ const List<IconData> availableIcons = [
   Icons.sports_bar_outlined,
   Icons.sports_esports,
   Icons.run_circle_outlined,
+  Icons.category,
+  Icons.flight,
+  Icons.train,
+  Icons.celebration,
 ];
+
+/// Function to get IconData by integer (codePoint)
+IconData getIconByCodePoint(int iconCodePoint) {
+  for (var icon in availableIcons) {
+    if (icon.codePoint == iconCodePoint) {
+      return icon;
+    }
+  }
+  throw ArgumentError("No IconData found for codePoint: $iconCodePoint");
+}

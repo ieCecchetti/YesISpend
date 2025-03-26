@@ -34,13 +34,30 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Categories'),
-        actions: [
-          if (isDeletionMode)
+          actions: [
             IconButton(
-              onPressed: _toggleDeletionMode,
-              icon: const Icon(Icons.close),
-              tooltip: 'Exit Deletion Mode',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CreateCategoryScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.add),
+              tooltip: 'Create new category',
             ),
+            isDeletionMode
+                ? IconButton(
+                    onPressed: _toggleDeletionMode,
+                    icon: const Icon(Icons.close),
+                    tooltip: 'Exit Deletion Mode',
+                  )
+                : IconButton(
+                    onPressed: _toggleDeletionMode,
+                    icon: const Icon(Icons.delete),
+                    tooltip: 'Enter Deletion Mode',
+                  ),
         ],
       ),
       body: Padding(
@@ -128,21 +145,6 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
             );
           },
         ),
-      ),
-      floatingActionButton: isDeletionMode
-          ? null
-          : FloatingActionButton(
-              onPressed: () {
-                // Navigate to the Create Category Screen
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CreateCategoryScreen(),
-                  ),
-                );
-              },
-              child: const Icon(Icons.add),
-            ),
-    );
+        ));
   }
 }

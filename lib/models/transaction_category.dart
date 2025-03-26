@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:monthly_count/data/icons.dart';
 
 class TransactionCategory {
   final String id;
@@ -41,6 +42,6 @@ class TransactionCategory {
 
   // Get the IconData by rebuilding it from the code point and font family
   IconData get icon {
-    return IconData(iconCodePoint, fontFamily: 'MaterialIcons'); 
+    return getIconByCodePoint(iconCodePoint); 
   }
 }

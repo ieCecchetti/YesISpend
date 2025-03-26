@@ -13,7 +13,6 @@ import 'package:monthly_count/screens/filter_screen.dart';
 import 'package:monthly_count/widgets/transaction_item.dart';
 import 'package:monthly_count/widgets/in_out_item.dart';
 import 'package:monthly_count/widgets/expense_graph.dart';
-import 'package:monthly_count/widgets/cathegory_chart.dart';
 import 'package:monthly_count/widgets/statistics_view.dart';
 import 'package:monthly_count/widgets/day_cost_histogram.dart';
 
@@ -53,7 +52,6 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
         monthlyObjective: settings[Settings.expenseObjective] as double,
       ),
       const DayCostHistogram(),
-      const CategoryPieChart(),
       StatisticsView(
         monthlyObjective: settings[Settings.expenseObjective] as double,
       ),
@@ -214,17 +212,15 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                         controller: _pageController,
                         count: pages.length,
                         effect: ExpandingDotsEffect(
-                          activeDotColor: Colors.white.withOpacity(
-                              0.9), // Subtle bright white for the active dot
-                          dotColor: Colors.blueGrey
-                              .shade200, // Muted blue-grey for inactive dots
+                          activeDotColor: Colors.white.withOpacity(0.9),
+                          dotColor: Colors.blueGrey.shade200,
                           dotHeight: 10,
                           dotWidth: 10,
                           expansionFactor: 3,
                           spacing: 10,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
@@ -232,54 +228,40 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
             ),
           ];
         },
-        body: montlyTransactions.isEmpty
-            ? const Center(
-                child: Text('No transactions found'),
-              )
-            : ListView.builder(
-                key: ValueKey(montlyTransactions.length),
-                itemCount: montlyTransactions.length,
-                itemBuilder: (context, index) {
-                  final item = montlyTransactions[index];
-                  return Dismissible(
-                    key: ValueKey(item.id),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      color: Colors.red,
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: const Icon(
-                        Icons.delete,
-                        color: Colors.white,
-                      ),
-                    ),
-                    onDismissed: (direction) async {
-                      final confirm = await showConfirmationDialog(
-                          context: context,
-                          title: "Delete Transaction",
-                          content:
-                              "Are you sure you want to delete this transaction?"); // If the user confirms, proceed with the deletion
-                      if (confirm) {
-                        ref
-                            .read(transactionsProvider.notifier)
-                            .removeTransaction(item);
-                        // Show a confirmation message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Transaction removed')),
-                        );
-                      } else {
-                        // Re-insert the item if the user canceled
-                        ref
-                            .read(transactionsProvider.notifier)
-                            .rebuildItem(item);
-                      }
-                    },
-                    child: TransactionItem(
-                      item: item,
-                    ),
-                  );
-                },
+        body: ListView.builder(
+          itemCount: montlyTransactions.length,
+          itemBuilder: (context, index) {
+            final item = montlyTransactions[index];
+            return Dismissible(
+              key: ValueKey(item.id),
+              direction: DismissDirection.endToStart,
+              background: Container(
+                color: Colors.red,
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: const Icon(Icons.delete, color: Colors.white),
               ),
+              onDismissed: (direction) async {
+                final confirm = await showConfirmationDialog(
+                    context: context,
+                    title: "Delete Transaction",
+                    content:
+                        "Are you sure you want to delete this transaction?");
+                if (confirm) {
+                  ref
+                      .read(transactionsProvider.notifier)
+                      .removeTransaction(item);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Transaction removed')),
+                  );
+                } else {
+                  ref.read(transactionsProvider.notifier).rebuildItem(item);
+                }
+              },
+              child: TransactionItem(item: item),
+            );
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -331,8 +313,9 @@ Future<bool> showConfirmationDialog({
 Widget getSliverAppBar(
     BuildContext context, MonthlyTransactionsNotifier montlyTransactions) {
   return SliverAppBar(
-    expandedHeight: 50.0,
-    pinned: true,
+    // pinned: true,
+    floating: true,
+    forceElevated: true,
     flexibleSpace: FlexibleSpaceBar(
       titlePadding: const EdgeInsets.only(left: 6.0, bottom: 6.0),
       title: Row(
@@ -373,7 +356,7 @@ Widget getSliverAppBar(
         ],
       ),
       background: Container(
-        color: Colors.blueGrey,
+        color: Theme.of(context).primaryColor,
       ),
     ),
   );
