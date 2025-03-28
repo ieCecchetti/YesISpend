@@ -153,7 +153,7 @@ class TransactionItem extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      'of ${item.price.toStringAsFixed(2)} €', // Total transaction amount
+                      'of ${item.splitInfo!.amount.toStringAsFixed(2)} €', // Total transaction amount
                       style: TextStyle(
                         fontSize: 12.0,
                         fontWeight: FontWeight.w500,

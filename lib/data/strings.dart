@@ -29,6 +29,10 @@ The price range is inclusive, meaning that transactions with prices equal to the
 The price is in absolute value.
 ''';
 
+const String isSplittedFilterDescription = '''
+Select whether you want to see transactions that are split or not.
+''';
+
 const String transactionListScreenDescription = '''
 This screen shows a list of transactions. You can filter the transactions by name, date, type, and category. 
 You can also search for transactions by title or place. 

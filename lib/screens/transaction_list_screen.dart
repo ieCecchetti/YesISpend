@@ -13,6 +13,7 @@ enum FilterStyle {
   transactionTypeFilter,
   categoryFilter,
   amountFilter,
+  splitFilter
 }
 
 class TransactionListScreen extends ConsumerWidget {
@@ -30,104 +31,110 @@ class TransactionListScreen extends ConsumerWidget {
         title: const Text('Transactions'),
       ),
       body: Column(
-  children: [
-    if (filters.isNotEmpty) // Check if any filters are applied
-      Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            child: Text(
-              'Filtered transactions: ${filteredTransactions.length}',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0),
-            child: Wrap(
-              spacing: 8.0,
-              runSpacing: 4.0,
-              children: filters.entries.map((filter) {
-                String filterValue;
-
-                // Customize filter value display based on filter type
-                switch (filter.key) {
-                  case FilterStyle.nameFilter:
-                    filterValue = 'Name: ${filter.value}';
-                    break;
-                  case FilterStyle.dateFilter:
-                    filterValue = 'Date: ${filter.value}';
-                    break;
-                  case FilterStyle.transactionTypeFilter:
-                    filterValue = 'Type: ${filter.value}';
-                    break;
-                  case FilterStyle.categoryFilter:
-                    var categoryTitles = filter.value.map((categoryId) {
-                      return ref.read(categoriesProvider).firstWhere(
-                            (category) => category.id == categoryId
-                          ).title;
-                    }).toList();
-                    filterValue = 'Category: ${categoryTitles.join(", ")}';
-                    break;
-                  case FilterStyle.amountFilter:
-                    var range = filter.value as RangeValues;
-                    filterValue = 'Amount: ${range.start} - ${range.end}';
-                          break;
-                }
-
-                return Chip(
-                  label: Text(
-                    filterValue,
-                    style: const TextStyle(color: Colors.white),
+          if (filters.isNotEmpty) // Check if any filters are applied
+            Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  child: Text(
+                    'Filtered transactions: ${filteredTransactions.length}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  backgroundColor: Colors.green,
-                  deleteIcon: const Icon(Icons.close, color: Colors.white),
-                  onDeleted: () {
-                    
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                  child: Wrap(
+                    spacing: 8.0,
+                    runSpacing: 4.0,
+                    children: filters.entries.map((filter) {
+                      String filterValue;
+
+                      // Customize filter value display based on filter type
+                      switch (filter.key) {
+                        case FilterStyle.nameFilter:
+                          filterValue = 'Name: ${filter.value}';
+                          break;
+                        case FilterStyle.dateFilter:
+                          filterValue = 'Date: ${filter.value}';
+                          break;
+                        case FilterStyle.transactionTypeFilter:
+                          filterValue = 'Type: ${filter.value}';
+                          break;
+                        case FilterStyle.categoryFilter:
+                          var categoryTitles = filter.value.map((categoryId) {
+                            return ref
+                                .read(categoriesProvider)
+                                .firstWhere(
+                                    (category) => category.id == categoryId)
+                                .title;
+                          }).toList();
+                          filterValue =
+                              'Category: ${categoryTitles.join(", ")}';
+                          break;
+                        case FilterStyle.amountFilter:
+                          var range = filter.value as RangeValues;
+                          filterValue = 'Amount: ${range.start} - ${range.end}';
+                          break;
+                        case FilterStyle.splitFilter:
+                          filterValue = 'Split: ${filter.value}';
+                          break;
+                      }
+
+                      return Chip(
+                        label: Text(
+                          filterValue,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        backgroundColor: Colors.green,
+                        deleteIcon:
+                            const Icon(Icons.close, color: Colors.white),
+                        onDeleted: () {},
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          Expanded(
+            child: ListView.builder(
+              key: ValueKey(filteredTransactions.length),
+              itemCount: filteredTransactions.length,
+              itemBuilder: (context, index) {
+                final item = filteredTransactions[index];
+                return Dismissible(
+                  key: ValueKey(item.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: const Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                    ),
+                  ),
+                  onDismissed: (direction) {
+                    ref
+                        .read(transactionsProvider.notifier)
+                        .removeTransaction(item);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Transaction dismissed')),
+                    );
                   },
+                  child: TransactionItem(
+                    item: item,
+                  ),
                 );
-              }).toList(),
+              },
             ),
           ),
         ],
       ),
-    Expanded(
-      child: ListView.builder(
-        key: ValueKey(filteredTransactions.length),
-        itemCount: filteredTransactions.length,
-        itemBuilder: (context, index) {
-          final item = filteredTransactions[index];
-          return Dismissible(
-            key: ValueKey(item.id),
-            direction: DismissDirection.endToStart,
-            background: Container(
-              color: Colors.red,
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: const Icon(
-                Icons.delete,
-                color: Colors.white,
-              ),
-            ),
-            onDismissed: (direction) {
-              ref
-                  .read(transactionsProvider.notifier)
-                  .removeTransaction(item);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Transaction dismissed')),
-              );
-            },
-            child: TransactionItem(
-              item: item,
-            ),
-          );
-        },
-      ),
-    ),
-  ],
-    ),);
+    );
   }
 }
 
@@ -198,10 +205,18 @@ List<Transaction> filterTransactions(
   if (filters.containsKey(FilterStyle.amountFilter)) {
     var range = filters[FilterStyle.amountFilter] as RangeValues;
     filteredTransactions = filteredTransactions
-      .where((element) =>
-        element.price.abs() >= range.start && element.price.abs() <= range.end)
-      .toList();
+        .where((element) =>
+            element.price.abs() >= range.start &&
+            element.price.abs() <= range.end)
+        .toList();
   }
+
+  if (filters.containsKey(FilterStyle.splitFilter)) {
+    filteredTransactions = filteredTransactions
+        .where((transaction) => transaction.splitInfo != null)
+        .toList();
+  }
+
 
   return filteredTransactions;
 }

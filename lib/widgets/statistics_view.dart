@@ -6,6 +6,8 @@ import 'package:monthly_count/providers/montly_transactions_provider.dart';
 import 'package:monthly_count/providers/settings_provider.dart';
 import 'package:monthly_count/widgets/information_title.dart';
 
+import 'package:monthly_count/widgets/animations/scrolling_text.dart';
+
 class StatisticsView extends ConsumerWidget {
   const StatisticsView({super.key});
 
@@ -140,7 +142,7 @@ class StatisticsView extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatisticCard(
+Widget _buildStatisticCard(
     BuildContext context,
     String title,
     String value,
@@ -164,6 +166,7 @@ class StatisticsView extends ConsumerWidget {
             ),
             const SizedBox(width: 16.0),
             Expanded(
+              flex: 3, // 60% of the space
               child: Text(
                 title,
                 style: const TextStyle(
@@ -173,14 +176,11 @@ class StatisticsView extends ConsumerWidget {
                 ),
               ),
             ),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.bold,
-                color: Colors.white70,
+            Expanded(
+              flex: 2, // 40% of the space
+              child: HorizontalScrollText(
+                value: value,
               ),
-              textAlign: TextAlign.right,
             ),
           ],
         ),

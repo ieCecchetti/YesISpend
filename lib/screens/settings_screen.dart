@@ -27,10 +27,28 @@ class SettingsScreen extends ConsumerWidget {
                   .read(settingsProvider.notifier)
                   .updateFilter(Settings.showResumeStats, isChecked);
             },
-            title: Text("Show resume stats",
+            title: Text("Show main screen statistics",
                 style: Theme.of(context).textTheme.titleLarge!.copyWith(
                     color: Theme.of(context).colorScheme.onBackground)),
-            subtitle: Text("Show a summary of your expenses on the home screen",
+            subtitle: Text(
+                "Show the income/outcome resume statistics on the main screen",
+                style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                    color: Theme.of(context).colorScheme.onBackground)),
+            activeColor: Theme.of(context).colorScheme.tertiary,
+            contentPadding: const EdgeInsets.only(left: 34, right: 22),
+          ),
+          SwitchListTile(
+            value: actualFilters[Settings.showExpenseLineChart] as bool,
+            onChanged: (isChecked) {
+              ref
+                  .read(settingsProvider.notifier)
+                  .updateFilter(Settings.showExpenseLineChart, isChecked);
+            },
+            title: Text("Show income/expenses line chart",
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                    color: Theme.of(context).colorScheme.onBackground)),
+            subtitle: Text(
+                "Show the income/expenses line chart on the home screen",
                 style: Theme.of(context).textTheme.labelMedium!.copyWith(
                     color: Theme.of(context).colorScheme.onBackground)),
             activeColor: Theme.of(context).colorScheme.tertiary,

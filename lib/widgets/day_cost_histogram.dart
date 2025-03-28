@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
+import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:monthly_count/widgets/information_title.dart';
+import 'package:monthly_count/models/transaction_category.dart';
 
 class DayCostHistogram extends ConsumerWidget {
   const DayCostHistogram({super.key});
@@ -11,63 +13,85 @@ class DayCostHistogram extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final transactions = ref.watch(monthlyTransactionsProvider);
+    final categories = ref.watch(categoriesProvider);
 
-    if (transactions.isEmpty) {
+    if (transactions.isEmpty || categories.isEmpty) {
       return Container(
         color: Colors.blueGrey[900],
         child: const Center(
           child: Text(
-            "No transactions found.",
+            "No transactions or categories found.",
             style: TextStyle(color: Colors.white, fontSize: 16),
           ),
         ),
       );
     }
 
-    transactions.sort((a, b) => a.date.compareTo(b.date));
+    // Build category map for quick lookup
+    final Map<String, TransactionCategory> categoryMap = {
+      for (final cat in categories) cat.id: cat,
+    };
 
-    // Create maps to track daily expenses and income
-    final Map<int, double> dailyExpenses = {};
-    final Map<int, double> dailyIncome = {};
+    // Group expenses by day and category_id
+    final Map<int, Map<String, double>> dailyCategoryExpenses = {};
 
-    // Process transactions to track expenses and income
     for (final transaction in transactions) {
+      if (transaction.price >= 0) continue; // Only expenses
+
       final day = transaction.date.day;
-      if (transaction.price < 0) {
-        // Track expenses
-        dailyExpenses[day] =
-            (dailyExpenses[day] ?? 0) + transaction.price.abs();
-      } else {
-        // Track income
-        dailyIncome[day] = (dailyIncome[day] ?? 0) + transaction.price;
-      }
+      final categoryId = transaction.category_id;
+      final amount = transaction.price.abs();
+
+      dailyCategoryExpenses.putIfAbsent(day, () => {});
+      dailyCategoryExpenses[day]![categoryId] =
+          (dailyCategoryExpenses[day]![categoryId] ?? 0) + amount;
     }
 
-    // Prepare bar chart data
+    // Prepare chart data
     final List<BarChartGroupData> barGroups = [];
-    for (int i = 1; i <= 31; i++) {
+
+    for (int day = 1; day <= 31; day++) {
+      final expensesByCategory = dailyCategoryExpenses[day];
+      if (expensesByCategory == null || expensesByCategory.isEmpty) {
+        continue;
+      }
+
+      double fromY = 0;
+      final List<BarChartRodStackItem> stackItems = [];
+
+      for (final entry in expensesByCategory.entries) {
+        final categoryId = entry.key;
+        final amount = entry.value;
+        final category = categoryMap[categoryId];
+
+        if (category == null) continue; // Skip if not found (just in case)
+
+        final toY = fromY + amount;
+        stackItems.add(
+          BarChartRodStackItem(fromY, toY, category.color),
+        );
+        fromY = toY;
+      }
+
       barGroups.add(
         BarChartGroupData(
-          x: i,
+          x: day,
           barRods: [
-            // Expense bar (red)
             BarChartRodData(
-              toY: dailyExpenses[i] ?? 0,
-              color: Colors.redAccent,
-              width: 8,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            // Income bar (green)
-            BarChartRodData(
-              toY: dailyIncome[i] ?? 0,
-              color: Colors.greenAccent,
-              width: 8,
-              borderRadius: BorderRadius.circular(4),
+              toY: fromY,
+              rodStackItems: stackItems,
+              width: 12,
+              borderRadius: BorderRadius.circular(2),
             ),
           ],
         ),
       );
     }
+
+    // Compute maxY
+    final maxY = dailyCategoryExpenses.values
+        .map((e) => e.values.fold(0.0, (a, b) => a + b))
+        .fold(0.0, (a, b) => a > b ? a : b);
 
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -77,11 +101,9 @@ class DayCostHistogram extends ConsumerWidget {
       child: Column(
         children: [
           const InformationTitle(
-            title: "Daily Histogram",
+            title: "Daily Expenses Histogram",
             description:
-                'This panel shows the daily expenses and income histogram. '
-                'Each bar represents the total amount spent or earned on that day. '
-                'You can see the exact amount by tapping on the bar.',
+                'Each bar shows daily expenses, stacked by category using its assigned color.',
           ),
           const SizedBox(height: 12),
           Expanded(
@@ -145,35 +167,34 @@ class DayCostHistogram extends ConsumerWidget {
                     tooltipPadding: const EdgeInsets.all(8),
                     tooltipMargin: 8,
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      final day = group.x;
+                      final categoryAmounts = dailyCategoryExpenses[day] ?? {};
+
                       return BarTooltipItem(
-                        'Day ${group.x}: ',
+                        'Day $day\n',
                         const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
-                        children: [
-                          TextSpan(
-                            text: '${rod.toY.toStringAsFixed(2)}€',
+                        children: categoryAmounts.entries.map((entry) {
+                          final categoryId = entry.key;
+                          final amount = entry.value;
+                          final category = categoryMap[categoryId];
+                          return TextSpan(
+                            text:
+                                '${category?.title ?? "Unknown"}: ${amount.toStringAsFixed(2)}€\n',
                             style: TextStyle(
-                              color: rod.color,
+                              color: category?.color ?? Colors.grey,
                               fontSize: 12,
                             ),
-                          ),
-                        ],
+                          );
+                        }).toList(),
                       );
                     },
                   ),
                 ),
-                maxY: [
-                      dailyExpenses.values.isNotEmpty
-                          ? dailyExpenses.values.reduce((a, b) => a > b ? a : b)
-                          : 0,
-                      dailyIncome.values.isNotEmpty
-                          ? dailyIncome.values.reduce((a, b) => a > b ? a : b)
-                          : 0,
-                    ].reduce((a, b) => a > b ? a : b) +
-                    100, // Adjust maxY to accommodate both income and expenses
+                maxY: maxY + 50, // Add some space for better visuals
               ),
             ),
           ),

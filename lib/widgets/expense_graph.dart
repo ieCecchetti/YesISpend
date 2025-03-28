@@ -27,11 +27,6 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
   bool showTarget = true;
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     // Get transactions from the provider
     final transactions = ref.watch(monthlyTransactionsProvider);
@@ -53,8 +48,6 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
       transactions.sort((a, b) => a.date.compareTo(b.date));
 
       maxDate = transactions.last.date.day.toDouble();
-      maxY = transactions.fold(
-          0.0, (max, t) => t.price.abs() > max ? t.price.abs() : max);
 
       // Calculate total outcome and income
       final outcomeTotal = transactions
@@ -73,7 +66,8 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
       setState(() {
         lineBars = getLineBarsData(
             incomeLineBarsData, showIncome, outcomeLineBarsData, showOutcome);
-        graphLimitY = buildMaxY(maxY, showTarget ? monthlyObjective : null);
+        graphLimitY =
+            retrieveMaxY(lineBars, showTarget ? monthlyObjective : null);
       });
 
       return Container(
@@ -144,11 +138,6 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                       onChanged: (value) {
                         setState(() {
                           showTarget = value ?? true;
-                          if (showTarget) {
-                            graphLimitY = buildMaxY(maxY, monthlyObjective);
-                          } else {
-                            graphLimitY = buildMaxY(maxY, null);
-                          }
                         });
                       },
                     ),
@@ -310,12 +299,6 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
     }
   }
 
-  double buildMaxY(double maxY, double? monthlyObjective) {
-    return monthlyObjective != null
-        ? (maxY > monthlyObjective ? maxY + 100 : monthlyObjective + 200)
-        : maxY + 100;
-  }
-
   List<LineChartBarData> getLineBarsData(List<LineChartBarData> incomeBars,
       bool showIncome, List<LineChartBarData> outcomeBars, bool showOutcome) {
     final List<LineChartBarData> result = [];
@@ -336,6 +319,17 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
       ];
     }
     return result;
+  }
+
+  double retrieveMaxY(List<LineChartBarData> bars, double? monthlyObjective) {
+    // If the monthly objective is set, use it to determine the max Y value
+    var maxY = bars
+        .map((bar) =>
+            bar.spots.map((spot) => spot.y).reduce((a, b) => a > b ? a : b))
+        .reduce((a, b) => a > b ? a : b);
+    return monthlyObjective != null
+        ? (maxY > monthlyObjective ? maxY + 100 : monthlyObjective + 200)
+        : maxY + 100;
   }
 
   List<LineChartBarData> getTransactionsLinebars(
@@ -418,7 +412,7 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
       ),
       barWidth: barWidth.toDouble(), // Optionally thinner line for projection
       dashArray: isDashed
-          ? [5, 5]
+          ? [4, 4]
           : null, // Make the projection line dashed only if isDashed
     );
   }

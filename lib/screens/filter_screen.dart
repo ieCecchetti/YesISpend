@@ -68,10 +68,9 @@ class _FilterTransactionScreenState
             children: [
               Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
                   decoration: BoxDecoration(
                     color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12.0),
+                    borderRadius: BorderRadius.circular(20.0),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black26,
@@ -83,9 +82,15 @@ class _FilterTransactionScreenState
                   child: TextField(
                     style: const TextStyle(fontSize: 16),
                     decoration: const InputDecoration(
-                      hintText: 'Name or Place contains...',
+                      isDense: true,
+                      hintText: 'Item or Place contains your text',
                       border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(vertical: 12),
                       prefixIcon: Icon(Icons.search, color: Colors.grey),
+                      prefixIconConstraints: BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 36,
+                      ),
                     ),
                     onChanged: (value) {
                       setState(() {
@@ -258,6 +263,41 @@ class _FilterTransactionScreenState
                   ),
                 ],
               )),
+              const SizedBox(height: 16),
+              const InformationTitle(
+                title: 'Is Splitted',
+                description: isSplittedFilterDescription,
+                lightmode: true,
+                centerText: false,
+              ),
+              const SizedBox(height: 12),
+              Center(
+                child: ToggleButtons(
+                  direction: Axis.horizontal,
+                  onPressed: (int index) {
+                    setState(() {
+                      _filters[FilterStyle.splitFilter] = index == 0;
+                    });
+                  },
+                  borderRadius: const BorderRadius.all(Radius.circular(8)),
+                  selectedBorderColor: Colors.green[700],
+                  selectedColor: Colors.white,
+                  fillColor: Colors.green[600],
+                  color: Colors.green[800],
+                  constraints: const BoxConstraints(
+                    minHeight: 50.0,
+                    minWidth: 100.0,
+                  ),
+                  isSelected: <bool>[
+                    _filters[FilterStyle.splitFilter] == true,
+                    _filters[FilterStyle.splitFilter] == false,
+                  ],
+                  children: const <Widget>[
+                    Text('Yes'),
+                    Text('No'),
+                  ],
+                ),
+              ),
               const SizedBox(height: 16),
               Center(
                 child: SizedBox(

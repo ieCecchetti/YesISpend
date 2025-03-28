@@ -196,7 +196,8 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
             getSliverAppBar(
                 context, ref.watch(monthlyTransactionsProvider.notifier)),
             SliverToBoxAdapter(
-              child: SizedBox(
+              child: pages.isNotEmpty
+                  ? SizedBox(
                 height: MediaQuery.of(context).size.height * 0.45,
                 child: Container(
                   color: Colors.blueGrey[900],
@@ -225,7 +226,8 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                     ],
                   ),
                 ),
-              ),
+                    )
+                  : Center(),
             ),
           ];
         },
@@ -242,12 +244,13 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: const Icon(Icons.delete, color: Colors.white),
               ),
-              onDismissed: (direction) async {
+              confirmDismiss: (direction) async {
                 final confirm = await showConfirmationDialog(
-                    context: context,
-                    title: "Delete Transaction",
-                    content:
-                        "Are you sure you want to delete this transaction?");
+                  context: context,
+                  title: "Delete Transaction",
+                  content: "Are you sure you want to delete this transaction?",
+                );
+
                 if (confirm) {
                   ref
                       .read(transactionsProvider.notifier)
@@ -255,9 +258,9 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Transaction removed')),
                   );
-                } else {
-                  ref.read(transactionsProvider.notifier).rebuildItem(item);
                 }
+
+                return confirm; // returning false cancels the swipe
               },
               child: TransactionItem(item: item),
             );
