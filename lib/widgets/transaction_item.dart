@@ -48,18 +48,72 @@ class TransactionItem extends ConsumerWidget {
       child: Row(
         children: [
           // Circular background for the icon
-          Container(
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              color: category.color.withOpacity(0.6),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              category.icon,
-              size: 32.0,
-              color: Colors.black87,
-            ),
-          ),
+          item.splitInfo != null
+              ? Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Outer Black Circle (Indicator of Split)
+                    Container(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        color: category.color
+                            .withOpacity(0.6), // Ensure same opacity effect
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        category.icon,
+                        size: 32.0,
+                        color: Colors.black87,
+                      ),
+                    ),
+
+                    // Percentage Indicator (Positioned on Top)
+                    Positioned(
+                      top: 0,
+                      right: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(4.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.black, width: 1.5),
+                        ),
+                        child: Text(
+                          "${item.splitInfo!.percentage}%",
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Return Icon if hasReturned is true
+                    if (item.splitInfo!.hasReturned)
+                      const Positioned(
+                        bottom: 0,
+                        left: 0,
+                        child: Icon(
+                          Icons.refresh,
+                          size: 14.0,
+                          color: Colors.green, // Green to show money returned
+                        ),
+                      ),
+                  ],
+                )
+              : Container(
+                  padding: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    color: category.color.withOpacity(0.6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    category.icon,
+                    size: 32.0,
+                    color: Colors.black87,
+                  ),
+                ),
           const SizedBox(width: 16.0),
           // Title and Date at Place
           Expanded(
@@ -85,14 +139,37 @@ class TransactionItem extends ConsumerWidget {
             ),
           ),
           // Price
-          Text(
+          item.splitInfo != null
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      '${item.splitInfo!.share.toStringAsFixed(2)} €',
+                      style: TextStyle(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.yellow[800],
+                      ),
+                    ),
+                    Text(
+                      'of ${item.price.toStringAsFixed(2)} €', // Total transaction amount
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                )
+              : Text(
             '${item.price > 0 ? '+' : ''}${item.price.toStringAsFixed(2)} €',
             style: TextStyle(
               fontSize: 16.0,
               fontWeight: FontWeight.bold,
               color: item.price > 0 ? Colors.green : Colors.red,
             ),
-          ),
+                )
         ],
       ),
     );

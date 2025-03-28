@@ -26,21 +26,41 @@ class DayCostHistogram extends ConsumerWidget {
 
     transactions.sort((a, b) => a.date.compareTo(b.date));
 
+    // Create maps to track daily expenses and income
     final Map<int, double> dailyExpenses = {};
-    for (final transaction in transactions.where((t) => t.price < 0)) {
+    final Map<int, double> dailyIncome = {};
+
+    // Process transactions to track expenses and income
+    for (final transaction in transactions) {
       final day = transaction.date.day;
-      dailyExpenses[day] = (dailyExpenses[day] ?? 0) + transaction.price.abs();
+      if (transaction.price < 0) {
+        // Track expenses
+        dailyExpenses[day] =
+            (dailyExpenses[day] ?? 0) + transaction.price.abs();
+      } else {
+        // Track income
+        dailyIncome[day] = (dailyIncome[day] ?? 0) + transaction.price;
+      }
     }
 
+    // Prepare bar chart data
     final List<BarChartGroupData> barGroups = [];
     for (int i = 1; i <= 31; i++) {
       barGroups.add(
         BarChartGroupData(
           x: i,
           barRods: [
+            // Expense bar (red)
             BarChartRodData(
               toY: dailyExpenses[i] ?? 0,
               color: Colors.redAccent,
+              width: 8,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            // Income bar (green)
+            BarChartRodData(
+              toY: dailyIncome[i] ?? 0,
+              color: Colors.greenAccent,
               width: 8,
               borderRadius: BorderRadius.circular(4),
             ),
@@ -57,12 +77,12 @@ class DayCostHistogram extends ConsumerWidget {
       child: Column(
         children: [
           const InformationTitle(
-                title: "Daily Histogram",
-                description: 'This panel shows the daily expenses histogram. '
-                            'Each bar represents the total amount spent on that day. '
-                            'You can see the exact amount by tapping on the bar.',
-                
-              ),
+            title: "Daily Histogram",
+            description:
+                'This panel shows the daily expenses and income histogram. '
+                'Each bar represents the total amount spent or earned on that day. '
+                'You can see the exact amount by tapping on the bar.',
+          ),
           const SizedBox(height: 12),
           Expanded(
             child: BarChart(
@@ -135,8 +155,8 @@ class DayCostHistogram extends ConsumerWidget {
                         children: [
                           TextSpan(
                             text: '${rod.toY.toStringAsFixed(2)}€',
-                            style: const TextStyle(
-                              color: Colors.redAccent,
+                            style: TextStyle(
+                              color: rod.color,
                               fontSize: 12,
                             ),
                           ),
@@ -145,9 +165,15 @@ class DayCostHistogram extends ConsumerWidget {
                     },
                   ),
                 ),
-                maxY: dailyExpenses.values.isNotEmpty
-                    ? dailyExpenses.values.reduce((a, b) => a > b ? a : b) + 100
-                    : 100,
+                maxY: [
+                      dailyExpenses.values.isNotEmpty
+                          ? dailyExpenses.values.reduce((a, b) => a > b ? a : b)
+                          : 0,
+                      dailyIncome.values.isNotEmpty
+                          ? dailyIncome.values.reduce((a, b) => a > b ? a : b)
+                          : 0,
+                    ].reduce((a, b) => a > b ? a : b) +
+                    100, // Adjust maxY to accommodate both income and expenses
               ),
             ),
           ),

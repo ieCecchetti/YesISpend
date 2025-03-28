@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 const List<IconData> availableIcons = [
-  Icons.shopping_cart,
+  Icons.child_friendly_rounded,
   Icons.sports,
   Icons.home,
   Icons.car_rental,

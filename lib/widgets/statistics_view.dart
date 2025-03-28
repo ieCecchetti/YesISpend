@@ -3,16 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:monthly_count/models/transaction.dart';
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
+import 'package:monthly_count/providers/settings_provider.dart';
 import 'package:monthly_count/widgets/information_title.dart';
 
 class StatisticsView extends ConsumerWidget {
-  final double monthlyObjective;
-
-  const StatisticsView({super.key, this.monthlyObjective = 0.0});
+  const StatisticsView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final transactions = ref.watch(monthlyTransactionsProvider);
+    final monthlyObjective =
+        ref.watch(settingsProvider)[Settings.expenseObjective] as double;
 
     // Calculate statistics
     double totalExpenses = 0.0;

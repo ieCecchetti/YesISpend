@@ -49,7 +49,8 @@ class CategoryPieChart extends ConsumerWidget {
       sections.add(
         PieChartSectionData(
           value: total,
-          title: '${percentage.toStringAsFixed(1)}%',
+          // title: '${percentage.toStringAsFixed(1)}%',
+          title: '',
           color: category.color.withOpacity(0.8),
           radius: 50,
           titleStyle: const TextStyle(

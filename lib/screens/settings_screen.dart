@@ -11,16 +11,83 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     var settings = ref.watch(settingsProvider);
-    double budget = settings[Settings.expenseObjective] as double? ?? 0.0;
+    var actualFilters = settings;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Filters'),
+        title: const Text('Settings'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: budgetChecker(ref, budget: budget),
+      body: Column(
+        children: [
+          budgetChecker(context, ref),
+          SwitchListTile(
+            value: actualFilters[Settings.showResumeStats] as bool,
+            onChanged: (isChecked) {
+              ref
+                  .read(settingsProvider.notifier)
+                  .updateFilter(Settings.showResumeStats, isChecked);
+            },
+            title: Text("Show resume stats",
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                    color: Theme.of(context).colorScheme.onBackground)),
+            subtitle: Text("Show a summary of your expenses on the home screen",
+                style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                    color: Theme.of(context).colorScheme.onBackground)),
+            activeColor: Theme.of(context).colorScheme.tertiary,
+            contentPadding: const EdgeInsets.only(left: 34, right: 22),
+          ),
+          SwitchListTile(
+            value: actualFilters[Settings.showCathegoryPieChart] as bool,
+            onChanged: (isChecked) {
+              ref
+                  .read(settingsProvider.notifier)
+                  .updateFilter(Settings.showCathegoryPieChart, isChecked);
+            },
+            title: Text("Show category pie chart",
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                    color: Theme.of(context).colorScheme.onBackground)),
+            subtitle: Text("Show a cathegory pie chart on the home screen",
+                style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                    color: Theme.of(context).colorScheme.onBackground)),
+            activeColor: Theme.of(context).colorScheme.tertiary,
+            contentPadding: const EdgeInsets.only(left: 34, right: 22),
+          ),
+          SwitchListTile(
+            value: actualFilters[Settings.showMonthlyInstogram] as bool,
+            onChanged: (isChecked) {
+              ref
+                  .read(settingsProvider.notifier)
+                  .updateFilter(Settings.showMonthlyInstogram, isChecked);
+            },
+            title: Text("Show expenses daily instogram",
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                    color: Theme.of(context).colorScheme.onBackground)),
+            subtitle: Text("Show expenses daily instogram on the home screen",
+                style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                    color: Theme.of(context).colorScheme.onBackground)),
+            activeColor: Theme.of(context).colorScheme.tertiary,
+            contentPadding: const EdgeInsets.only(left: 34, right: 22),
+          ),
+          SwitchListTile(
+            value: actualFilters[Settings.showStatistics] as bool,
+            onChanged: (isChecked) {
+              ref
+                  .read(settingsProvider.notifier)
+                  .updateFilter(Settings.showStatistics, isChecked);
+            },
+            title: Text("Show expenses statistics",
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                    color: Theme.of(context).colorScheme.onBackground)),
+            subtitle: Text("Show expenses statistics on the home screen",
+                style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                    color: Theme.of(context).colorScheme.onBackground)),
+            activeColor: Theme.of(context).colorScheme.tertiary,
+            contentPadding: const EdgeInsets.only(left: 34, right: 22),
+          ),
+        ],
       ),
     );
   }
 }
+
+

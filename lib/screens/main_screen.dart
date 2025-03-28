@@ -13,6 +13,7 @@ import 'package:monthly_count/screens/filter_screen.dart';
 import 'package:monthly_count/widgets/transaction_item.dart';
 import 'package:monthly_count/widgets/in_out_item.dart';
 import 'package:monthly_count/widgets/expense_graph.dart';
+import 'package:monthly_count/widgets/cathegory_chart.dart';
 import 'package:monthly_count/widgets/statistics_view.dart';
 import 'package:monthly_count/widgets/day_cost_histogram.dart';
 
@@ -47,14 +48,14 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
       ..sort((a, b) => b.date.compareTo(a.date));
 
     List<Widget> pages = [
-      const IncomeOutcomeWidget(),
-      ExpenseGraphScreen(
-        monthlyObjective: settings[Settings.expenseObjective] as double,
-      ),
-      const DayCostHistogram(),
-      StatisticsView(
-        monthlyObjective: settings[Settings.expenseObjective] as double,
-      ),
+      if (settings[Settings.showResumeStats] as bool)
+        const IncomeOutcomeWidget(),
+      if (settings[Settings.showExpenseLineChart] as bool) ExpenseGraphScreen(),
+      if (settings[Settings.showCathegoryPieChart] as bool)
+        const CategoryPieChart(),
+      if (settings[Settings.showMonthlyInstogram] as bool)
+        const DayCostHistogram(),
+      if (settings[Settings.showStatistics] as bool) const StatisticsView(),
     ];
 
     return Scaffold(

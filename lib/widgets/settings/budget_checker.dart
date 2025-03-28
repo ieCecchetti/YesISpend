@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:monthly_count/providers/settings_provider.dart';
 
 
-Widget budgetChecker(ref, {double budget = 2000}) {
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
+Widget budgetChecker(BuildContext context, ref) {
+  var budget = ref.watch(settingsProvider)[Settings.expenseObjective];
+  return Padding(
+    padding: const EdgeInsets.all(30),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          const Text(
+            Text(
             "Expense Budget",
-            style: TextStyle(fontSize: 16),
+              style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 2),
           const Text(
@@ -58,5 +61,6 @@ Widget budgetChecker(ref, {double budget = 2000}) {
         ),
       ),
     ],
+    ),
   );
 }

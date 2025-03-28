@@ -1,3 +1,4 @@
+import 'package:monthly_count/data/icons.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -47,10 +48,27 @@ class DatabaseHelper {
         place TEXT NOT NULL,
         price REAL NOT NULL,
         date TEXT NOT NULL,
+        splittedInfo TEXT,
         FOREIGN KEY (category_id) REFERENCES transaction_category (id) ON DELETE CASCADE
       )
     ''');
     print('Created financial_record table');
+    _insertDefaultCategories(db);
+  }
+
+  Future<void> _insertDefaultCategories(Database db) async {
+    await db.execute('''
+    INSERT INTO transaction_category (id, title, iconCodePoint, color) VALUES
+      ('1', 'Food', ${availableIcons[15].codePoint}, 0xFFFF5722),  
+      ('3', 'Entertainment', ${availableIcons[8].codePoint}, 0xFF2196F3),
+      ('4', 'Grocery', ${availableIcons[22].codePoint}, 0xFF4CAF50),
+      ('5', 'Shopping', ${availableIcons[14].codePoint}, 0xFFFFC107),
+      ('6', 'Health', ${availableIcons[12].codePoint}, 0xFFE91E63),
+      ('7', 'Work', ${availableIcons[4].codePoint}, 0xFF9E9E9E),
+      ('8', 'Home', ${availableIcons[2].codePoint}, 0xFF795548),
+      ('9', 'Other', ${availableIcons[8].codePoint}, 0xFF616161)
+  ''');
+    print('Inserted default categories into transaction_category table');
   }
 
   // Delete all records and drop the database
