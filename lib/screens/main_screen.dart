@@ -237,30 +237,50 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
             final item = montlyTransactions[index];
             return Dismissible(
               key: ValueKey(item.id),
-              direction: DismissDirection.endToStart,
+              direction: DismissDirection.horizontal,
               background: Container(
+                color: Colors.green,
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: const Icon(Icons.edit, color: Colors.white),
+              ),
+              secondaryBackground: Container(
                 color: Colors.red,
                 alignment: Alignment.centerRight,
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: const Icon(Icons.delete, color: Colors.white),
               ),
               confirmDismiss: (direction) async {
-                final confirm = await showConfirmationDialog(
-                  context: context,
-                  title: "Delete Transaction",
-                  content: "Are you sure you want to delete this transaction?",
-                );
-
-                if (confirm) {
-                  ref
-                      .read(transactionsProvider.notifier)
-                      .removeTransaction(item);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Transaction removed')),
+                if (direction == DismissDirection.startToEnd) {
+                  // Swipe right → open in update mode
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          CreateTransactionScreen(transaction: item),
+                    ),
                   );
+                  return false;
                 }
 
-                return confirm; // returning false cancels the swipe
+                if (direction == DismissDirection.endToStart) {
+                  // Swipe left → confirm deletion
+                  final confirm = await showConfirmationDialog(
+                    context: context,
+                    title: "Delete Transaction",
+                    content:
+                        "Are you sure you want to delete this transaction?",
+                  );
+                  if (confirm) {
+                    ref
+                        .read(transactionsProvider.notifier)
+                        .removeTransaction(item);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Transaction removed')),
+                    );
+                  }
+                  return confirm;
+                }
+                return false;
               },
               child: TransactionItem(item: item),
             );

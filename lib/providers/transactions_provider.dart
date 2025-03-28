@@ -36,6 +36,14 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
     state = state.where((element) => element.id != transaction.id).toList();
   }
 
+  // Update an existing transaction
+  void updateTransaction(Transaction transaction) async {
+    // Update the transaction in the database
+    await _dbHelper.update('financial_record', transaction.toMap());
+    // Update the transaction in the state
+    state = state.map((item) => item.id == transaction.id ? transaction : item).toList();
+  }
+
   void rebuildItem(Transaction transaction) {
     // Re-add the item to the state
     state = [...state, transaction];

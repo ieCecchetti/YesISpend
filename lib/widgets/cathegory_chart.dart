@@ -94,43 +94,44 @@ class CategoryPieChart extends ConsumerWidget {
                 final category = sortedCategoryTotals.keys.elementAt(index);
                 final total = sortedCategoryTotals[category]!;
                 final percentage = (total / totalExpenses) * 100;
-
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: Row(
-                    children: [
-                      // Color indicator
-                      Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                            color: category.color.withOpacity(0.8),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      // Category name
-                      Expanded(
-                        child: Text(
-                          category.title,
-                          style: const TextStyle(
-                            fontSize: 14.0,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      // Total expense and percentage
-                      Text(
-                        '€${total.toStringAsFixed(2)} (${percentage.toStringAsFixed(1)}%)',
-                        style: const TextStyle(
-                          fontSize: 14.0,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: total != 0
+                      ? Row(
+                          children: [
+                            // Color indicator
+                            Container(
+                              width: 16,
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: category.color.withOpacity(0.8),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8.0),
+                            // Category name
+                            Expanded(
+                              child: Text(
+                                category.title,
+                                style: const TextStyle(
+                                  fontSize: 14.0,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            // Total expense and percentage
+                            Text(
+                              '€${total.toStringAsFixed(2)} (${percentage.toStringAsFixed(1)}%)',
+                              style: const TextStyle(
+                                fontSize: 14.0,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
+                        )
+                      : const SizedBox.shrink(),
                 );
               },
             ),

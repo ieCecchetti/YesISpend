@@ -110,7 +110,7 @@ class DayCostHistogram extends ConsumerWidget {
             child: BarChart(
               BarChartData(
                 barGroups: barGroups,
-                gridData: FlGridData(show: true),
+                gridData: const FlGridData(show: true),
                 titlesData: FlTitlesData(
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
@@ -128,24 +128,33 @@ class DayCostHistogram extends ConsumerWidget {
                     ),
                   ),
                   bottomTitles: AxisTitles(
+                    axisNameSize: 16, // optional
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 30,
-                      interval: 5,
+                      interval: 3,
                       getTitlesWidget: (value, meta) {
-                        if (value % 5 == 0) {
-                          return Text(
-                            value.toInt().toString(),
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
+                        // if (value % 3 == 0) {
+                        //   return Text(
+                        //     value.toInt().toString(),
+                        //     style: const TextStyle(
+                        //       color: Colors.white70,
+                        //       fontSize: 10,
+                        //     ),
+                        //   );
+                        // }
+                        // return const SizedBox.shrink();
+                        return Text(
+                          value.toInt().toString(),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 10,
+                          ),
+                        );
                       },
                     ),
                   ),
+
                   topTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
                   ),
@@ -197,6 +206,35 @@ class DayCostHistogram extends ConsumerWidget {
                 maxY: maxY + 50, // Add some space for better visuals
               ),
             ),
+          ),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: categories.where((category) {
+              return transactions.any((transaction) => transaction.category_id == category.id);
+            }).map((category) {
+              return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                width: 12,
+                height: 12,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: category.color,
+                ),
+                ),
+                Text(
+                category.title,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                ),
+                ),
+              ],
+              );
+            }).toList(),
           ),
         ],
       ),

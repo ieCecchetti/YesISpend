@@ -99,9 +99,10 @@ class DatabaseHelper {
     return await db.delete(table, where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<int> update(String table, Map<String, Object> data, String id) async {
+  Future<int> update(String table, Map<String, Object> data) async {
     final db = await instance.database;
-    return await db.update(table, data, where: 'id = ?', whereArgs: [id]);
+    return await db
+        .update(table, data, where: 'id = ?', whereArgs: [data['id']]);
   }
 
   Future close() async {

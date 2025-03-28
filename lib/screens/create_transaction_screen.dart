@@ -11,7 +11,8 @@ import 'package:monthly_count/widgets/forms/price_textview.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
 
 class CreateTransactionScreen extends ConsumerStatefulWidget {
-  const CreateTransactionScreen({super.key});
+  final Transaction? transaction;
+  const CreateTransactionScreen({super.key, this.transaction});
 
   @override
   ConsumerState<CreateTransactionScreen> createState() {
@@ -32,6 +33,35 @@ class _CreateTransactionScreenState
   bool _isSplitWithSomeone = false;
   int? _selectedPercentage;
   final _splitNoteController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    final tx = widget.transaction;
+    if (tx != null) {
+      _titleController.text = tx.title;
+      _placeController.text = tx.place;
+      _priceController.text = tx.price.abs().toStringAsFixed(2);
+      _transactionType = tx.price < 0 ? '-' : '+';
+      _selectedDate = tx.date;
+      try {
+        _selectedCategory = ref
+            .read(categoriesProvider)
+            .firstWhere((cat) => cat.id == tx.category_id);
+      } catch (_) {
+        // should never happen, but in case of a missing category
+        print('errors in category id');
+        _selectedCategory = null;
+      }
+
+      if (tx.splitInfo != null) {
+        _isSplitWithSomeone = true;
+        _selectedPercentage = tx.splitInfo!.percentage;
+        _splitNoteController.text = tx.splitInfo!.notes;
+      }
+    }
+  }
 
   double getTransactionAmount(String transactionType, String priceInput) {
     try {
@@ -64,7 +94,7 @@ class _CreateTransactionScreenState
   void _submitForm() {
     if (_formKey.currentState!.validate() && _selectedCategory != null) {
       final newTransaction = Transaction(
-        id: const Uuid().v4(),
+        id: widget.transaction?.id ?? const Uuid().v4(),
         title: _titleController.text,
         category_id: _selectedCategory!.id,
         place: _placeController.text,
@@ -79,18 +109,24 @@ class _CreateTransactionScreenState
                 amount: getTransactionAmount(
                     _transactionType, _priceController.text),
                 percentage: _selectedPercentage!,
-                notes: _placeController.text,
+                notes: _splitNoteController.text,
               )
             : null,
       );
 
-      ref.watch(transactionsProvider.notifier).addTransaction(newTransaction);
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Transaction created')),
-      );
+      final notifier = ref.read(transactionsProvider.notifier);
 
-      // Go back to the previous screen
+      if (widget.transaction != null) {
+        notifier.updateTransaction(newTransaction);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transaction updated')),
+        );
+      } else {
+        notifier.addTransaction(newTransaction);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transaction created')),
+        );
+      }
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
