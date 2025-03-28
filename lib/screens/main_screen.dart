@@ -227,7 +227,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                   ),
                 ),
                     )
-                  : Center(),
+                  : const Center(),
             ),
           ];
         },
