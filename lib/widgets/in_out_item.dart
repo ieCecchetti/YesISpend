@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
+import 'package:monthly_count/providers/transactions_provider.dart';
 
 class IncomeOutcomeWidget extends ConsumerWidget {
 
@@ -10,10 +11,12 @@ class IncomeOutcomeWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final transactions = ref.watch(monthlyTransactionsProvider);
-    final totalIncome = transactions
+    final validTransactions =
+        TransactionsNotifier.filterValidTransactions(transactions);
+    final totalIncome = validTransactions
         .where((t) => t.price > 0)
         .fold(0.0, (sum, t) => sum + t.price);
-    final totalExpenses = transactions
+    final totalExpenses = validTransactions
         .where((t) => t.price < 0)
         .fold(0.0, (sum, t) => sum + t.price.abs());
     final balance = totalIncome - totalExpenses;

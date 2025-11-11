@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
+import 'package:monthly_count/providers/transactions_provider.dart';
 import 'package:monthly_count/models/transaction_category.dart';
 
 class DayCostHistogram extends ConsumerWidget {
@@ -12,9 +13,11 @@ class DayCostHistogram extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final transactions = ref.watch(monthlyTransactionsProvider);
+    final validTransactions =
+        TransactionsNotifier.filterValidTransactions(transactions);
     final categories = ref.watch(categoriesProvider);
 
-    if (transactions.isEmpty || categories.isEmpty) {
+    if (validTransactions.isEmpty || categories.isEmpty) {
       return Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -43,7 +46,7 @@ class DayCostHistogram extends ConsumerWidget {
     // Group expenses by day and category_id
     final Map<int, Map<String, double>> dailyCategoryExpenses = {};
 
-    for (final transaction in transactions) {
+    for (final transaction in validTransactions) {
       if (transaction.price >= 0) continue; // Only expenses
 
       final day = transaction.date.day;

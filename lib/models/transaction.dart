@@ -9,6 +9,8 @@ class Transaction {
   double price;
   DateTime date;
   SplitInfo? splitInfo;
+  bool recurrent;
+  String? originalRecurrentId; // ID of the original recurrent transaction
 
   Transaction({
     required this.id,
@@ -18,6 +20,8 @@ class Transaction {
     required this.price,
     required this.date,
     this.splitInfo,
+    this.recurrent = false,
+    this.originalRecurrentId,
   });
 
   @override
@@ -35,6 +39,8 @@ class Transaction {
       'price': price,
       'date': date.toIso8601String(),
       'splittedInfo': splitInfo != null ? jsonEncode(splitInfo!.toMap()) : '',
+      'recurrent': recurrent ? 1 : 0,
+      'originalRecurrentId': originalRecurrentId ?? '',
     };
   }
 
@@ -50,6 +56,11 @@ class Transaction {
       splitInfo: (map['splittedInfo'] as String?)?.isNotEmpty == true
           ? SplitInfo.fromMap(jsonDecode(map['splittedInfo'] as String))
           : null,
+      recurrent: (map['recurrent'] as int? ?? 0) == 1,
+      originalRecurrentId:
+          (map['originalRecurrentId'] as String?)?.isNotEmpty == true
+              ? map['originalRecurrentId'] as String
+              : null,
     );
   }
 

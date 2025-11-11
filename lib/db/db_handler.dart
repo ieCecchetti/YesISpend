@@ -22,9 +22,23 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add recurrent and originalRecurrentId columns
+      await db.execute('''
+        ALTER TABLE financial_record ADD COLUMN recurrent INTEGER NOT NULL DEFAULT 0
+      ''');
+      await db.execute('''
+        ALTER TABLE financial_record ADD COLUMN originalRecurrentId TEXT
+      ''');
+      print('Upgraded database to version 2: added recurrent fields');
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -49,6 +63,8 @@ class DatabaseHelper {
         price REAL NOT NULL,
         date TEXT NOT NULL,
         splittedInfo TEXT,
+        recurrent INTEGER NOT NULL DEFAULT 0,
+        originalRecurrentId TEXT,
         FOREIGN KEY (category_id) REFERENCES transaction_category (id) ON DELETE CASCADE
       )
     ''');

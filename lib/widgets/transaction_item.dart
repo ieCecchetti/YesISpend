@@ -34,7 +34,7 @@ class TransactionItem extends ConsumerWidget {
     final String formattedDate = DateFormat('dd MMM yyyy').format(item.date);
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
       child: InkWell(
         onTap: () {
           Navigator.push(

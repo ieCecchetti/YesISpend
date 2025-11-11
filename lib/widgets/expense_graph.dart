@@ -5,6 +5,7 @@ import 'package:monthly_count/models/transaction.dart';
 
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
 import 'package:monthly_count/providers/settings_provider.dart';
+import 'package:monthly_count/providers/transactions_provider.dart';
 
 class ExpenseGraphScreen extends ConsumerStatefulWidget {
   ExpenseGraphScreen({super.key});
@@ -27,10 +28,12 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
   Widget build(BuildContext context) {
     // Get transactions from the provider
     final transactions = ref.watch(monthlyTransactionsProvider);
+    final validTransactions =
+        TransactionsNotifier.filterValidTransactions(transactions);
     final monthlyObjective =
         ref.watch(settingsProvider)[Settings.expenseObjective] as double;
 
-    if (transactions.isEmpty) {
+    if (validTransactions.isEmpty) {
       return Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -51,15 +54,15 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
       );
     } else {
       // Sort transactions by date
-      transactions.sort((a, b) => a.date.compareTo(b.date));
+      validTransactions.sort((a, b) => a.date.compareTo(b.date));
 
-      maxDate = transactions.last.date.day.toDouble();
+      maxDate = validTransactions.last.date.day.toDouble();
 
       // Calculate total outcome and income
-      final outcomeTotal = transactions
+      final outcomeTotal = validTransactions
           .where((t) => t.price < 0)
           .fold(0.0, (sum, t) => sum + t.price.abs());
-      final incomeTotal = transactions
+      final incomeTotal = validTransactions
           .where((t) => t.price > 0)
           .fold(0.0, (sum, t) => sum + t.price);
 
@@ -67,9 +70,9 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
       final errorColor = Theme.of(context).colorScheme.error;
       final secondaryColor = Theme.of(context).colorScheme.secondary;
       final outcomeLineBarsData = getTransactionsLinebars(
-          transactions.where((t) => t.price < 0).toList(), errorColor);
+          validTransactions.where((t) => t.price < 0).toList(), errorColor);
       final incomeLineBarsData = getTransactionsLinebars(
-          transactions.where((t) => t.price > 0).toList(), secondaryColor);
+          validTransactions.where((t) => t.price > 0).toList(), secondaryColor);
 
       setState(() {
         lineBars = getLineBarsData(

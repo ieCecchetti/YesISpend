@@ -6,6 +6,7 @@ import 'package:monthly_count/models/transaction_category.dart';
 
 import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
+import 'package:monthly_count/providers/transactions_provider.dart';
 
 
 class CategoryPieChart extends ConsumerWidget {
@@ -16,10 +17,12 @@ class CategoryPieChart extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final categories = ref.watch(categoriesProvider);
     final transactions = ref.watch(monthlyTransactionsProvider);
+    final validTransactions =
+        TransactionsNotifier.filterValidTransactions(transactions);
 
     // Aggregate expenses by category
     final Map<TransactionCategory, double> categoryTotals = {};
-    for (var transaction in transactions) {
+    for (var transaction in validTransactions) {
       if (transaction.price < 0) {
       categoryTotals.update(
         categories.firstWhere((c) => c.id == transaction.category_id),

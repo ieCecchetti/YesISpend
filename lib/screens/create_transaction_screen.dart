@@ -38,6 +38,8 @@ class _CreateTransactionScreenState
   bool _isSplitWithSomeone = false;
   int? _selectedPercentage;
   final _splitNoteController = TextEditingController();
+  // recurrent
+  bool _isRecurrent = false;
   late bool _isReadOnly;
 
   @override
@@ -67,6 +69,7 @@ class _CreateTransactionScreenState
         _selectedPercentage = tx.splitInfo!.percentage;
         _splitNoteController.text = tx.splitInfo!.notes;
       }
+      _isRecurrent = tx.recurrent;
     }
   }
 
@@ -100,8 +103,9 @@ class _CreateTransactionScreenState
 
   void _submitForm() {
     if (_formKey.currentState!.validate() && _selectedCategory != null) {
+      final transactionId = widget.transaction?.id ?? const Uuid().v4();
       final newTransaction = Transaction(
-        id: widget.transaction?.id ?? const Uuid().v4(),
+        id: transactionId,
         title: _titleController.text,
         category_id: _selectedCategory!.id,
         place: _placeController.text,
@@ -119,6 +123,9 @@ class _CreateTransactionScreenState
                 notes: _splitNoteController.text,
               )
             : null,
+        recurrent: _isRecurrent,
+        originalRecurrentId: widget.transaction?.originalRecurrentId ??
+            (_isRecurrent ? transactionId : null),
       );
 
       final notifier = ref.read(transactionsProvider.notifier);
@@ -462,6 +469,59 @@ class _CreateTransactionScreenState
                 ),
               ),
             ],
+            const SizedBox(height: 20.0),
+
+            // Recurrent Toggle
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.repeat,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Recurrent transaction',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'This transaction will repeat every month on the same day',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: _isRecurrent,
+                    onChanged: _isReadOnly
+                        ? null
+                        : (bool? value) {
+                            setState(() {
+                              _isRecurrent = value ?? false;
+                            });
+                          },
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 20.0),
 
             // Date Picker

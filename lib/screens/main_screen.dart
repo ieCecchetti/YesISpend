@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:monthly_count/providers/transactions_provider.dart';
+import 'package:monthly_count/models/transaction.dart';
 
 import 'package:monthly_count/screens/category_screen.dart';
 import 'package:monthly_count/screens/settings_screen.dart';
 import 'package:monthly_count/screens/create_transaction_screen.dart';
 import 'package:monthly_count/screens/filter_screen.dart';
 import 'package:monthly_count/screens/analytics_screen.dart';
+import 'package:monthly_count/screens/changelog_screen.dart';
 
 import 'package:monthly_count/widgets/transaction_item.dart';
 
@@ -26,6 +28,7 @@ class MainViewScreen extends ConsumerStatefulWidget {
 
 class _MainViewSampleState extends ConsumerState<MainViewScreen> {
   int _selectedIndex = 0;
+  int _selectedTab = 0; // 0: All, 1: Shared, 2: Recurrent
 
   void _onItemTapped(int index) {
     setState(() {
@@ -33,13 +36,79 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
     });
   }
 
+  void _onTabTapped(int index) {
+    setState(() {
+      _selectedTab = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final montlyTransactions = ref.watch(monthlyTransactionsProvider)
-      ..sort((a, b) => b.date.compareTo(a.date));
+    final allTransactions = ref.watch(transactionsProvider);
+    final selectedMonth = ref.watch(selectedMonthProvider);
+
+    // Filter transactions by month
+    var montlyTransactions = allTransactions.where((transaction) {
+      return transaction.date.year == selectedMonth.year &&
+          transaction.date.month == selectedMonth.month;
+    }).toList();
+
+    // Generate recurrent transactions for future months
+    final now = DateTime.now();
+    final recurrentTransactions = allTransactions
+        .where((t) => t.recurrent && t.originalRecurrentId == t.id)
+        .toList();
+
+    for (var recurrentTx in recurrentTransactions) {
+      final originalDate = recurrentTx.date;
+      var nextDate =
+          DateTime(selectedMonth.year, selectedMonth.month, originalDate.day);
+
+      // If the date is in the future (not yet occurred), add it as a preview
+      if (nextDate.isAfter(now) &&
+          nextDate.year == selectedMonth.year &&
+          nextDate.month == selectedMonth.month) {
+        // Check if this recurrent transaction for this month already exists
+        final exists = allTransactions.any((t) =>
+            t.originalRecurrentId == recurrentTx.id &&
+            t.date.year == nextDate.year &&
+            t.date.month == nextDate.month);
+
+        if (!exists) {
+          // Create a preview transaction (not yet occurred)
+          final previewTx = Transaction(
+            id: '${recurrentTx.id}_preview_${nextDate.millisecondsSinceEpoch}',
+            title: recurrentTx.title,
+            category_id: recurrentTx.category_id,
+            place: recurrentTx.place,
+            price: recurrentTx.price,
+            date: nextDate,
+            splitInfo: recurrentTx.splitInfo,
+            recurrent: true,
+            originalRecurrentId: recurrentTx.id,
+          );
+          montlyTransactions.add(previewTx);
+        }
+      }
+    }
+
+    montlyTransactions.sort((a, b) => b.date.compareTo(a.date));
+
+    // Filter by tab
+    List filteredTransactions = montlyTransactions;
+    if (_selectedTab == 1) {
+      // Shared = transactions with split
+      filteredTransactions =
+          montlyTransactions.where((t) => t.splitInfo != null).toList();
+    } else if (_selectedTab == 2) {
+      // Recurrent = transactions that are recurrent
+      filteredTransactions =
+          montlyTransactions.where((t) => t.recurrent).toList();
+    }
 
     final List<Widget> _screens = [
-      _buildTransactionsScreen(context, montlyTransactions),
+      _buildTransactionsScreen(
+          context, filteredTransactions, montlyTransactions),
       const AnalyticsScreen(),
     ];
 
@@ -76,15 +145,18 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
   }
 
   Widget _buildTransactionsScreen(
-      BuildContext context, List montlyTransactions) {
+      BuildContext context,
+      List filteredTransactions, List allMonthlyTransactions) {
     return NestedScrollView(
       headerSliverBuilder: (context, innerBoxIsScrolled) {
         return [
-          SliverAppBar(
-            floating: true,
-            forceElevated: innerBoxIsScrolled,
-            title: const Text('YesISpend'),
-            actions: [
+          SliverOverlapAbsorber(
+            handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+            sliver: SliverAppBar(
+              floating: true,
+              forceElevated: innerBoxIsScrolled,
+              title: const Text('YesISpend'),
+              actions: [
               IconButton(
                 icon: const Icon(Icons.search),
                 onPressed: () {
@@ -126,6 +198,14 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                       ),
                     );
                   }
+                    if (value == "PatchNotes") {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ChangelogScreen(),
+                        ),
+                      );
+                    }
                   if (value == "CleanUp") {
                     showDialog(
                       context: context,
@@ -171,6 +251,10 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                       child: Text("Settings"),
                     ),
                     const PopupMenuItem(
+                        value: "PatchNotes",
+                        child: Text("Patch Notes"),
+                      ),
+                      const PopupMenuItem(
                       value: "CleanUp",
                       child: Text("CleanUp data"),
                     ),
@@ -178,6 +262,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                 },
               ),
             ],
+            ),
           ),
           SliverToBoxAdapter(
             child: Container(
@@ -199,27 +284,20 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new, size: 20),
                     onPressed: () {
+                      final currentMonth = ref.read(selectedMonthProvider);
                       final newMonth = DateTime(
-                        ref
-                            .read(monthlyTransactionsProvider.notifier)
-                            .selectedMonth
-                            .year,
-                        ref
-                                .read(monthlyTransactionsProvider.notifier)
-                                .selectedMonth
-                                .month -
-                            1,
+                        currentMonth.year,
+                        currentMonth.month - 1,
                       );
                       ref
-                          .read(monthlyTransactionsProvider.notifier)
+                          .read(selectedMonthProvider.notifier)
                           .setSelectedMonth(newMonth);
                     },
                   ),
                   // Centered Month Text
                   Text(
-                    DateFormat('MMMM yyyy').format(ref
-                        .watch(monthlyTransactionsProvider.notifier)
-                        .selectedMonth),
+                    DateFormat('MMMM yyyy')
+                        .format(ref.watch(selectedMonthProvider)),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -228,19 +306,13 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                   IconButton(
                     icon: const Icon(Icons.arrow_forward_ios, size: 20),
                     onPressed: () {
+                      final currentMonth = ref.read(selectedMonthProvider);
                       final newMonth = DateTime(
-                        ref
-                            .read(monthlyTransactionsProvider.notifier)
-                            .selectedMonth
-                            .year,
-                        ref
-                                .read(monthlyTransactionsProvider.notifier)
-                                .selectedMonth
-                                .month +
-                            1,
+                        currentMonth.year,
+                        currentMonth.month + 1,
                       );
                       ref
-                          .read(monthlyTransactionsProvider.notifier)
+                          .read(selectedMonthProvider.notifier)
                           .setSelectedMonth(newMonth);
                     },
                   ),
@@ -248,9 +320,71 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
               ),
             ),
           ),
+          // Summary Card (scrollable, can disappear)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: _buildSummaryCard(context, allMonthlyTransactions),
+            ),
+          ),
+          // Tabs (always visible, pinned with top margin)
+          SliverPersistentHeader(
+            pinned: true,
+            floating: false,
+            delegate: _TabsHeaderDelegate(
+              child: Container(
+                padding: const EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 8,
+                  bottom: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  border: Border(
+                    bottom: BorderSide(
+                      color:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildTabButton(
+                        context,
+                        'All',
+                        0,
+                        Icons.list,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildTabButton(
+                        context,
+                        'Shared',
+                        1,
+                        Icons.people,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildTabButton(
+                        context,
+                        'Recurrent',
+                        2,
+                        Icons.repeat,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ];
       },
-      body: montlyTransactions.isEmpty
+      body: filteredTransactions.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -262,87 +396,183 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No transactions yet',
+                    'No transactions found',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tap the + button to add your first transaction',
+                    _selectedTab == 1
+                        ? 'No shared transactions in this month'
+                        : _selectedTab == 2
+                            ? 'No recurrent transactions in this month'
+                            : 'Tap the + button to add your first transaction',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
               ),
             )
-          : ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              children: [
-                _buildSummaryCard(context, montlyTransactions),
-                const SizedBox(height: 8),
-                ...montlyTransactions.map((item) => Dismissible(
-                      key: ValueKey(item.id),
-                      direction: DismissDirection.horizontal,
-                      background: Container(
-                        color: Theme.of(context).colorScheme.secondary,
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: const Icon(Icons.edit, color: Colors.white),
-                      ),
-                      secondaryBackground: Container(
-                        color: Theme.of(context).colorScheme.error,
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      confirmDismiss: (direction) async {
-                        if (direction == DismissDirection.startToEnd) {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  CreateTransactionScreen(transaction: item),
-                            ),
-                          );
-                          return false;
-                        }
+          : Builder(
+              builder: (context) {
+                return CustomScrollView(
+                  slivers: [
+                    SliverOverlapInjector(
+                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                          context),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final item = filteredTransactions[index];
+                            // Check if this is a future recurrent transaction (preview)
+                            final now = DateTime.now();
+                            final today =
+                                DateTime(now.year, now.month, now.day);
+                            final itemDate = DateTime(
+                                item.date.year, item.date.month, item.date.day);
+                            // Only show as future if the date is AFTER today (not today itself)
+                            final isFutureRecurrent = item.recurrent &&
+                                item.originalRecurrentId != null &&
+                                itemDate.isAfter(today) &&
+                                item.id.contains('_preview_');
 
-                        if (direction == DismissDirection.endToStart) {
-                          final confirm = await showConfirmationDialog(
-                            context: context,
-                            title: "Delete Transaction",
-                            content:
-                                "Are you sure you want to delete this transaction?",
-                          );
-                          if (confirm) {
-                            ref
-                                .read(transactionsProvider.notifier)
-                                .removeTransaction(item);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Transaction removed')),
+                            return Opacity(
+                              opacity: isFutureRecurrent ? 0.5 : 1.0,
+                              child: Dismissible(
+                                key: ValueKey(item.id),
+                                direction: DismissDirection.horizontal,
+                                background: Container(
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
+                                  alignment: Alignment.centerLeft,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20.0),
+                                  child: const Icon(Icons.edit,
+                                      color: Colors.white),
+                                ),
+                                secondaryBackground: Container(
+                                  color: Theme.of(context).colorScheme.error,
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20.0),
+                                  child: const Icon(Icons.delete,
+                                      color: Colors.white),
+                                ),
+                                confirmDismiss: (direction) async {
+                                  if (direction ==
+                                      DismissDirection.startToEnd) {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => CreateTransactionScreen(
+                                            transaction: item),
+                                      ),
+                                    );
+                                    return false;
+                                  }
+
+                                  if (direction ==
+                                      DismissDirection.endToStart) {
+                                    final confirm =
+                                        await showConfirmationDialog(
+                                      context: context,
+                                      title: "Delete Transaction",
+                                      content:
+                                          "Are you sure you want to delete this transaction?",
+                                    );
+                                    if (confirm) {
+                                      ref
+                                          .read(transactionsProvider.notifier)
+                                          .removeTransaction(item);
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content:
+                                                Text('Transaction removed')),
+                                      );
+                                    }
+                                    return confirm;
+                                  }
+                                  return false;
+                                },
+                                child: TransactionItem(item: item),
+                              ),
                             );
-                          }
-                          return confirm;
-                        }
-                        return false;
-                      },
-                      child: TransactionItem(item: item),
-                    )),
-              ],
+                          },
+                          childCount: filteredTransactions.length,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
     );
   }
 
+  Widget _buildTabButton(
+      BuildContext context, String label, int index, IconData icon) {
+    final isSelected = _selectedTab == index;
+    return GestureDetector(
+      onTap: () => _onTabTapped(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: isSelected
+                        ? Colors.white
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSummaryCard(BuildContext context, List montlyTransactions) {
-    final totalIncome = montlyTransactions
+    // Exclude future recurrent transactions from calculations
+    final validTransactions = montlyTransactions.where((t) {
+      if (t.recurrent &&
+          t.originalRecurrentId != null &&
+          t.id.contains('_preview_')) {
+        return false; // Exclude future preview transactions
+      }
+      return true;
+    }).toList();
+
+    final totalIncome = validTransactions
         .where((t) => t.price > 0)
         .fold(0.0, (sum, t) => sum + t.price);
-    final totalExpenses = montlyTransactions
+    final totalExpenses = validTransactions
         .where((t) => t.price < 0)
         .fold(0.0, (sum, t) => sum + t.price.abs());
     final balance = totalIncome - totalExpenses;
-    final transactionCount = montlyTransactions.length;
+    final transactionCount = validTransactions.length;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 8),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -508,5 +738,35 @@ Future<bool> showConfirmationDialog({
         },
       ) ??
       false; // Default to false if the dialog is dismissed without a choice
+}
+
+// Delegate for pinned tabs header
+class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double topMargin = 25.0;
+
+  _TabsHeaderDelegate({required this.child});
+
+  @override
+  double get minExtent => 56.0 + topMargin; // Height + top margin
+
+  @override
+  double get maxExtent => 56.0 + topMargin; // Height + top margin
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    // When pinned, maintain 100px top margin
+    final topMargin = shrinkOffset > 0 ? this.topMargin : this.topMargin;
+    return Container(
+      margin: EdgeInsets.only(top: topMargin),
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_TabsHeaderDelegate oldDelegate) {
+    return child != oldDelegate.child;
+  }
 }
 

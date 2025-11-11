@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:monthly_count/models/transaction.dart';
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
 import 'package:monthly_count/providers/settings_provider.dart';
+import 'package:monthly_count/providers/transactions_provider.dart';
 
 import 'package:monthly_count/widgets/animations/scrolling_text.dart';
 
@@ -13,6 +14,8 @@ class StatisticsView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final transactions = ref.watch(monthlyTransactionsProvider);
+    final validTransactions =
+        TransactionsNotifier.filterValidTransactions(transactions);
     final monthlyObjective =
         ref.watch(settingsProvider)[Settings.expenseObjective] as double;
 
@@ -25,7 +28,7 @@ class StatisticsView extends ConsumerWidget {
     Transaction? largestIncomeTransaction;
 
     // Aggregate daily expenses
-    for (var transaction in transactions) {
+    for (var transaction in validTransactions) {
       if (transaction.price < 0) {
         totalExpenses += transaction.price;
         if (transaction.price < largestExpense) {
@@ -55,7 +58,7 @@ class StatisticsView extends ConsumerWidget {
         monthlyObjective > 0 ? (totalExpenses.abs() / monthlyObjective) * 100 : 0.0;
 
     // Number of transactions
-    final int transactionCount = transactions.length;
+    final int transactionCount = validTransactions.length;
 
     return Container(
       decoration: BoxDecoration(
