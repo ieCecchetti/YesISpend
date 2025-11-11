@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
-import 'package:monthly_count/widgets/information_title.dart';
 
 class IncomeOutcomeWidget extends ConsumerWidget {
 
@@ -22,37 +21,43 @@ class IncomeOutcomeWidget extends ConsumerWidget {
         totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
 
     return Container(
-        padding: const EdgeInsets.all(16),
-        color: Colors.blueGrey[900],
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF0075FF).withOpacity(0.4),
+              const Color(0xFF0075FF).withOpacity(0.25),
+            ],
+          ),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const InformationTitle(
-              title: 'Income & Expenses',
-              description:
-                  'This panel provides an overview of your financial status. '
-                  'You can see your total balance, income, and expenses. '
-                  'The bar below shows the percentage of your income that has been spent.',
-            ),
-            const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.blueGrey[800],
-                borderRadius: BorderRadius.circular(12),
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
               ),
               child: Column(
                 children: [
-                  const Text('Total Balance',
-                      style: TextStyle(fontSize: 16, color: Colors.white70)),
+                  Text('Total Balance',
+                      style: Theme.of(context).textTheme.bodyMedium),
+                  const SizedBox(height: 8),
                   Text(
                     '${balance.toStringAsFixed(2)}€',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color:
-                          balance >= 0 ? Colors.greenAccent : Colors.redAccent,
-                    ),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: balance >= 0
+                              ? Theme.of(context).colorScheme.secondary
+                              : Theme.of(context).colorScheme.error,
+                        ),
                   ),
                 ],
               ),
@@ -60,10 +65,14 @@ class IncomeOutcomeWidget extends ConsumerWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                _infoCard('Income', totalIncome, Colors.greenAccent,
+                _infoCard(
+                    'Income',
+                    totalIncome,
+                    Theme.of(context).colorScheme.secondary,
                     Icons.arrow_upward),
-                const SizedBox(width: 8),
-                _infoCard('Expenses', totalExpenses, Colors.redAccent,
+                const SizedBox(width: 12),
+                _infoCard('Expenses', totalExpenses,
+                    Theme.of(context).colorScheme.error,
                     Icons.arrow_downward),
               ],
             ),
@@ -71,37 +80,43 @@ class IncomeOutcomeWidget extends ConsumerWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Expenses (% of Income)',
-                    style: TextStyle(fontSize: 14, color: Colors.white70)),
-                const SizedBox(height: 8),
+                Text('Expenses (% of Income)',
+                    style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: 12),
                 Stack(
                   children: [
                     Container(
-                      height: 12,
+                      height: 10,
                       decoration: BoxDecoration(
-                        color: Colors.white12,
-                        borderRadius: BorderRadius.circular(6),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     Container(
-                      height: 12,
+                      height: 10,
                       width: expensePercentage > 100
                           ? double.infinity
                           : expensePercentage == 0
                               ? 0
                               : (expensePercentage / 100) *
-                                  MediaQuery.of(context).size.width,
+                                  (MediaQuery.of(context).size.width - 72),
                       decoration: BoxDecoration(
-                        color: Colors.redAccent,
-                        borderRadius: BorderRadius.circular(6),
+                        color: expensePercentage > 100
+                            ? Theme.of(context).colorScheme.error
+                            : Theme.of(context).colorScheme.secondary,
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 Text(
                   '${expensePercentage.toStringAsFixed(1)}%',
-                  style: const TextStyle(fontSize: 14, color: Colors.white70),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                   textAlign: TextAlign.right,
                 ),
               ],
@@ -112,25 +127,47 @@ class IncomeOutcomeWidget extends ConsumerWidget {
 }
 
 Widget _infoCard(String title, double amount, Color color, IconData icon) {
-  return Expanded(
-    child: Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 28, color: color),
-          const SizedBox(height: 8),
-          Text(title,
-              style: TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.bold, color: color)),
-          Text('${amount.toStringAsFixed(2)}€',
-              style: TextStyle(
-                  fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-        ],
+  return Builder(
+    builder: (context) => Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 24, color: color),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${amount.toStringAsFixed(2)}€',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+            ),
+          ],
+        ),
       ),
     ),
   );

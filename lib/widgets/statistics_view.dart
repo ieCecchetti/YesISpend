@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:monthly_count/models/transaction.dart';
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
 import 'package:monthly_count/providers/settings_provider.dart';
-import 'package:monthly_count/widgets/information_title.dart';
 
 import 'package:monthly_count/widgets/animations/scrolling_text.dart';
 
@@ -59,19 +58,14 @@ class StatisticsView extends ConsumerWidget {
     final int transactionCount = transactions.length;
 
     return Container(
-      color: Colors.blueGrey[900],
-      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F4F8), // Fixed light blue-gray background
+      ),
+      padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const InformationTitle(
-            title: 'Statistics',
-            description:
-                 'This panel shows the key statistics of your financial status. '
-                'You can see your total expenses, income, average daily expense, '
-                'projected total expense, largest expense, largest income, '
-                'number of transactions, and budget used percentage.',
-          ),
           const SizedBox(height: 8.0),
           Expanded(
             child: ListView(
@@ -151,9 +145,8 @@ Widget _buildStatisticCard(
   ) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
-      color: Colors.blueGrey[800],
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(16.0),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -169,10 +162,8 @@ Widget _buildStatisticCard(
               flex: 3, // 60% of the space
               child: Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -192,9 +183,8 @@ Widget _buildStatisticCard(
       BuildContext context, String title, double percentage, double budget) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
-      color: Colors.blueGrey[800],
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(16.0),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -203,25 +193,26 @@ Widget _buildStatisticCard(
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8.0),
+            const SizedBox(height: 12.0),
             LinearProgressIndicator(
               value: percentage / 100,
-              backgroundColor: Colors.blueGrey[700],
-              color: percentage > 100 ? Colors.red : Colors.green,
-              minHeight: 8.0,
+              backgroundColor:
+                  Theme.of(context).colorScheme.surfaceContainerHighest,
+              color: percentage > 100
+                  ? Theme.of(context).colorScheme.error
+                  : Theme.of(context).colorScheme.secondary,
+              minHeight: 10.0,
+              borderRadius: BorderRadius.circular(5),
             ),
             const SizedBox(height: 8.0),
             Text(
               '${percentage.toStringAsFixed(1)}% of €${budget.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 14.0,
-                color: Colors.white70,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],

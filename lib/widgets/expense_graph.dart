@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -7,7 +5,6 @@ import 'package:monthly_count/models/transaction.dart';
 
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
 import 'package:monthly_count/providers/settings_provider.dart';
-import 'package:monthly_count/widgets/information_title.dart';
 
 class ExpenseGraphScreen extends ConsumerStatefulWidget {
   ExpenseGraphScreen({super.key});
@@ -35,11 +32,20 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
 
     if (transactions.isEmpty) {
       return Container(
-        color: Colors.blueGrey[900],
-        child: const Center(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF0075FF).withOpacity(0.4),
+              const Color(0xFF0075FF).withOpacity(0.25),
+            ],
+          ),
+        ),
+        child: Center(
           child: Text(
             "No transactions available.",
-            style: TextStyle(color: Colors.white, fontSize: 16),
+            style: Theme.of(context).textTheme.bodyLarge,
           ),
         ),
       );
@@ -58,10 +64,12 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
           .fold(0.0, (sum, t) => sum + t.price);
 
       // Generate line bars data
+      final errorColor = Theme.of(context).colorScheme.error;
+      final secondaryColor = Theme.of(context).colorScheme.secondary;
       final outcomeLineBarsData = getTransactionsLinebars(
-          transactions.where((t) => t.price < 0).toList(), Colors.redAccent);
+          transactions.where((t) => t.price < 0).toList(), errorColor);
       final incomeLineBarsData = getTransactionsLinebars(
-          transactions.where((t) => t.price > 0).toList(), Colors.greenAccent);
+          transactions.where((t) => t.price > 0).toList(), secondaryColor);
 
       setState(() {
         lineBars = getLineBarsData(
@@ -71,19 +79,20 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
       });
 
       return Container(
-        color: Colors.blueGrey[900], // Background for the graph area
-        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF0075FF).withOpacity(0.4),
+              const Color(0xFF0075FF).withOpacity(0.25),
+            ],
+          ),
+        ),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const InformationTitle(
-              title: 'Expenses Graph',
-              description:
-                  'This panel displays a graph of your income and expenses over time. '
-                  'The green line represents your cumulative income, '
-                  'while the red line represents your cumulative expenses. '
-                  'The blue line indicates your monthly objective.',
-            ),
-            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -105,9 +114,9 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                         });
                       },
                     ),
-                    const Text(
+                    Text(
                       'Income',
-                      style: TextStyle(color: Colors.white),
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
                 ),
@@ -125,9 +134,9 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                         });
                       },
                     ),
-                    const Text(
+                    Text(
                       'Outcome',
-                      style: TextStyle(color: Colors.white),
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
                 ),
@@ -141,9 +150,9 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                         });
                       },
                     ),
-                    const Text(
+                    Text(
                       'Target',
-                      style: TextStyle(color: Colors.white),
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
                 ),
@@ -160,17 +169,23 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                     horizontalInterval: 500,
                     verticalInterval: 3,
                     getDrawingHorizontalLine: (value) {
-                      return const FlLine(
-                        color: Colors.white38,
+                      return FlLine(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant
+                            .withOpacity(0.2),
                         strokeWidth: 1,
-                        dashArray: [4, 4], // Dotted lines
+                        dashArray: [4, 4],
                       );
                     },
                     getDrawingVerticalLine: (value) {
-                      return const FlLine(
-                        color: Colors.white24,
+                      return FlLine(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant
+                            .withOpacity(0.15),
                         strokeWidth: 1,
-                        dashArray: [4, 4], // Dotted lines
+                        dashArray: [4, 4],
                       );
                     },
                   ),
@@ -224,9 +239,11 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                         getTitlesWidget: (value, meta) {
                           return Text(
                             '${value.toInt()}€',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                             ),
                           );
                         },
@@ -241,8 +258,11 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                         getTitlesWidget: (value, meta) {
                           return Text(
                             '${value.toInt().toString()}',
-                            style: const TextStyle(
-                              color: Colors.white70,
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                               fontSize: 10,
                             ),
                           );
@@ -258,9 +278,19 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                   ),
                   borderData: FlBorderData(
                     show: true,
-                    border: const Border(
-                      left: BorderSide(color: Colors.white70),
-                      bottom: BorderSide(color: Colors.white70),
+                    border: Border(
+                      left: BorderSide(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant
+                            .withOpacity(0.3),
+                      ),
+                      bottom: BorderSide(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant
+                            .withOpacity(0.3),
+                      ),
                     ),
                   ),
                   lineBarsData: lineBars,
@@ -269,15 +299,15 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                         ? [
                             HorizontalLine(
                               y: monthlyObjective,
-                              color: Colors.blueAccent,
+                              color: Theme.of(context).colorScheme.primary,
                               strokeWidth: 2,
                               label: HorizontalLineLabel(
                                 show: true,
                                 alignment: Alignment.topRight,
                                 labelResolver: (line) =>
                                     'Target: max-expenses: ${line.y.toInt()}€',
-                                style: const TextStyle(
-                                  color: Colors.blueAccent,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),

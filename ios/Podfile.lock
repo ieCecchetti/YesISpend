@@ -31,11 +31,11 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/vibration/ios"
 
 SPEC CHECKSUMS:
-  device_info_plus: bf2e3232933866d73fe290f2942f2156cdd10342
+  device_info_plus: 21fcca2080fbcd348be798aa36c3e5ed849eefbe
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
-  sqflite_darwin: 5a7236e3b501866c1c9befc6771dfd73ffb8702d
-  vibration: 7d883d141656a1c1a6d8d238616b2042a51a1241
+  path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
+  sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
+  vibration: 8e2f50fc35bb736f9eecb7dd9f7047fbb6a6e888
 
 PODFILE CHECKSUM: 819463e6a0290f5a72f145ba7cde16e8b6ef0796
 

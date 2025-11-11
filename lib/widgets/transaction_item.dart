@@ -32,19 +32,10 @@ class TransactionItem extends ConsumerWidget {
 
     final String formattedDate = DateFormat('dd MMM yyyy').format(item.date);
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 1.0),
-      padding: const EdgeInsets.all(12.0),
-      decoration: BoxDecoration(
-        color: Colors.white60,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            blurRadius: 6.0,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
       child: Row(
         children: [
           // Circular background for the icon
@@ -52,38 +43,44 @@ class TransactionItem extends ConsumerWidget {
               ? Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Outer Black Circle (Indicator of Split)
+                      // Outer Circle (Indicator of Split)
                     Container(
-                      padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(10.0),
                       decoration: BoxDecoration(
-                        color: category.color
-                            .withOpacity(0.6), // Ensure same opacity effect
+                          color: category.color.withOpacity(0.15),
                         shape: BoxShape.circle,
+                          border: Border.all(
+                            color: category.color.withOpacity(0.3),
+                            width: 2,
+                          ),
                       ),
                       child: Icon(
                         category.icon,
-                        size: 32.0,
-                        color: Colors.black87,
+                          size: 28.0,
+                          color: category.color,
                       ),
                     ),
 
                     // Percentage Indicator (Positioned on Top)
                     Positioned(
-                      top: 0,
+                        top: -2,
                       right: -2,
                       child: Container(
                         padding: const EdgeInsets.all(4.0),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                            color: Theme.of(context).colorScheme.primary,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.black, width: 1.5),
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2,
+                            ),
                         ),
                         child: Text(
                           "${item.splitInfo!.percentage}%",
-                          style: const TextStyle(
-                            fontSize: 10,
+                            style: TextStyle(
+                              fontSize: 9,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                              color: Colors.white,
                           ),
                         ),
                       ),
@@ -91,27 +88,42 @@ class TransactionItem extends ConsumerWidget {
 
                     // Return Icon if hasReturned is true
                     if (item.splitInfo!.hasReturned)
-                      const Positioned(
-                        bottom: 0,
-                        left: 0,
-                        child: Icon(
-                          Icons.refresh,
-                          size: 14.0,
-                          color: Colors.green, // Green to show money returned
+                        Positioned(
+                          bottom: -2,
+                          left: -2,
+                          child: Container(
+                            padding: const EdgeInsets.all(3.0),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.secondary,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.refresh,
+                              size: 12.0,
+                              color: Colors.white,
+                            ),
                         ),
                       ),
                   ],
                 )
               : Container(
-                  padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(10.0),
                   decoration: BoxDecoration(
-                    color: category.color.withOpacity(0.6),
+                      color: category.color.withOpacity(0.15),
                     shape: BoxShape.circle,
+                      border: Border.all(
+                        color: category.color.withOpacity(0.3),
+                        width: 2,
+                      ),
                   ),
                   child: Icon(
                     category.icon,
-                    size: 32.0,
-                    color: Colors.black87,
+                      size: 28.0,
+                      color: category.color,
                   ),
                 ),
           const SizedBox(width: 16.0),
@@ -122,18 +134,16 @@ class TransactionItem extends ConsumerWidget {
               children: [
                 Text(
                   item.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16.0,
-                  ),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                 ),
                 const SizedBox(height: 4.0),
                 Text(
-                  '$formattedDate -- ${item.place}',
-                  style: TextStyle(
-                    fontSize: 14.0,
-                    color: Colors.grey[700],
-                  ),
+                    '$formattedDate • ${item.place}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                 ),
               ],
             ),
@@ -146,31 +156,33 @@ class TransactionItem extends ConsumerWidget {
                   children: [
                     Text(
                       '${item.splitInfo!.share.toStringAsFixed(2)} €',
-                      style: TextStyle(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.yellow[800],
-                      ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.tertiary,
+                                ),
                     ),
                     Text(
-                      'of ${item.splitInfo!.amount.toStringAsFixed(2)} €', // Total transaction amount
-                      style: TextStyle(
-                        fontSize: 12.0,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black.withOpacity(0.6),
-                      ),
+                        'of ${item.splitInfo!.amount.toStringAsFixed(2)} €',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
                     ),
                   ],
                 )
               : Text(
             '${item.price > 0 ? '+' : ''}${item.price.toStringAsFixed(2)} €',
-            style: TextStyle(
-              fontSize: 16.0,
-              fontWeight: FontWeight.bold,
-              color: item.price > 0 ? Colors.green : Colors.red,
-            ),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: item.price > 0
+                              ? Theme.of(context).colorScheme.secondary
+                              : Theme.of(context).colorScheme.error,
+                        ),
                 )
         ],
+      ),
       ),
     );
   }

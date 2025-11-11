@@ -5,7 +5,7 @@ class InformationTitle extends StatelessWidget {
     super.key,
     required this.title,
     required this.description,
-    this.lightmode = false,
+    this.lightmode = true,
     this.centerText = true,
   });
 
@@ -16,8 +16,10 @@ class InformationTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fontColor = lightmode ? Colors.black : Colors.white;
-    final backColor = lightmode ? Colors.white : Colors.blueGrey[900];
+    final fontColor =
+        lightmode ? Colors.black : Theme.of(context).colorScheme.onSurface;
+    final backColor =
+        lightmode ? Colors.white : Theme.of(context).colorScheme.surface;
 
     return Row(
       mainAxisAlignment: centerText ? MainAxisAlignment.center : MainAxisAlignment.start,

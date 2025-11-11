@@ -141,91 +141,131 @@ class _CreateTransactionScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Transaction'),
+        title: Text(widget.transaction == null
+            ? 'Create Transaction'
+            : 'Edit Transaction'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              // Title Field
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  border: OutlineInputBorder(),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            // Title Field
+            TextFormField(
+              controller: _titleController,
+              decoration: InputDecoration(
+                labelText: 'Title',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a title';
-                  }
-                  return null;
-                },
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
               ),
-              const SizedBox(height: 16.0),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a title';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 20.0),
 
-              // Category Dropdown
-              DropdownButtonFormField<TransactionCategory>(
-                value: _selectedCategory,
-                items: categoryList
-                    .map(
-                      (category) => DropdownMenuItem(
-                        value: category,
-                        child: Row(
-                          children: [
-                            Icon(category.icon, color: category.color),
-                            const SizedBox(width: 8),
-                            Text(category.title),
-                          ],
-                        ),
+            // Category Dropdown
+            DropdownButtonFormField<TransactionCategory>(
+              value: _selectedCategory,
+              items: categoryList
+                  .map(
+                    (category) => DropdownMenuItem(
+                      value: category,
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: category.color.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(category.icon,
+                                color: category.color, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(category.title),
+                        ],
                       ),
-                    )
-                    .toList(),
-                onChanged: (category) {
-                  setState(() {
-                    _selectedCategory = category;
-                  });
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Category',
-                  border: OutlineInputBorder(),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (category) {
+                setState(() {
+                  _selectedCategory = category;
+                });
+              },
+              decoration: InputDecoration(
+                labelText: 'Category',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                validator: (value) =>
-                    value == null ? 'Please select a category' : null,
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
               ),
-              const SizedBox(height: 16.0),
+              validator: (value) =>
+                  value == null ? 'Please select a category' : null,
+            ),
+            const SizedBox(height: 20.0),
 
-              // Place Field
-              TextFormField(
-                controller: _placeController,
-                decoration: const InputDecoration(
-                  labelText: 'Place',
-                  border: OutlineInputBorder(),
+            // Place Field
+            TextFormField(
+              controller: _placeController,
+              decoration: InputDecoration(
+                labelText: 'Place',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                validator: (value) {
-                  return null;
-                },
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
               ),
-              const SizedBox(height: 16.0),
+              validator: (value) {
+                return null;
+              },
+            ),
+            const SizedBox(height: 20.0),
 
-              // Price Field
-              priceTextView(
-                selectedType: _transactionType,
-                priceController: _priceController,
-                onTypeChanged: (String? newValue) {
-                  setState(() {
-                    _transactionType = newValue!;
-                  });
-                },
+            // Price Field
+            priceTextView(
+              selectedType: _transactionType,
+              priceController: _priceController,
+              onTypeChanged: (String? newValue) {
+                setState(() {
+                  _transactionType = newValue!;
+                });
+              },
+            ),
+            const SizedBox(height: 20.0),
+
+            // Split Toggle
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
               ),
-              const SizedBox(height: 16.0),
-
-              Row(
+              child: Row(
                 children: [
-                  Text('Split with someone:'),
-                  const Spacer(),
-                  Checkbox(
+                  Icon(
+                    Icons.people_outline,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Split with someone',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ),
+                  Switch(
                     value: _isSplitWithSomeone,
                     onChanged: (bool? value) {
                       if (_priceController.text.isNotEmpty &&
@@ -257,16 +297,29 @@ class _CreateTransactionScreenState
                   ),
                 ],
               ),
-              if (_isSplitWithSomeone)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+            ),
+            if (_isSplitWithSomeone) ...[
+              const SizedBox(height: 20.0),
+              Container(
+                padding: const EdgeInsets.all(20.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Split Percentage:',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      'Split Percentage',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                     ),
+                    const SizedBox(height: 16),
                     Slider(
                       value: (_selectedPercentage ?? 50).toDouble(),
                       min: 0,
@@ -279,54 +332,130 @@ class _CreateTransactionScreenState
                         });
                       },
                     ),
-                    Text(
-                      'Selected: ${_selectedPercentage ?? 50}% - Your Share: ${(getTransactionAmount(_transactionType, _priceController.text) * (_selectedPercentage ?? 50) / 100).toStringAsFixed(2)} €',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 8.0),
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: TextFormField(
-                        controller: _splitNoteController,
-                        decoration: const InputDecoration(
-                          labelText: 'Notes about the split',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          return null;
-                        },
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Your Share:',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          Text(
+                            '${(getTransactionAmount(_transactionType, _priceController.text) * (_selectedPercentage ?? 50) / 100).toStringAsFixed(2)} €',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16.0),
+                    TextFormField(
+                      controller: _splitNoteController,
+                      decoration: InputDecoration(
+                        labelText: 'Notes about the split',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        filled: true,
+                        fillColor: Theme.of(context).colorScheme.surface,
+                      ),
+                      validator: (value) {
+                        return null;
+                      },
                     ),
                   ],
                 ),
-              const SizedBox(height: 16.0),
+              ),
+            ],
+            const SizedBox(height: 20.0),
 
-              // Date Pickerr
-              Row(
+            // Date Picker
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
+              ),
+              child: Row(
                 children: [
-                  Text(
-                    'Date: ${DateFormat.yMMMd().format(_selectedDate)}',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  Icon(
+                    Icons.calendar_today,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
-                  const Spacer(),
-                  ElevatedButton(
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Date',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                        ),
+                        Text(
+                          DateFormat.yMMMd().format(_selectedDate),
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton.icon(
                     onPressed: _pickDate,
-                    child: const Text('Pick Date'),
+                    icon: const Icon(Icons.edit),
+                    label: const Text('Change'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16.0),
+            ),
+            const SizedBox(height: 24.0),
 
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submitForm,
-                  child: const Text('Create Transaction'),
+            // Submit Button
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _submitForm,
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: Text(
+                  widget.transaction == null
+                      ? 'Create Transaction'
+                      : 'Update Transaction',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

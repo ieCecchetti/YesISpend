@@ -3,22 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:monthly_count/providers/transactions_provider.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import 'package:monthly_count/screens/category_screen.dart';
 import 'package:monthly_count/screens/settings_screen.dart';
 import 'package:monthly_count/screens/create_transaction_screen.dart';
 import 'package:monthly_count/screens/filter_screen.dart';
+import 'package:monthly_count/screens/analytics_screen.dart';
 
 import 'package:monthly_count/widgets/transaction_item.dart';
-import 'package:monthly_count/widgets/in_out_item.dart';
-import 'package:monthly_count/widgets/expense_graph.dart';
-import 'package:monthly_count/widgets/cathegory_chart.dart';
-import 'package:monthly_count/widgets/statistics_view.dart';
-import 'package:monthly_count/widgets/day_cost_histogram.dart';
 
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
-import 'package:monthly_count/providers/settings_provider.dart';
 import 'package:monthly_count/db/db_handler.dart';
 
 class MainViewScreen extends ConsumerStatefulWidget {
@@ -31,273 +25,455 @@ class MainViewScreen extends ConsumerStatefulWidget {
 }
 
 class _MainViewSampleState extends ConsumerState<MainViewScreen> {
-  late PageController _pageController;
-  int _clickCount = 0;
-  double _turns = 0;
+  int _selectedIndex = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController();
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final settings = ref.watch(settingsProvider);
     final montlyTransactions = ref.watch(monthlyTransactionsProvider)
       ..sort((a, b) => b.date.compareTo(a.date));
 
-    List<Widget> pages = [
-      if (settings[Settings.showResumeStats] as bool)
-        const IncomeOutcomeWidget(),
-      if (settings[Settings.showExpenseLineChart] as bool) ExpenseGraphScreen(),
-      if (settings[Settings.showCathegoryPieChart] as bool)
-        const CategoryPieChart(),
-      if (settings[Settings.showMonthlyInstogram] as bool)
-        const DayCostHistogram(),
-      if (settings[Settings.showStatistics] as bool) const StatisticsView(),
+    final List<Widget> _screens = [
+      _buildTransactionsScreen(context, montlyTransactions),
+      const AnalyticsScreen(),
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  _clickCount++;
-                  if (_clickCount == 3) {
-                    _clickCount = 0;
-                    _turns += 2;
-                  }
-                });
-              },
-              child: AnimatedRotation(
-                turns: _turns,
-                duration: const Duration(seconds: 1),
-                curve: Curves.easeInOut, // Smooth rotation curve
-                child: const Icon(
-                  Icons.attach_money,
-                  size: 32, // Adjust icon size if necessary
-                ),
-              ),
-            ),
-            const Text('YesISpend'),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const FilterTransactionScreen(),
-                ),
-              );
-            },
+      body: _screens[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.receipt_long),
+            label: 'Transactions',
           ),
-          IconButton(
-            icon: const Icon(Icons.category),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CategoryDisplayScreen(),
-                ),
-              );
-            },
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              // Handle the selection
-              if (value == "Export") {
-                const SnackBar(
-                  content: Text("Function will be available in the next patch"),
-                  duration: Duration(seconds: 2),
-                );
-              }
-              if (value == "Settings") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SettingsScreen(),
-                  ),
-                );
-              }
-              if (value == "CleanUp") {
-                // Show confirmation dialog
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Confirm Cleanup'),
-                      content: const Text(
-                          'Are you sure you want to delete all the data (transactions/categories)? This action cannot be undone.'),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            // Cancel the operation
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () async {
-                            // Call the deleteAll method from DatabaseHelper to drop the database
-                            await DatabaseHelper.instance.deleteAll();
-
-                            // Refresh the transactions state
-                            ref
-                                .read(transactionsProvider.notifier)
-                                .refreshTransactions();
-
-                            // Refresh the categories state
-                            ref
-                                .read(categoriesProvider.notifier)
-                                .refreshCategories();
-
-                            // Close the dialog after the operations are done
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('Confirm'),
-                        ),
-
-                      ],
-                    );
-                  },
-                );
-              }
-
-            },
-            itemBuilder: (BuildContext context) {
-              return [
-                const PopupMenuItem(
-                  value: "Export",
-                  child: Text("Export Excel"),
-                ),
-                const PopupMenuItem(
-                  value: "Settings",
-                  child: Text("Settings"),
-                ),
-                const PopupMenuItem(
-                  value: "CleanUp",
-                  child: Text("CleanUp data"),
-                ),
-              ];
-            },
+          BottomNavigationBarItem(
+            icon: Icon(Icons.analytics),
+            label: 'Analytics',
           ),
         ],
       ),
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            getSliverAppBar(
-                context, ref.watch(monthlyTransactionsProvider.notifier)),
-            SliverToBoxAdapter(
-              child: pages.isNotEmpty
-                  ? SizedBox(
-                height: MediaQuery.of(context).size.height * 0.45,
-                child: Container(
-                  color: Colors.blueGrey[900],
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: PageView(
-                          controller: _pageController,
-                          children: pages,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      SmoothPageIndicator(
-                        controller: _pageController,
-                        count: pages.length,
-                        effect: ExpandingDotsEffect(
-                          activeDotColor: Colors.white.withOpacity(0.9),
-                          dotColor: Colors.blueGrey.shade200,
-                          dotHeight: 10,
-                          dotWidth: 10,
-                          expansionFactor: 3,
-                          spacing: 10,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CreateTransactionScreen(),
                   ),
-                ),
-                    )
-                  : const Center(),
-            ),
-          ];
-        },
-        body: ListView.builder(
-          itemCount: montlyTransactions.length,
-          itemBuilder: (context, index) {
-            final item = montlyTransactions[index];
-            return Dismissible(
-              key: ValueKey(item.id),
-              direction: DismissDirection.horizontal,
-              background: Container(
-                color: Colors.green,
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: const Icon(Icons.edit, color: Colors.white),
-              ),
-              secondaryBackground: Container(
-                color: Colors.red,
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: const Icon(Icons.delete, color: Colors.white),
-              ),
-              confirmDismiss: (direction) async {
-                if (direction == DismissDirection.startToEnd) {
-                  // Swipe right → open in update mode
-                  Navigator.of(context).push(
+                );
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildTransactionsScreen(
+      BuildContext context, List montlyTransactions) {
+    return NestedScrollView(
+      headerSliverBuilder: (context, innerBoxIsScrolled) {
+        return [
+          SliverAppBar(
+            floating: true,
+            forceElevated: innerBoxIsScrolled,
+            title: const Text('Transactions'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () {
+                  Navigator.push(
+                    context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          CreateTransactionScreen(transaction: item),
+                      builder: (context) => const FilterTransactionScreen(),
                     ),
                   );
-                  return false;
-                }
-
-                if (direction == DismissDirection.endToStart) {
-                  // Swipe left → confirm deletion
-                  final confirm = await showConfirmationDialog(
-                    context: context,
-                    title: "Delete Transaction",
-                    content:
-                        "Are you sure you want to delete this transaction?",
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.category_outlined),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CategoryDisplayScreen(),
+                    ),
                   );
-                  if (confirm) {
-                    ref
-                        .read(transactionsProvider.notifier)
-                        .removeTransaction(item);
+                },
+              ),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == "Export") {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Transaction removed')),
+                      const SnackBar(
+                        content: Text(
+                            "Function will be available in the next patch"),
+                        duration: Duration(seconds: 2),
+                      ),
                     );
                   }
-                  return confirm;
-                }
-                return false;
-              },
-              child: TransactionItem(item: item),
-            );
-          },
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Navigate to the Create Transaction Screen
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const CreateTransactionScreen(),
+                  if (value == "Settings") {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsScreen(),
+                      ),
+                    );
+                  }
+                  if (value == "CleanUp") {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Confirm Cleanup'),
+                          content: const Text(
+                              'Are you sure you want to delete all the data (transactions/categories)? This action cannot be undone.'),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                await DatabaseHelper.instance.deleteAll();
+                                ref
+                                    .read(transactionsProvider.notifier)
+                                    .refreshTransactions();
+                                ref
+                                    .read(categoriesProvider.notifier)
+                                    .refreshCategories();
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text('Confirm'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                },
+                itemBuilder: (BuildContext context) {
+                  return [
+                    const PopupMenuItem(
+                      value: "Export",
+                      child: Text("Export Excel"),
+                    ),
+                    const PopupMenuItem(
+                      value: "Settings",
+                      child: Text("Settings"),
+                    ),
+                    const PopupMenuItem(
+                      value: "CleanUp",
+                      child: Text("CleanUp data"),
+                    ),
+                  ];
+                },
+              ),
+            ],
+          ),
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                border: Border(
+                  bottom: BorderSide(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Left Arrow
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                    onPressed: () {
+                      final newMonth = DateTime(
+                        ref
+                            .read(monthlyTransactionsProvider.notifier)
+                            .selectedMonth
+                            .year,
+                        ref
+                                .read(monthlyTransactionsProvider.notifier)
+                                .selectedMonth
+                                .month -
+                            1,
+                      );
+                      ref
+                          .read(monthlyTransactionsProvider.notifier)
+                          .setSelectedMonth(newMonth);
+                    },
+                  ),
+                  // Centered Month Text
+                  Text(
+                    DateFormat('MMMM yyyy').format(ref
+                        .watch(monthlyTransactionsProvider.notifier)
+                        .selectedMonth),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  // Right Arrow
+                  IconButton(
+                    icon: const Icon(Icons.arrow_forward_ios, size: 20),
+                    onPressed: () {
+                      final newMonth = DateTime(
+                        ref
+                            .read(monthlyTransactionsProvider.notifier)
+                            .selectedMonth
+                            .year,
+                        ref
+                                .read(monthlyTransactionsProvider.notifier)
+                                .selectedMonth
+                                .month +
+                            1,
+                      );
+                      ref
+                          .read(monthlyTransactionsProvider.notifier)
+                          .setSelectedMonth(newMonth);
+                    },
+                  ),
+                ],
+              ),
             ),
-          );
-        }, // Call method to add a new page
-        child: const Icon(Icons.add),
+          ),
+        ];
+      },
+      body: montlyTransactions.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No transactions yet',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tap the + button to add your first transaction',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            )
+          : ListView(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              children: [
+                _buildSummaryCard(context, montlyTransactions),
+                const SizedBox(height: 8),
+                ...montlyTransactions.map((item) => Dismissible(
+                      key: ValueKey(item.id),
+                      direction: DismissDirection.horizontal,
+                      background: Container(
+                        color: Theme.of(context).colorScheme.secondary,
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: const Icon(Icons.edit, color: Colors.white),
+                      ),
+                      secondaryBackground: Container(
+                        color: Theme.of(context).colorScheme.error,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      confirmDismiss: (direction) async {
+                        if (direction == DismissDirection.startToEnd) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  CreateTransactionScreen(transaction: item),
+                            ),
+                          );
+                          return false;
+                        }
+
+                        if (direction == DismissDirection.endToStart) {
+                          final confirm = await showConfirmationDialog(
+                            context: context,
+                            title: "Delete Transaction",
+                            content:
+                                "Are you sure you want to delete this transaction?",
+                          );
+                          if (confirm) {
+                            ref
+                                .read(transactionsProvider.notifier)
+                                .removeTransaction(item);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Transaction removed')),
+                            );
+                          }
+                          return confirm;
+                        }
+                        return false;
+                      },
+                      child: TransactionItem(item: item),
+                    )),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildSummaryCard(BuildContext context, List montlyTransactions) {
+    final totalIncome = montlyTransactions
+        .where((t) => t.price > 0)
+        .fold(0.0, (sum, t) => sum + t.price);
+    final totalExpenses = montlyTransactions
+        .where((t) => t.price < 0)
+        .fold(0.0, (sum, t) => sum + t.price.abs());
+    final balance = totalIncome - totalExpenses;
+    final transactionCount = montlyTransactions.length;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.primary.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Monthly Summary',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: _buildSummaryItem(
+                  context,
+                  'Balance',
+                  balance,
+                  Icons.account_balance_wallet,
+                  balance >= 0
+                      ? Theme.of(context).colorScheme.secondary
+                      : Theme.of(context).colorScheme.error,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSummaryItem(
+                  context,
+                  'Income',
+                  totalIncome,
+                  Icons.trending_up,
+                  Theme.of(context).colorScheme.secondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: _buildSummaryItem(
+                  context,
+                  'Expenses',
+                  totalExpenses,
+                  Icons.trending_down,
+                  Theme.of(context).colorScheme.error,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSummaryItem(
+                  context,
+                  'Transactions',
+                  transactionCount.toDouble(),
+                  Icons.receipt_long,
+                  Colors.white70,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryItem(
+    BuildContext context,
+    String label,
+    double value,
+    IconData icon,
+    Color color,
+  ) {
+    final isCount = label == 'Transactions';
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            isCount
+                ? value.toInt().toString()
+                : '${value >= 0 ? '+' : ''}${value.toStringAsFixed(2)}€',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+        ],
       ),
     );
   }
@@ -334,54 +510,3 @@ Future<bool> showConfirmationDialog({
       false; // Default to false if the dialog is dismissed without a choice
 }
 
-Widget getSliverAppBar(
-    BuildContext context, MonthlyTransactionsNotifier montlyTransactions) {
-  return SliverAppBar(
-    // pinned: true,
-    floating: true,
-    forceElevated: true,
-    flexibleSpace: FlexibleSpaceBar(
-      titlePadding: const EdgeInsets.only(left: 6.0, bottom: 6.0),
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Left Arrow
-          IconButton(
-            icon: const Icon(Icons.arrow_left, color: Colors.white),
-            onPressed: () {
-              final newMonth = DateTime(
-                montlyTransactions.selectedMonth.year,
-                montlyTransactions.selectedMonth.month - 1,
-              );
-              montlyTransactions.setSelectedMonth(newMonth);
-            },
-          ),
-          // Centered Month Text
-          Text(
-            DateFormat('MMMM yyyy').format(montlyTransactions.selectedMonth),
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18.0,
-              color: Colors.white,
-            ),
-          ),
-          // Right Arrow
-          IconButton(
-            icon: const Icon(Icons.arrow_right, color: Colors.white),
-            onPressed: () {
-              // increment the month and trigger the UI
-              final newMonth = DateTime(
-                montlyTransactions.selectedMonth.year,
-                montlyTransactions.selectedMonth.month + 1,
-              );
-              montlyTransactions.setSelectedMonth(newMonth);
-            },
-          ),
-        ],
-      ),
-      background: Container(
-        color: Theme.of(context).primaryColor,
-      ),
-    ),
-  );
-}

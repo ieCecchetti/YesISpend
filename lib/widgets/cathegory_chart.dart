@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:monthly_count/models/transaction_category.dart';
 
-import 'package:monthly_count/widgets/information_title.dart';
-
 import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
 
@@ -53,29 +51,31 @@ class CategoryPieChart extends ConsumerWidget {
           title: '',
           color: category.color.withOpacity(0.8),
           radius: 50,
-          titleStyle: const TextStyle(
+          titleStyle: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       );
     });
 
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: Colors.blueGrey[900],
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF0075FF).withOpacity(0.4),
+            const Color(0xFF0075FF).withOpacity(0.25),
+          ],
+        ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const InformationTitle(
-            title: "Category Chart",
-            description: 'This panel shows the distribution of expenses by category. '
-                'Each category is represented by a slice of the pie chart. '
-                'The legend below shows the total amount and percentage of expenses for each category.',
-          ),
-          const SizedBox(height: 32.0),
+          const SizedBox(height: 16.0),
           Expanded(
             child: PieChart(
               PieChartData(
@@ -113,20 +113,25 @@ class CategoryPieChart extends ConsumerWidget {
                             Expanded(
                               child: Text(
                                 category.title,
-                                style: const TextStyle(
-                                  fontSize: 14.0,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
                             // Total expense and percentage
                             Text(
                               '€${total.toStringAsFixed(2)} (${percentage.toStringAsFixed(1)}%)',
-                              style: const TextStyle(
-                                fontSize: 14.0,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white70,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                               ),
                             ),
                           ],

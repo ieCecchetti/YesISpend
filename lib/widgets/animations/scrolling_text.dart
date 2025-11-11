@@ -65,34 +65,38 @@ class _HorizontalScrollTextState extends State<HorizontalScrollText>
   }
 
   Widget _buildStaticText() {
-    return Text(
-      widget.value,
-      key: _textKey,
-      style: const TextStyle(
-        fontSize: 16.0,
-        fontWeight: FontWeight.bold,
-        color: Colors.white70,
+    return Builder(
+      builder: (context) => Text(
+        widget.value,
+        key: _textKey,
+        style: TextStyle(
+          fontSize: 16.0,
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.left,
       ),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      textAlign: TextAlign.left,
     );
   }
 
   Widget _buildScrollingText() {
-    return SizedBox(
-      width: _textWidth,
-      child: Text(
-        widget.value,
-        style: const TextStyle(
-          fontSize: 16.0,
-          fontWeight: FontWeight.bold,
-          color: Colors.white70,
+    return Builder(
+      builder: (context) => SizedBox(
+        width: _textWidth,
+        child: Text(
+          widget.value,
+          style: TextStyle(
+            fontSize: 16.0,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.visible,
+          textAlign: TextAlign.left,
+          softWrap: false,
         ),
-        maxLines: 1,
-        overflow: TextOverflow.visible,
-        textAlign: TextAlign.left,
-        softWrap: false,
       ),
     );
   }

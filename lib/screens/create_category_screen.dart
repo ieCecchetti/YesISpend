@@ -64,105 +64,183 @@ class _CreateCategoryScreenState extends ConsumerState<CreateCategoryScreen> {
       appBar: AppBar(
         title: const Text('Create Category'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Title Field
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Category Title',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a title';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16.0),
-
-              // Icon Picker
-              Row(
-                children: [
-                  Text(
-                    'Selected Icon:',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(width: 8.0),
-                  Icon(
-                    _selectedIcon,
-                    size: 32.0,
-                    color: _selectedColor,
-                  ),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: _pickIcon,
-                    child: const Text('Pick Icon'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16.0),
-
-              // Color Picker
-              Row(
-                children: [
-                  Text(
-                    'Selected Color:',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(width: 8.0),
-                  Container(
-                    width: 24.0,
-                    height: 24.0,
-                    decoration: BoxDecoration(
-                      color: _selectedColor,
-                      shape: BoxShape.circle,
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            // Title Field
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextFormField(
+                  controller: _titleController,
+                  decoration: InputDecoration(
+                    labelText: 'Category Title',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.surface,
                   ),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: _pickColor,
-                    child: const Text('Pick Color'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16.0),
-
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      final newCategory = TransactionCategory(
-                        id: const Uuid().v4(),
-                        title: _titleController.text,
-                        iconCodePoint: _selectedIcon.codePoint,
-                        color: _selectedColor,
-                      );
-
-                      ref
-                          .read(categoriesProvider.notifier)
-                          .addCategory(newCategory);
-                      ScaffoldMessenger.of(context).clearSnackBars();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Category created')),
-                      );
-
-                      Navigator.pop(context, newCategory);
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a title';
                     }
+                    return null;
                   },
-                  child: const Text('Create Category'),
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16.0),
+
+            // Icon Picker
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Icon',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: _selectedColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: _selectedColor.withOpacity(0.3),
+                              width: 2,
+                            ),
+                          ),
+                          child: Icon(
+                            _selectedIcon,
+                            size: 48.0,
+                            color: _selectedColor,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _pickIcon,
+                            icon: const Icon(Icons.palette_outlined),
+                            label: const Text('Pick Icon'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+
+            // Color Picker
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Color',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          width: 56.0,
+                          height: 56.0,
+                          decoration: BoxDecoration(
+                            color: _selectedColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
+                              width: 3,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _selectedColor.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _pickColor,
+                            icon: const Icon(Icons.color_lens_outlined),
+                            label: const Text('Pick Color'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24.0),
+
+            // Submit Button
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    final newCategory = TransactionCategory(
+                      id: const Uuid().v4(),
+                      title: _titleController.text,
+                      iconCodePoint: _selectedIcon.codePoint,
+                      color: _selectedColor,
+                    );
+
+                    ref
+                        .read(categoriesProvider.notifier)
+                        .addCategory(newCategory);
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Category created')),
+                    );
+
+                    Navigator.pop(context, newCategory);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text(
+                  'Create Category',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

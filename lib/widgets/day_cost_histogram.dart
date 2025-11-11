@@ -4,7 +4,6 @@ import 'package:fl_chart/fl_chart.dart';
 
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
-import 'package:monthly_count/widgets/information_title.dart';
 import 'package:monthly_count/models/transaction_category.dart';
 
 class DayCostHistogram extends ConsumerWidget {
@@ -17,11 +16,20 @@ class DayCostHistogram extends ConsumerWidget {
 
     if (transactions.isEmpty || categories.isEmpty) {
       return Container(
-        color: Colors.blueGrey[900],
-        child: const Center(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF0075FF).withOpacity(0.4),
+              const Color(0xFF0075FF).withOpacity(0.25),
+            ],
+          ),
+        ),
+        child: Center(
           child: Text(
             "No transactions or categories found.",
-            style: TextStyle(color: Colors.white, fontSize: 16),
+            style: Theme.of(context).textTheme.bodyLarge,
           ),
         ),
       );
@@ -94,18 +102,21 @@ class DayCostHistogram extends ConsumerWidget {
         .fold(0.0, (a, b) => a > b ? a : b);
 
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: Colors.blueGrey[900],
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF6C5CE7).withOpacity(0.12),
+            const Color(0xFF0075FF).withOpacity(0.08),
+          ],
+        ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const InformationTitle(
-            title: "Daily Expenses Histogram",
-            description:
-                'Each bar shows daily expenses, stacked by category using its assigned color.',
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Expanded(
             child: BarChart(
               BarChartData(
@@ -119,9 +130,11 @@ class DayCostHistogram extends ConsumerWidget {
                       getTitlesWidget: (value, meta) {
                         return Text(
                           '${value.toInt()}€',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                           ),
                         );
                       },
@@ -146,8 +159,11 @@ class DayCostHistogram extends ConsumerWidget {
                         // return const SizedBox.shrink();
                         return Text(
                           value.toInt().toString(),
-                          style: const TextStyle(
-                            color: Colors.white70,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                             fontSize: 10,
                           ),
                         );
@@ -164,15 +180,25 @@ class DayCostHistogram extends ConsumerWidget {
                 ),
                 borderData: FlBorderData(
                   show: true,
-                  border: const Border(
-                    left: BorderSide(color: Colors.white70),
-                    bottom: BorderSide(color: Colors.white70),
+                  border: Border(
+                    left: BorderSide(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurfaceVariant
+                          .withOpacity(0.3),
+                    ),
+                    bottom: BorderSide(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurfaceVariant
+                          .withOpacity(0.3),
+                    ),
                   ),
                 ),
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipColor: (group) =>
-                        Colors.blueGrey.withOpacity(0.8),
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                     tooltipPadding: const EdgeInsets.all(8),
                     tooltipMargin: 8,
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
@@ -181,8 +207,10 @@ class DayCostHistogram extends ConsumerWidget {
 
                       return BarTooltipItem(
                         'Day $day\n',
-                        const TextStyle(
-                          color: Colors.white,
+                        Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ) ??
+                            const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
@@ -207,6 +235,7 @@ class DayCostHistogram extends ConsumerWidget {
               ),
             ),
           ),
+          const SizedBox(height: 12),
           Wrap(
             spacing: 12,
             runSpacing: 8,
@@ -227,9 +256,8 @@ class DayCostHistogram extends ConsumerWidget {
                 ),
                 Text(
                 category.title,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
                 ),
               ],
