@@ -12,7 +12,12 @@ import 'package:monthly_count/providers/categories_provider.dart';
 
 class CreateTransactionScreen extends ConsumerStatefulWidget {
   final Transaction? transaction;
-  const CreateTransactionScreen({super.key, this.transaction});
+  final bool readOnly;
+  const CreateTransactionScreen({
+    super.key,
+    this.transaction,
+    this.readOnly = false,
+  });
 
   @override
   ConsumerState<CreateTransactionScreen> createState() {
@@ -33,10 +38,12 @@ class _CreateTransactionScreenState
   bool _isSplitWithSomeone = false;
   int? _selectedPercentage;
   final _splitNoteController = TextEditingController();
+  late bool _isReadOnly;
 
   @override
   void initState() {
     super.initState();
+    _isReadOnly = widget.readOnly;
 
     final tx = widget.transaction;
     if (tx != null) {
@@ -141,9 +148,69 @@ class _CreateTransactionScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.transaction == null
-            ? 'Create Transaction'
-            : 'Edit Transaction'),
+        title: Text(
+          _isReadOnly
+              ? 'Transaction Details'
+              : (widget.transaction == null
+                  ? 'Create Transaction'
+                  : 'Edit Transaction'),
+        ),
+        actions: [
+          if (_isReadOnly)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                setState(() {
+                  _isReadOnly = false;
+                });
+              },
+              tooltip: 'Edit',
+            ),
+          if (widget.transaction != null)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Delete Transaction'),
+                      content: const Text(
+                          'Are you sure you want to delete this transaction? This action cannot be undone.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            ref
+                                .read(transactionsProvider.notifier)
+                                .removeTransaction(widget.transaction!);
+                            Navigator.of(context).pop(); // Close dialog
+                            Navigator.of(context)
+                                .pop(); // Close transaction screen
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Transaction deleted')),
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor:
+                                Theme.of(context).colorScheme.error,
+                          ),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              tooltip: 'Delete',
+            ),
+        ],
       ),
       body: Form(
         key: _formKey,
@@ -153,6 +220,8 @@ class _CreateTransactionScreenState
             // Title Field
             TextFormField(
               controller: _titleController,
+              enabled: !_isReadOnly,
+              readOnly: _isReadOnly,
               decoration: InputDecoration(
                 labelText: 'Title',
                 border: OutlineInputBorder(
@@ -162,7 +231,7 @@ class _CreateTransactionScreenState
                 fillColor: Theme.of(context).colorScheme.surface,
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) {
+                if (!_isReadOnly && (value == null || value.isEmpty)) {
                   return 'Please enter a title';
                 }
                 return null;
@@ -195,7 +264,9 @@ class _CreateTransactionScreenState
                     ),
                   )
                   .toList(),
-              onChanged: (category) {
+              onChanged: _isReadOnly
+                  ? null
+                  : (category) {
                 setState(() {
                   _selectedCategory = category;
                 });
@@ -209,13 +280,17 @@ class _CreateTransactionScreenState
                 fillColor: Theme.of(context).colorScheme.surface,
               ),
               validator: (value) =>
-                  value == null ? 'Please select a category' : null,
+                  !_isReadOnly && value == null
+                  ? 'Please select a category'
+                  : null,
             ),
             const SizedBox(height: 20.0),
 
             // Place Field
             TextFormField(
               controller: _placeController,
+              enabled: !_isReadOnly,
+              readOnly: _isReadOnly,
               decoration: InputDecoration(
                 labelText: 'Place',
                 border: OutlineInputBorder(
@@ -239,6 +314,7 @@ class _CreateTransactionScreenState
                   _transactionType = newValue!;
                 });
               },
+              readOnly: _isReadOnly,
             ),
             const SizedBox(height: 20.0),
 
@@ -267,7 +343,9 @@ class _CreateTransactionScreenState
                   ),
                   Switch(
                     value: _isSplitWithSomeone,
-                    onChanged: (bool? value) {
+                    onChanged: _isReadOnly
+                        ? null
+                        : (bool? value) {
                       if (_priceController.text.isNotEmpty &&
                           double.tryParse(
                                   _priceController.text.replaceAll(',', '.')) !=
@@ -326,7 +404,9 @@ class _CreateTransactionScreenState
                       max: 100,
                       divisions: 4,
                       label: '${_selectedPercentage ?? 50}%',
-                      onChanged: (double newValue) {
+                      onChanged: _isReadOnly
+                          ? null
+                          : (double newValue) {
                         setState(() {
                           _selectedPercentage = newValue.toInt();
                         });
@@ -364,6 +444,8 @@ class _CreateTransactionScreenState
                     const SizedBox(height: 16.0),
                     TextFormField(
                       controller: _splitNoteController,
+                      enabled: !_isReadOnly,
+                      readOnly: _isReadOnly,
                       decoration: InputDecoration(
                         labelText: 'Notes about the split',
                         border: OutlineInputBorder(
@@ -419,42 +501,44 @@ class _CreateTransactionScreenState
                       ],
                     ),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: _pickDate,
-                    icon: const Icon(Icons.edit),
-                    label: const Text('Change'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                  if (!_isReadOnly)
+                    ElevatedButton.icon(
+                      onPressed: _pickDate,
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Change'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 24.0),
-
-            // Submit Button
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _submitForm,
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+            if (!_isReadOnly) ...[
+              const SizedBox(height: 24.0),
+              // Submit Button
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _submitForm,
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                ),
-                child: Text(
-                  widget.transaction == null
-                      ? 'Create Transaction'
-                      : 'Update Transaction',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                  child: Text(
+                    widget.transaction == null
+                        ? 'Create Transaction'
+                        : 'Update Transaction',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),

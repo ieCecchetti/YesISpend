@@ -5,6 +5,7 @@ import 'package:monthly_count/models/transaction.dart';
 import 'package:monthly_count/models/transaction_category.dart';
 import 'package:collection/collection.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
+import 'package:monthly_count/screens/create_transaction_screen.dart';
 import 'package:intl/intl.dart';
 
 class TransactionItem extends ConsumerWidget {
@@ -34,9 +35,22 @@ class TransactionItem extends ConsumerWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-      child: Row(
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CreateTransactionScreen(
+                transaction: item,
+                readOnly: true,
+              ),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
         children: [
           // Circular background for the icon
           item.splitInfo != null
@@ -183,6 +197,7 @@ class TransactionItem extends ConsumerWidget {
                 )
         ],
       ),
+        ),
       ),
     );
   }

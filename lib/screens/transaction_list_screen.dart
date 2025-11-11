@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import 'package:monthly_count/models/transaction.dart';
 import 'package:monthly_count/widgets/transaction_item.dart';
@@ -25,10 +26,31 @@ class TransactionListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     var userTransactions = ref.read(transactionsProvider);
     var filteredTransactions = filterTransactions(userTransactions, filters);
+    
+    // Sort transactions by date (newest first)
+    filteredTransactions.sort((a, b) => b.date.compareTo(a.date));
+
+    // Group transactions by month
+    Map<String, List<Transaction>> groupedByMonth = {};
+    for (var transaction in filteredTransactions) {
+      final monthKey = DateFormat('MMMM yyyy').format(transaction.date);
+      if (!groupedByMonth.containsKey(monthKey)) {
+        groupedByMonth[monthKey] = [];
+      }
+      groupedByMonth[monthKey]!.add(transaction);
+    }
+
+    // Sort months (newest first)
+    final sortedMonths = groupedByMonth.keys.toList()
+      ..sort((a, b) {
+        final dateA = DateFormat('MMMM yyyy').parse(a);
+        final dateB = DateFormat('MMMM yyyy').parse(b);
+        return dateB.compareTo(dateA);
+      });
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Transactions'),
+        title: const Text('YesISpend'),
       ),
       body: Column(
         children: [
@@ -100,37 +122,108 @@ class TransactionListScreen extends ConsumerWidget {
               ],
             ),
           Expanded(
-            child: ListView.builder(
-              key: ValueKey(filteredTransactions.length),
-              itemCount: filteredTransactions.length,
-              itemBuilder: (context, index) {
-                final item = filteredTransactions[index];
-                return Dismissible(
-                  key: ValueKey(item.id),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    color: Colors.red,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: const Icon(
-                      Icons.delete,
-                      color: Colors.white,
-                    ),
+            child: sortedMonths.length == 1
+                ? ListView.builder(
+                    key: ValueKey(filteredTransactions.length),
+                    itemCount: filteredTransactions.length,
+                    itemBuilder: (context, index) {
+                      final item = filteredTransactions[index];
+                      return Dismissible(
+                        key: ValueKey(item.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: const Icon(
+                            Icons.delete,
+                            color: Colors.white,
+                          ),
+                        ),
+                        onDismissed: (direction) {
+                          ref
+                              .read(transactionsProvider.notifier)
+                              .removeTransaction(item);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Transaction dismissed')),
+                          );
+                        },
+                        child: TransactionItem(
+                          item: item,
+                        ),
+                      );
+                    },
+                  )
+                : ListView.builder(
+                    key: ValueKey(filteredTransactions.length),
+                    itemCount: sortedMonths.length,
+                    itemBuilder: (context, monthIndex) {
+                      final monthKey = sortedMonths[monthIndex];
+                      final monthTransactions = groupedByMonth[monthKey]!;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Month Header
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  monthKey,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                                const SizedBox(height: 8),
+                                Divider(
+                                  thickness: 1,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Transactions for this month
+                          ...monthTransactions.map((item) {
+                            return Dismissible(
+                              key: ValueKey(item.id),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                color: Colors.red,
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0),
+                                child: const Icon(
+                                  Icons.delete,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              onDismissed: (direction) {
+                                ref
+                                    .read(transactionsProvider.notifier)
+                                    .removeTransaction(item);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Transaction dismissed')),
+                                );
+                              },
+                              child: TransactionItem(
+                                item: item,
+                              ),
+                            );
+                          }),
+                        ],
+                      );
+                    },
                   ),
-                  onDismissed: (direction) {
-                    ref
-                        .read(transactionsProvider.notifier)
-                        .removeTransaction(item);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Transaction dismissed')),
-                    );
-                  },
-                  child: TransactionItem(
-                    item: item,
-                  ),
-                );
-              },
-            ),
           ),
         ],
       ),

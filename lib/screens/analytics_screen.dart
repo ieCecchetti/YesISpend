@@ -92,7 +92,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     if (analyticsItems.isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Analytics'),
+          title: const Text('YesISpend'),
         ),
         body: Center(
           child: Column(
@@ -126,7 +126,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Analytics'),
+        title: const Text('YesISpend'),
       ),
       body: Column(
         children: [

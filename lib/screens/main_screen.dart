@@ -83,7 +83,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
           SliverAppBar(
             floating: true,
             forceElevated: innerBoxIsScrolled,
-            title: const Text('Transactions'),
+            title: const Text('YesISpend'),
             actions: [
               IconButton(
                 icon: const Icon(Icons.search),

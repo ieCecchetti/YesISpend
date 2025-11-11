@@ -63,9 +63,46 @@ class _OpeningScreenState extends State<OpeningScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A), // Subtle dark background
+      backgroundColor: const Color(0xFFF5F7FA), // Light gray-blue background
       body: Stack(
         children: [
+          // Decorative circles in the background
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF0075FF).withOpacity(0.1), // Blue circle
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -150,
+            left: -150,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.8), // White circle
+              ),
+            ),
+          ),
+          Positioned(
+            top: 200,
+            left: -50,
+            child: Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF0075FF).withOpacity(0.15), // Blue circle
+              ),
+            ),
+          ),
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -82,8 +119,8 @@ class _OpeningScreenState extends State<OpeningScreen>
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
                             colors: [
-                              Colors.green.withOpacity(0.8), // Subtle green
-                              Colors.green.withOpacity(0.2), // Subtle lime
+                              const Color(0xFF0075FF).withOpacity(0.8), // Blue
+                              Colors.white.withOpacity(0.9), // White
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -111,7 +148,7 @@ class _OpeningScreenState extends State<OpeningScreen>
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white.withOpacity(0.8), // Subtle white
+                        color: const Color(0xFF1A1A1A), // Dark text
                         letterSpacing: 1.5,
                       ),
                     ),
@@ -123,8 +160,7 @@ class _OpeningScreenState extends State<OpeningScreen>
                       "Find what's wrong with your spending habits",
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.white70
-                            .withOpacity(0.8), // Subtle light text
+                        color: const Color(0xFF6C7A89), // Medium gray text
                         fontStyle: FontStyle.italic,
                       ),
                       textAlign: TextAlign.center,
@@ -146,15 +182,8 @@ class _OpeningScreenState extends State<OpeningScreen>
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white.withOpacity(0.7), // Subtle white
+                  color: const Color(0xFF6C7A89), // Medium gray text
                   letterSpacing: 1.2,
-                  shadows: [
-                    Shadow(
-                      blurRadius: 5.0,
-                      color: Colors.black.withOpacity(0.5), // Subtle shadow
-                      offset: const Offset(2, 2),
-                    ),
-                  ],
                 ),
                 textAlign: TextAlign.center,
               ),

@@ -4,6 +4,8 @@ import 'package:vibration/vibration.dart';
 
 import 'package:monthly_count/screens/create_category_screen.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
+import 'package:monthly_count/providers/transactions_provider.dart';
+import 'package:monthly_count/screens/transaction_list_screen.dart';
 
 class CategoryDisplayScreen extends ConsumerStatefulWidget {
   const CategoryDisplayScreen({super.key});
@@ -30,6 +32,7 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
   @override
   Widget build(BuildContext context) {
     final categoriesList = ref.watch(categoriesProvider);
+    final allTransactions = ref.watch(transactionsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -96,7 +99,24 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
                 itemCount: categoriesList.length,
                 itemBuilder: (context, index) {
                   final category = categoriesList[index];
+                  final transactionCount = allTransactions
+                      .where((t) => t.category_id == category.id)
+                      .length;
                   return GestureDetector(
+                    onTap: isDeletionMode
+                        ? null
+                        : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TransactionListScreen(
+                                  filters: {
+                                    FilterStyle.categoryFilter: [category.id],
+                                  },
+                                ),
+                              ),
+                            );
+                          },
                     onLongPress: _toggleDeletionMode,
                     child: Stack(
                       fit: StackFit.expand,
@@ -158,6 +178,25 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
                                 textAlign: TextAlign.center,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: category.color.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '$transactionCount ${transactionCount == 1 ? 'transaction' : 'transactions'}',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: category.color,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
                               ),
                             ],
                           ),

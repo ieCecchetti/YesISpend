@@ -4,6 +4,7 @@ Widget priceTextView({
   required String selectedType, 
   required TextEditingController priceController,
   required Function(String?) onTypeChanged,
+  bool readOnly = false,
 }) {
   return Builder(
     builder: (context) => Row(
@@ -12,7 +13,7 @@ Widget priceTextView({
           flex: 1,
           child: DropdownButtonFormField<String>(
             value: selectedType,
-            onChanged: onTypeChanged,
+            onChanged: readOnly ? null : onTypeChanged,
             isExpanded: true,
             decoration: InputDecoration(
               border: OutlineInputBorder(
@@ -66,6 +67,8 @@ Widget priceTextView({
           flex: 5,
           child: TextFormField(
             controller: priceController,
+            enabled: !readOnly,
+            readOnly: readOnly,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               labelText: 'Price',
