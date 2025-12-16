@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:monthly_count/models/transaction_category.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:monthly_count/screens/transaction_list_screen.dart';
-import 'package:monthly_count/widgets/information_title.dart';
 import 'package:monthly_count/data/strings.dart';
+import 'package:monthly_count/widgets/section_card.dart';
 
 const List<Widget> transactionType = <Widget>[
   Row(
@@ -66,7 +66,7 @@ class _FilterTransactionScreenState
         title: const Text('Search Transaction'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -93,23 +93,16 @@ class _FilterTransactionScreenState
                 },
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 4),
 
             // Time Period
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    InformationTitle(
-                      title: 'Select time period',
-                      description: timePeriodFilterDescription,
-                      lightmode: true,
-                      centerText: false,
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
+            SectionCard(
+              title: 'Select time period',
+              description: timePeriodFilterDescription,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: List.generate(
@@ -136,27 +129,19 @@ class _FilterTransactionScreenState
                         ),
                       ),
                     ),
-                  ],
-                ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 4),
 
             // Transaction Type
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    InformationTitle(
-                      title: 'Transaction Type',
-                      description: transactionTypeFilterDescription,
-                      lightmode: true,
-                      centerText: false,
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
+            SectionCard(
+              title: 'Transaction Type',
+              description: transactionTypeFilterDescription,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: List.generate(
@@ -184,26 +169,18 @@ class _FilterTransactionScreenState
                         ),
                       ),
                     ),
-                  ],
-                ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 4),
 
             // Categories
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    InformationTitle(
-                      title: 'Transaction Category',
-                      description: categoryFilterDescription,
-                      lightmode: true,
-                      centerText: false,
-                    ),
-                    const SizedBox(height: 12),
+            SectionCard(
+              title: 'Transaction Category',
+              description: categoryFilterDescription,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                     if (categories.isEmpty)
                       Padding(
                         padding: const EdgeInsets.all(16),
@@ -256,26 +233,18 @@ class _FilterTransactionScreenState
                           ),
                         ),
                       ),
-                  ],
-                ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 4),
 
             // Price Range
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    InformationTitle(
-                      title: 'Price Range',
-                      description: priceRangeFilterDescription,
-                      lightmode: true,
-                      centerText: false,
-                    ),
-                    const SizedBox(height: 12),
+            SectionCard(
+              title: 'Price Range',
+              description: priceRangeFilterDescription,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                     RangeSlider(
                       values: _priceRange,
                       min: 0,
@@ -295,7 +264,7 @@ class _FilterTransactionScreenState
                         });
                       },
                     ),
-                    const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                     Center(
                       child: Text(
                         "€${_priceRange.start.toInt()} - €${_priceRange.end.toInt()}",
@@ -305,26 +274,18 @@ class _FilterTransactionScreenState
                                 ),
                       ),
                     ),
-                  ],
-                ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 4),
             
             // Split Filter
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    InformationTitle(
-                      title: 'Is Splitted',
-                      description: isSplittedFilterDescription,
-                      lightmode: true,
-                      centerText: false,
-                    ),
-                    const SizedBox(height: 12),
+            SectionCard(
+              title: 'Is Splitted',
+              description: isSplittedFilterDescription,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                     Wrap(
                       spacing: 8,
                       children: [
@@ -358,32 +319,36 @@ class _FilterTransactionScreenState
                         ),
                       ],
                     ),
-                  ],
-                ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 4),
 
             // Search Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TransactionListScreen(
-                        filters: _filters,
+            Card(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TransactionListScreen(
+                            filters: _filters,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.search),
+                    label: const Text('Search'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
                       ),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.search),
-                label: const Text('Search'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),

@@ -1,24 +1,41 @@
 # YesISpend Changelog
 
+## Version 1.1.0 - November 2024
+
+- 📊 New Statistics Dashboard - Get deeper insights into your finances with comprehensive metrics
+- 💰 Track Your Balance - See your current balance at a glance with color-coded indicators
+- 📈 Smart Financial Insights - Discover your savings rate, average expenses, and expense-to-income ratio
+- 🔄 Fixed & Shared Expenses Tracking - Easily see how much you spend on recurring and shared transactions
+- 📅 Active Days Counter - Know how many days you've been tracking expenses this month
+- 🏆 Most Expensive Category - Quickly identify which category takes the biggest chunk of your budget
+- 🔮 Future Projections - See your projected balance and remaining budget for the month
+- 📊 Flexible Time Periods - Switch between Month, Quarter, and Year views in Statistics
+- 🔍 Quick Access - Search, categories, and settings now available directly from the Analytics tab
+- 💡 Expense Projection - Get an estimate of your total monthly expenses based on your spending pattern
+- 📊 Better Expense Breakdown - See fixed expenses and shared expenses separately in your Income & Expenses panel
+- 📝 Clearer Budget Alerts - Improved messages when you're over budget or have no income
+- 🎨 Redesigned Settings & Filters - Cleaner, more intuitive interface with modern design
+- ⚖️ Balance Indicator - Quick visual indicator showing if you're in the green or red
+- 🎯 Improved Navigation - Better organized screens for easier access to all features
+
 ## Version 1.0.1 - November 2024
 
-- 🎨 Complete UI/UX redesign with modern Material 3 design
-- 🌈 New vibrant color scheme inspired by Revolut app
-- 📊 Redesigned Analytics page with swipeable cards and page indicators
-- 📱 New tab system: All, Shared, and Recurrent transactions
-- 🔄 Recurrent transactions feature - automatically create transactions on the same day each month
-- 👁️ Transaction preview mode - view transactions in read-only mode
-- ✏️ Edit and Delete buttons in transaction details screen
-- 📈 Monthly Summary card on main screen with balance, income, expenses, and transaction count
-- 🏷️ Category list now shows transaction count for each category
-- 📅 Transactions grouped by month in category view
-- 🎯 Improved transaction form with modern design
-- 🎨 Updated icons for transaction type (Income/Outcome)
-- 📱 Fixed app bar titles to always show "YesISpend"
-- 🎨 Updated intro screen with blue and white circles matching app theme
-- 📊 Analytics graphs now exclude future recurrent transactions from calculations
-- 🎨 Improved readability of Income and Expense text in analytics
-- 📱 Better scroll behavior with pinned tabs and collapsible summary
+- 🎨 Fresh New Look - Complete redesign with a modern, clean interface
+- 🌈 Beautiful Colors - New vibrant color scheme for a more enjoyable experience
+- 📊 Swipeable Analytics - Navigate through different charts and graphs by swiping
+- 📱 Smart Transaction Tabs - Filter transactions by All, Shared, or Recurrent
+- 🔄 Recurring Transactions - Set up transactions that automatically repeat every month
+- 👁️ Transaction Preview - View transaction details without accidentally editing them
+- ✏️ Easy Editing - Edit or delete transactions directly from the details screen
+- 📈 Monthly Overview - See your balance, income, expenses, and transaction count at a glance
+- 🏷️ Category Insights - See how many transactions you have in each category
+- 📅 Organized by Month - Transactions grouped by month for easier browsing
+- 🎯 Better Forms - Improved transaction and category creation forms
+- 🎨 Clear Icons - Updated icons to better distinguish between income and expenses
+- 📱 Consistent Branding - App name "YesISpend" now appears throughout the app
+- 🎨 Welcome Screen - Updated intro screen with beautiful blue and white design
+- 📊 Accurate Analytics - Charts now correctly exclude future recurring transactions
+- 📱 Smooth Scrolling - Better navigation with tabs that stay visible while scrolling
 
 ## Version 1.0.0 - Initial Release
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:monthly_count/providers/settings_provider.dart';
 import 'package:monthly_count/widgets/settings/budget_checker.dart';
+import 'package:monthly_count/widgets/section_card.dart';
 
 
 class SettingsScreen extends ConsumerWidget {
@@ -17,123 +18,103 @@ class SettingsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Settings'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          budgetChecker(context, ref),
-          const SizedBox(height: 16),
-          Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: SwitchListTile(
-              value: actualFilters[Settings.showResumeStats] as bool,
-              onChanged: (isChecked) {
-                ref
-                    .read(settingsProvider.notifier)
-                    .updateFilter(Settings.showResumeStats, isChecked);
-              },
-              title: Text(
-                "Show main screen statistics",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              subtitle: Text(
-                "Show the income/outcome resume statistics on the main screen",
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              activeColor: Theme.of(context).colorScheme.primary,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Budget Section
+            SectionCard(
+              title: 'Expense Budget',
+              description: 'Set your monthly expense budget limit',
+              child: budgetChecker(context, ref),
             ),
-          ),
-          Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: SwitchListTile(
-              value: actualFilters[Settings.showExpenseLineChart] as bool,
-              onChanged: (isChecked) {
-                ref
-                    .read(settingsProvider.notifier)
-                    .updateFilter(Settings.showExpenseLineChart, isChecked);
-              },
-              title: Text(
-                "Show income/expenses line chart",
-                style: Theme.of(context).textTheme.titleMedium,
+            const SizedBox(height: 4),
+
+            // Analytics Display Section
+            SectionCard(
+              title: 'Analytics Display',
+              description:
+                  'Configure which analytics panels to show on the home screen',
+              child: Column(
+                children: [
+                  _buildSwitchTile(
+                    context,
+                    ref,
+                    'Show main screen statistics',
+                    'Show the income/outcome resume statistics on the main screen',
+                    Settings.showResumeStats,
+                    actualFilters,
+                  ),
+                  const Divider(),
+                  _buildSwitchTile(
+                    context,
+                    ref,
+                    'Show income/expenses line chart',
+                    'Show the income/expenses line chart on the home screen',
+                    Settings.showExpenseLineChart,
+                    actualFilters,
+                  ),
+                  const Divider(),
+                  _buildSwitchTile(
+                    context,
+                    ref,
+                    'Show category pie chart',
+                    'Show a category pie chart on the home screen',
+                    Settings.showCathegoryPieChart,
+                    actualFilters,
+                  ),
+                  const Divider(),
+                  _buildSwitchTile(
+                    context,
+                    ref,
+                    'Show expenses daily histogram',
+                    'Show expenses daily histogram on the home screen',
+                    Settings.showMonthlyInstogram,
+                    actualFilters,
+                  ),
+                  const Divider(),
+                  _buildSwitchTile(
+                    context,
+                    ref,
+                    'Show expenses statistics',
+                    'Show expenses statistics on the home screen',
+                    Settings.showStatistics,
+                    actualFilters,
+                  ),
+                ],
               ),
-              subtitle: Text(
-                "Show the income/expenses line chart on the home screen",
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              activeColor: Theme.of(context).colorScheme.primary,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
-          ),
-          Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: SwitchListTile(
-              value: actualFilters[Settings.showCathegoryPieChart] as bool,
-              onChanged: (isChecked) {
-                ref
-                    .read(settingsProvider.notifier)
-                    .updateFilter(Settings.showCathegoryPieChart, isChecked);
-              },
-              title: Text(
-                "Show category pie chart",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              subtitle: Text(
-                "Show a category pie chart on the home screen",
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              activeColor: Theme.of(context).colorScheme.primary,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-          ),
-          Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: SwitchListTile(
-              value: actualFilters[Settings.showMonthlyInstogram] as bool,
-              onChanged: (isChecked) {
-                ref
-                    .read(settingsProvider.notifier)
-                    .updateFilter(Settings.showMonthlyInstogram, isChecked);
-              },
-              title: Text(
-                "Show expenses daily histogram",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              subtitle: Text(
-                "Show expenses daily histogram on the home screen",
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              activeColor: Theme.of(context).colorScheme.primary,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-          ),
-          Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: SwitchListTile(
-              value: actualFilters[Settings.showStatistics] as bool,
-              onChanged: (isChecked) {
-                ref
-                    .read(settingsProvider.notifier)
-                    .updateFilter(Settings.showStatistics, isChecked);
-              },
-              title: Text(
-                "Show expenses statistics",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              subtitle: Text(
-                "Show expenses statistics on the home screen",
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              activeColor: Theme.of(context).colorScheme.primary,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-          ),
-        ],
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildSwitchTile(
+    BuildContext context,
+    WidgetRef ref,
+    String title,
+    String subtitle,
+    Settings setting,
+    Map<Settings, Object> actualFilters,
+  ) {
+    return SwitchListTile(
+      value: actualFilters[setting] as bool,
+      onChanged: (isChecked) {
+        ref.read(settingsProvider.notifier).updateFilter(setting, isChecked);
+      },
+      title: Text(
+        title,
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
+      subtitle: Text(
+        subtitle,
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      activeColor: Theme.of(context).colorScheme.primary,
+      contentPadding: EdgeInsets.zero,
     );
   }
 }

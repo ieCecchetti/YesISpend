@@ -5,8 +5,9 @@ import 'package:monthly_count/providers/montly_transactions_provider.dart';
 import 'package:monthly_count/providers/transactions_provider.dart';
 
 class IncomeOutcomeWidget extends ConsumerWidget {
+  final Color? backgroundColor;
 
-  const IncomeOutcomeWidget({super.key});
+  const IncomeOutcomeWidget({super.key, this.backgroundColor});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -19,21 +20,32 @@ class IncomeOutcomeWidget extends ConsumerWidget {
     final totalExpenses = validTransactions
         .where((t) => t.price < 0)
         .fold(0.0, (sum, t) => sum + t.price.abs());
+    
+    // Calculate fixed expenses (recurrent)
+    final fixedExpenses = validTransactions
+        .where(
+            (t) => t.price < 0 && t.recurrent && t.originalRecurrentId != null)
+        .fold(0.0, (sum, t) => sum + t.price.abs());
+
+    // Calculate shared expenses (with splitInfo)
+    final sharedExpenses = validTransactions
+        .where((t) => t.price < 0 && t.splitInfo != null)
+        .fold(0.0, (sum, t) => sum + t.price.abs());
+    
     final balance = totalIncome - totalExpenses;
-    final expensePercentage =
-        totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
+    // Calculate percentage: if income is 0 but expenses exist, show 100%+
+    final expensePercentage = totalIncome > 0
+        ? (totalExpenses / totalIncome) * 100
+        : (totalExpenses > 0 ? 100.0 : 0.0);
 
     return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF0075FF).withOpacity(0.4),
-              const Color(0xFF0075FF).withOpacity(0.25),
-            ],
-          ),
+          color: backgroundColor ??
+              Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withOpacity(0.3),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -80,11 +92,25 @@ class IncomeOutcomeWidget extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 8),
+            Row(
+              children: [
+                _infoCard('Fixed Expenses', fixedExpenses,
+                    Theme.of(context).colorScheme.tertiary, Icons.repeat),
+                const SizedBox(width: 12),
+                _infoCard('Shared Expenses', sharedExpenses,
+                    Theme.of(context).colorScheme.primary, Icons.people),
+              ],
+            ),
+            const SizedBox(height: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Expenses (% of Income)',
-                    style: Theme.of(context).textTheme.bodyMedium),
+                Text(
+                  totalIncome > 0
+                      ? 'Expenses (% of Income)'
+                      : 'Expenses (No Income)',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
                 const SizedBox(height: 12),
                 Stack(
                   children: [
@@ -99,28 +125,51 @@ class IncomeOutcomeWidget extends ConsumerWidget {
                     ),
                     Container(
                       height: 10,
-                      width: expensePercentage > 100
-                          ? double.infinity
-                          : expensePercentage == 0
-                              ? 0
-                              : (expensePercentage / 100) *
-                                  (MediaQuery.of(context).size.width - 72),
+                      width: totalIncome > 0
+                          ? (expensePercentage >= 100
+                              ? double.infinity
+                              : expensePercentage == 0
+                                  ? 0
+                                  : (expensePercentage / 100) *
+                                      (MediaQuery.of(context).size.width - 72))
+                          : double.infinity, // Show full bar when no income
                       decoration: BoxDecoration(
-                        color: expensePercentage > 100
-                            ? Theme.of(context).colorScheme.error
-                            : Theme.of(context).colorScheme.secondary,
+                        color: totalIncome > 0
+                            ? (expensePercentage >= 100
+                                ? Theme.of(context).colorScheme.error
+                                : Theme.of(context).colorScheme.secondary)
+                            : Theme.of(context)
+                                .colorScheme
+                                .error, // Red when no income
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  '${expensePercentage.toStringAsFixed(1)}%',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      totalIncome > 0
+                          ? '${expensePercentage.toStringAsFixed(1)}% of income'
+                          : '€${totalExpenses.toStringAsFixed(2)} spent (no income)',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: totalIncome == 0
+                                ? Theme.of(context).colorScheme.error
+                                : null,
+                          ),
+                    ),
+                    if (totalIncome > 0 && expensePercentage >= 100)
+                      Text(
+                        'Over budget',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.error,
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
-                  textAlign: TextAlign.right,
+                  ],
                 ),
               ],
             ),

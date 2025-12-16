@@ -8,7 +8,9 @@ import 'package:monthly_count/providers/transactions_provider.dart';
 import 'package:monthly_count/models/transaction_category.dart';
 
 class DayCostHistogram extends ConsumerWidget {
-  const DayCostHistogram({super.key});
+  final Color? backgroundColor;
+
+  const DayCostHistogram({super.key, this.backgroundColor});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,14 +22,11 @@ class DayCostHistogram extends ConsumerWidget {
     if (validTransactions.isEmpty || categories.isEmpty) {
       return Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF0075FF).withOpacity(0.4),
-              const Color(0xFF0075FF).withOpacity(0.25),
-            ],
-          ),
+          color: backgroundColor ??
+              Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withOpacity(0.3),
         ),
         child: Center(
           child: Text(
@@ -107,14 +106,11 @@ class DayCostHistogram extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF6C5CE7).withOpacity(0.12),
-            const Color(0xFF0075FF).withOpacity(0.08),
-          ],
-        ),
+        color: backgroundColor ??
+            Theme.of(context)
+                .colorScheme
+                .surfaceContainerHighest
+                .withOpacity(0.3),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

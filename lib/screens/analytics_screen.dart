@@ -3,11 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import 'package:monthly_count/providers/settings_provider.dart';
+import 'package:monthly_count/providers/categories_provider.dart';
+import 'package:monthly_count/providers/transactions_provider.dart';
 import 'package:monthly_count/widgets/in_out_item.dart';
 import 'package:monthly_count/widgets/expense_graph.dart';
 import 'package:monthly_count/widgets/cathegory_chart.dart';
 import 'package:monthly_count/widgets/statistics_view.dart';
 import 'package:monthly_count/widgets/day_cost_histogram.dart';
+import 'package:monthly_count/screens/category_screen.dart';
+import 'package:monthly_count/screens/settings_screen.dart';
+import 'package:monthly_count/screens/filter_screen.dart';
+import 'package:monthly_count/screens/changelog_screen.dart';
+import 'package:monthly_count/db/db_handler.dart';
 
 class AnalyticsScreen extends ConsumerStatefulWidget {
   const AnalyticsScreen({super.key});
@@ -19,6 +26,7 @@ class AnalyticsScreen extends ConsumerStatefulWidget {
 class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   int _selectedIndex = 0;
   late PageController _pageController;
+  PeriodType _statisticsPeriod = PeriodType.month;
 
   @override
   void initState() {
@@ -85,7 +93,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             'You can see your total expenses, income, average daily expense, '
             'projected total expense, largest expense, largest income, '
             'number of transactions, and budget used percentage.',
-        'widget': const StatisticsView(),
+        'widget': StatisticsView(
+          period: _statisticsPeriod,
+        ),
       });
     }
 
@@ -127,6 +137,134 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('YesISpend'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FilterTransactionScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.category_outlined),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CategoryDisplayScreen(),
+                ),
+              );
+            },
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == "Export") {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content:
+                        Text("Function will be available in the next patch"),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+              if (value == "Settings") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
+                );
+              }
+              if (value == "PatchNotes") {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ChangelogScreen(),
+                  ),
+                );
+              }
+              if (value == "CleanUp") {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Confirm Cleanup'),
+                      content: const Text(
+                          'Are you sure you want to delete all the data (transactions/categories)? This action cannot be undone.'),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            await DatabaseHelper.instance.deleteAll();
+                            ref
+                                .read(transactionsProvider.notifier)
+                                .refreshTransactions();
+                            ref
+                                .read(categoriesProvider.notifier)
+                                .refreshCategories();
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Confirm'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: "Export",
+                child: Row(
+                  children: [
+                    Icon(Icons.download),
+                    SizedBox(width: 8),
+                    Text("Export"),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: "Settings",
+                child: Row(
+                  children: [
+                    Icon(Icons.settings),
+                    SizedBox(width: 8),
+                    Text("Settings"),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: "PatchNotes",
+                child: Row(
+                  children: [
+                    Icon(Icons.description),
+                    SizedBox(width: 8),
+                    Text("Patch Notes"),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: "CleanUp",
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_forever, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text("Clean Up", style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -177,6 +315,10 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .inversePrimary
+                        .withOpacity(0.5),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -199,7 +341,10 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                               end: Alignment.bottomRight,
                               colors: [
                                 Theme.of(context).colorScheme.primary,
-                                Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                                Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.8),
                               ],
                             ),
                           ),
@@ -214,14 +359,65 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                               Expanded(
                                 child: Text(
                                   item['title'] as String,
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                       ),
                                 ),
                               ),
+                              // Period selector for Statistics panel
+                              if (item['title'] == 'Statistics')
+                                Container(
+                                  margin: const EdgeInsets.only(right: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: DropdownButton<PeriodType>(
+                                    value: _statisticsPeriod,
+                                    underline: const SizedBox(),
+                                    dropdownColor:
+                                        Theme.of(context).colorScheme.primary,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                    icon: const Icon(Icons.arrow_drop_down,
+                                        color: Colors.white),
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: PeriodType.month,
+                                        child: Text('Month'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: PeriodType.quarter,
+                                        child: Text('Quarter'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: PeriodType.year,
+                                        child: Text('Year'),
+                                      ),
+                                    ],
+                                    onChanged: (PeriodType? newValue) {
+                                      if (newValue != null) {
+                                        setState(() {
+                                          _statisticsPeriod = newValue;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
                               IconButton(
-                                icon: const Icon(Icons.info_outline, color: Colors.white),
+                                icon: const Icon(Icons.info_outline,
+                                    color: Colors.white),
                                 onPressed: () {
                                   showDialog(
                                     context: context,

@@ -10,8 +10,9 @@ import 'package:monthly_count/providers/transactions_provider.dart';
 
 
 class CategoryPieChart extends ConsumerWidget {
+  final Color? backgroundColor;
 
-  const CategoryPieChart({super.key});
+  const CategoryPieChart({super.key, this.backgroundColor});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -66,14 +67,11 @@ class CategoryPieChart extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF0075FF).withOpacity(0.4),
-            const Color(0xFF0075FF).withOpacity(0.25),
-          ],
-        ),
+        color: backgroundColor ??
+            Theme.of(context)
+                .colorScheme
+                .surfaceContainerHighest
+                .withOpacity(0.3),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

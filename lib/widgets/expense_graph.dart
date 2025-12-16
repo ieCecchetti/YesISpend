@@ -8,7 +8,9 @@ import 'package:monthly_count/providers/settings_provider.dart';
 import 'package:monthly_count/providers/transactions_provider.dart';
 
 class ExpenseGraphScreen extends ConsumerStatefulWidget {
-  ExpenseGraphScreen({super.key});
+  final Color? backgroundColor;
+
+  ExpenseGraphScreen({super.key, this.backgroundColor});
 
   @override
   ConsumerState<ExpenseGraphScreen> createState() => _ExpenseGraphScreenState();
@@ -36,14 +38,11 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
     if (validTransactions.isEmpty) {
       return Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF0075FF).withOpacity(0.4),
-              const Color(0xFF0075FF).withOpacity(0.25),
-            ],
-          ),
+          color: widget.backgroundColor ??
+              Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withOpacity(0.3),
         ),
         child: Center(
           child: Text(
@@ -83,14 +82,11 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
 
       return Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF0075FF).withOpacity(0.4),
-              const Color(0xFF0075FF).withOpacity(0.25),
-            ],
-          ),
+          color: widget.backgroundColor ??
+              Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withOpacity(0.3),
         ),
         padding: const EdgeInsets.all(20.0),
         child: Column(

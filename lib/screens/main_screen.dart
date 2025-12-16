@@ -324,7 +324,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(top: 4.0),
-              child: _buildSummaryCard(context, allMonthlyTransactions),
+              child: _buildSummaryCard(context, ref, allMonthlyTransactions),
             ),
           ),
           // Tabs (always visible, pinned with top margin)
@@ -551,7 +551,8 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
     );
   }
 
-  Widget _buildSummaryCard(BuildContext context, List montlyTransactions) {
+  Widget _buildSummaryCard(
+      BuildContext context, WidgetRef ref, List montlyTransactions) {
     // Exclude future recurrent transactions from calculations
     final validTransactions = montlyTransactions.where((t) {
       if (t.recurrent &&
@@ -570,6 +571,15 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
         .fold(0.0, (sum, t) => sum + t.price.abs());
     final balance = totalIncome - totalExpenses;
     final transactionCount = validTransactions.length;
+
+    // Calculate expense projection
+    final selectedMonth = ref.read(selectedMonthProvider);
+    final now = DateTime.now();
+    final daysPassed = now.day;
+    final daysInMonth =
+        DateTime(selectedMonth.year, selectedMonth.month + 1, 0).day;
+    final dailyExpense = daysPassed > 0 ? totalExpenses / daysPassed : 0.0;
+    final expenseProjection = dailyExpense * daysInMonth;
 
     return Container(
       margin: const EdgeInsets.only(left: 16, right: 16, top: 8),
@@ -595,29 +605,56 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Monthly Summary',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+          // Header with title and balance
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Monthly Summary',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
                 ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'in-out',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.white70,
+                            fontSize: 9,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${balance >= 0 ? '+' : ''}${balance.toStringAsFixed(2)}€',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: balance >= 0
+                                ? Theme.of(context).colorScheme.secondary
+                                : Theme.of(context).colorScheme.error,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
+          // First row: Income and Expenses
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: _buildSummaryItem(
-                  context,
-                  'Balance',
-                  balance,
-                  Icons.account_balance_wallet,
-                  balance >= 0
-                      ? Theme.of(context).colorScheme.secondary
-                      : Theme.of(context).colorScheme.error,
-                ),
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: _buildSummaryItem(
                   context,
@@ -627,12 +664,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                   Theme.of(context).colorScheme.secondary,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+              const SizedBox(width: 12),
               Expanded(
                 child: _buildSummaryItem(
                   context,
@@ -640,6 +672,22 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                   totalExpenses,
                   Icons.trending_down,
                   Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Second row: Expense Projection and Transactions
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: _buildSummaryItem(
+                  context,
+                  'Expense Projection',
+                  expenseProjection,
+                  Icons.analytics,
+                  Colors.white70,
                 ),
               ),
               const SizedBox(width: 12),
@@ -667,6 +715,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
     Color color,
   ) {
     final isCount = label == 'Transactions';
+    final isProjection = label == 'Expense Projection';
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -697,7 +746,9 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
           Text(
             isCount
                 ? value.toInt().toString()
-                : '${value >= 0 ? '+' : ''}${value.toStringAsFixed(2)}€',
+                : isProjection
+                    ? '${value.toStringAsFixed(2)}€'
+                    : '${value >= 0 ? '+' : ''}${value.toStringAsFixed(2)}€',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
