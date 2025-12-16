@@ -358,8 +358,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     context,
                     'Most Expensive Category',
                     '${mostExpensiveCategory.title} (€${maxCategoryExpense.toStringAsFixed(2)})',
-                    IconData(mostExpensiveCategory.iconCodePoint,
-                        fontFamily: 'MaterialIcons'),
+                    mostExpensiveCategory.icon,
                     mostExpensiveCategory.color,
                   ),
                 _buildStatisticCard(
