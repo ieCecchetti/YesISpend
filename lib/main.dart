@@ -120,12 +120,12 @@ final theme = ThemeData(
   appBarTheme: AppBarTheme(
     elevation: 0,
     centerTitle: false,
-    backgroundColor: Colors.white,
-    foregroundColor: const Color(0xFF1A1A1A),
+    backgroundColor: primaryBlue,
+    foregroundColor: Colors.white,
     titleTextStyle: GoogleFonts.inter(
       fontSize: 20,
       fontWeight: FontWeight.bold,
-      color: const Color(0xFF1A1A1A),
+      color: Colors.white,
     ),
   ),
   bottomNavigationBarTheme: BottomNavigationBarThemeData(

@@ -44,7 +44,7 @@ class TransactionItem extends ConsumerWidget {
                           categoryIds: item.category_ids,
                           showRecurrent: item.recurrent,
                           showShared: item.splitInfo != null,
-                        ),
+                    ),
 
                         // Percentage Indicator (Positioned on Top) - for split
                         if (item.splitInfo != null)
@@ -96,7 +96,7 @@ class TransactionItem extends ConsumerWidget {
                         ),
                       ),
                   ],
-                    )
+                )
                   : MultiCategoryIcon(
                       categoryIds: item.category_ids,
                 ),

@@ -30,11 +30,11 @@ class CategoryPieChart extends ConsumerWidget {
         for (var categoryId in transaction.category_ids) {
           try {
             final category = categories.firstWhere((c) => c.id == categoryId);
-            categoryTotals.update(
+      categoryTotals.update(
               category,
               (value) => value + amountPerCategory,
               ifAbsent: () => amountPerCategory,
-            );
+      );
           } catch (_) {
             // Category not found, skip
           }

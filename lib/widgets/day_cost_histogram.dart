@@ -55,7 +55,7 @@ class DayCostHistogram extends ConsumerWidget {
 
       dailyCategoryExpenses.putIfAbsent(day, () => {});
       for (var categoryId in transaction.category_ids) {
-        dailyCategoryExpenses[day]![categoryId] =
+      dailyCategoryExpenses[day]![categoryId] =
             (dailyCategoryExpenses[day]![categoryId] ?? 0) + amountPerCategory;
       }
     }
