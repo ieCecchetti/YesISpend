@@ -3,12 +3,16 @@ import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:monthly_count/models/transaction.dart';
 import 'package:monthly_count/models/transaction_category.dart';
 import 'package:monthly_count/models/split_info.dart';
 import 'package:monthly_count/providers/transactions_provider.dart';
 import 'package:monthly_count/widgets/forms/price_textview.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
+import 'package:monthly_count/services/image_service.dart';
+import 'package:share_plus/share_plus.dart';
 
 class CreateTransactionScreen extends ConsumerStatefulWidget {
   final Transaction? transaction;
@@ -41,6 +45,9 @@ class _CreateTransactionScreenState
   // recurrent
   bool _isRecurrent = false;
   late bool _isReadOnly;
+  // images
+  List<String> _imagePaths = [];
+  List<XFile> _selectedImages = [];
 
   @override
   void initState() {
@@ -71,6 +78,43 @@ class _CreateTransactionScreenState
         _splitNoteController.text = tx.splitInfo!.notes;
       }
       _isRecurrent = tx.recurrent;
+      _imagePaths = List.from(tx.imagePaths);
+
+      // Verify image paths exist after first frame
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _verifyImagePaths();
+      });
+    }
+  }
+
+  // Verify that image paths exist and filter out invalid ones
+  Future<void> _verifyImagePaths() async {
+    if (_imagePaths.isEmpty) return;
+
+    final validPaths = await ImageService.filterValidImagePaths(_imagePaths);
+    if (validPaths.length != _imagePaths.length) {
+      setState(() {
+        _imagePaths = validPaths;
+      });
+
+      // Update transaction in database if paths were filtered
+      final tx = widget.transaction;
+      if (tx != null && validPaths.length != tx.imagePaths.length) {
+        final updatedTx = Transaction(
+          id: tx.id,
+          title: tx.title,
+          category_ids: tx.category_ids,
+          place: tx.place,
+          price: tx.price,
+          date: tx.date,
+          splitInfo: tx.splitInfo,
+          recurrent: tx.recurrent,
+          originalRecurrentId: tx.originalRecurrentId,
+          imagePaths: validPaths,
+        );
+        // Update in database
+        ref.read(transactionsProvider.notifier).updateTransaction(updatedTx);
+      }
     }
   }
 
@@ -102,9 +146,37 @@ class _CreateTransactionScreenState
     }
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate() && _selectedCategories.isNotEmpty) {
       final transactionId = widget.transaction?.id ?? const Uuid().v4();
+      
+      // Get original image paths to compare
+      final originalImagePaths = widget.transaction?.imagePaths ?? [];
+
+      // Save new images and get their paths
+      final List<String> savedImagePaths =
+          List.from(_imagePaths); // Keep existing images
+      for (int i = 0; i < _selectedImages.length; i++) {
+        try {
+          final savedPath = await ImageService.saveImage(
+            transactionId,
+            _selectedImages[i],
+            savedImagePaths.length + i,
+          );
+          savedImagePaths.add(savedPath);
+        } catch (e) {
+          print('Error saving image: $e');
+        }
+      }
+
+      // Delete removed images
+      final imagesToDelete = originalImagePaths
+          .where((path) => !_imagePaths.contains(path))
+          .toList();
+      for (final path in imagesToDelete) {
+        await ImageService.deleteImage(path);
+      }
+      
       final newTransaction = Transaction(
         id: transactionId,
         title: _titleController.text,
@@ -127,26 +199,35 @@ class _CreateTransactionScreenState
         recurrent: _isRecurrent,
         originalRecurrentId: widget.transaction?.originalRecurrentId ??
             (_isRecurrent ? transactionId : null),
+        imagePaths: savedImagePaths, // Include saved image paths
       );
 
       final notifier = ref.read(transactionsProvider.notifier);
 
       if (widget.transaction != null) {
         notifier.updateTransaction(newTransaction);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Transaction updated')),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Transaction updated')),
+          );
+        }
       } else {
         notifier.addTransaction(newTransaction);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Transaction created')),
+          );
+        }
+      }
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+    } else {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Transaction created')),
+          const SnackBar(content: Text('Please fill all fields')),
         );
       }
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
-      );
     }
   }
 
@@ -339,6 +420,160 @@ class _CreateTransactionScreenState
               },
               readOnly: _isReadOnly,
             ),
+            const SizedBox(height: 20.0),
+
+            // Receipt Images Section
+            if (!_isReadOnly ||
+                _imagePaths.isNotEmpty ||
+                _selectedImages.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.receipt_long,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Receipt Images',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        ),
+                        if (_isReadOnly &&
+                            (_imagePaths.isNotEmpty ||
+                                _selectedImages.isNotEmpty))
+                          IconButton(
+                            onPressed: () => _shareReceipts([
+                              ..._imagePaths,
+                              ..._selectedImages.map((img) => img.path)
+                            ]),
+                            icon: Icon(
+                              Icons.share,
+                              size: 20,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            tooltip: 'Share receipts',
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // Display images - carousel for read-only, grid for edit
+                    if (_imagePaths.isNotEmpty || _selectedImages.isNotEmpty)
+                      _isReadOnly
+                          ? _buildImageCarousel()
+                          : Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                // Existing saved images
+                                ..._imagePaths.asMap().entries.map((entry) {
+                                  final index = entry.key;
+                                  final path = entry.value;
+                                  return _buildImageThumbnail(
+                                    path,
+                                    index,
+                                    isExisting: true,
+                                  );
+                                }),
+                                // New selected images
+                                ..._selectedImages.asMap().entries.map((entry) {
+                                  final index = entry.key;
+                                  final image = entry.value;
+                                  return _buildImageThumbnail(
+                                    image.path,
+                                    _imagePaths.length + index,
+                                    isExisting: false,
+                                  );
+                                }),
+                                // Add image button
+                                if (!_isReadOnly)
+                                  GestureDetector(
+                                    onTap: _pickImages,
+                                    child: Container(
+                                      width: 80,
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .surfaceContainerHighest
+                                            .withOpacity(0.5),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .surfaceContainerHighest,
+                                          style: BorderStyle.solid,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.add_photo_alternate,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                        size: 32,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            )
+                    else if (!_isReadOnly)
+                      GestureDetector(
+                        onTap: _pickImages,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
+                              style: BorderStyle.solid,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.add_photo_alternate,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 48,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Add Receipt Images',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 20.0),
 
             // Advanced Section
@@ -675,7 +910,9 @@ class _CreateTransactionScreenState
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _submitForm,
+                  onPressed: () async {
+                    await _submitForm();
+                  },
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -697,5 +934,191 @@ class _CreateTransactionScreenState
         ),
       ),
     );
+  }
+
+  Future<void> _pickImages() async {
+    try {
+      print('Starting image picker...');
+      final images = await ImageService.pickImages(allowMultiple: true);
+      print('Picked ${images.length} images');
+      if (images.isNotEmpty) {
+        setState(() {
+          _selectedImages.addAll(images);
+        });
+        // If we only got one image and user wants multiple, ask if they want to add more
+        // (This happens when multi-image picker is not available, e.g., on iOS Simulator)
+        if (images.length == 1 && !_isReadOnly && _selectedImages.length == 1) {
+          // Show a snackbar suggesting they can add more
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content:
+                    const Text('Image added. Tap the + button to add more.'),
+                duration: const Duration(seconds: 2),
+                action: SnackBarAction(
+                  label: 'Add More',
+                  onPressed: _pickImages,
+                ),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e, stackTrace) {
+      print('Error in _pickImages: $e');
+      print('Stack trace: $stackTrace');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Error picking image from camera.'),
+                const SizedBox(height: 4),
+                Text(
+                  'Please stop the app completely and restart it (not just hot restart).',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildImageThumbnail(String imagePath, int index,
+      {required bool isExisting}) {
+    return Stack(
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.file(
+              File(imagePath),
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.broken_image),
+                );
+              },
+            ),
+          ),
+        ),
+        if (!_isReadOnly)
+          Positioned(
+            top: -4,
+            right: -4,
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  if (isExisting) {
+                    _imagePaths.removeAt(index);
+                  } else {
+                    _selectedImages.removeAt(index - _imagePaths.length);
+                  }
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.error,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.close,
+                  size: 16,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // Build image carousel for read-only mode
+  Widget _buildImageCarousel() {
+    final allImages = [
+      ..._imagePaths,
+      ..._selectedImages.map((img) => img.path)
+    ];
+
+    if (allImages.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      height: 300,
+      child: PageView.builder(
+        itemCount: allImages.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.file(
+                File(allImages[index]),
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[300],
+                    child: const Center(
+                      child: Icon(Icons.broken_image,
+                          size: 48, color: Colors.grey),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // Share receipts via WhatsApp
+  Future<void> _shareReceipts(List<String> imagePaths) async {
+    try {
+      if (imagePaths.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No images to share')),
+          );
+        }
+        return;
+      }
+
+      // Convert image paths to XFile for sharing
+      final files = imagePaths.map((path) => XFile(path)).toList();
+
+      // Share images
+      await Share.shareXFiles(
+        files,
+        text: 'Receipt images from transaction: ${_titleController.text}',
+        subject: 'Receipt Images',
+      );
+    } catch (e) {
+      print('Error sharing receipts: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error sharing receipts: ${e.toString()}'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 }

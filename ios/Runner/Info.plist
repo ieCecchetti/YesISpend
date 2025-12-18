@@ -45,5 +45,11 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to attach receipt images to transactions.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app needs access to save receipt images to your photo library.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs access to your camera to take photos of receipts for transactions.</string>
 </dict>
 </plist>

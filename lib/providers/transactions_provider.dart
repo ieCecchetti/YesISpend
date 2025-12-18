@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:monthly_count/models/transaction.dart';
 import 'package:monthly_count/db/db_handler.dart';
+import 'package:monthly_count/services/image_service.dart';
 
 
 class TransactionsNotifier extends StateNotifier<List<Transaction>> {
@@ -30,6 +31,16 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
         }
         
         transaction.category_ids = categoryIds;
+        
+        // Filter out non-existent image paths
+        if (transaction.imagePaths.isNotEmpty) {
+          transaction.imagePaths = await ImageService.filterValidImagePaths(transaction.imagePaths);
+          // Update database if paths were filtered
+          if (transaction.imagePaths.length != transactionMap['imagePaths'].toString().split(',').length) {
+            await _dbHelper.update('financial_record', transaction.toMap());
+          }
+        }
+        
         transactions.add(transaction);
       }
       

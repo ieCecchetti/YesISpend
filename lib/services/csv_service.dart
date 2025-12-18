@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:monthly_count/models/transaction.dart';
 import 'package:monthly_count/models/split_info.dart';
+import 'package:monthly_count/models/transaction_category.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -38,9 +40,25 @@ class CsvService {
       // Build CSV content
       final StringBuffer csvContent = StringBuffer();
 
-      // CSV Header
+      // Export Categories first
+      csvContent.writeln('# Categories Section');
+      csvContent.writeln('Category ID,Category Title,Icon Code Point,Color');
+      for (var category in categories) {
+        // Skip Uncategorized as it's always created by default
+        if (category.id == '0') continue;
+        csvContent.writeln([
+          category.id,
+          _escapeCsvField(category.title),
+          category.iconCodePoint.toString(),
+          category.color.value.toString(),
+        ].join(','));
+      }
+      csvContent.writeln(''); // Empty line separator
+
+      // Transactions CSV Header
+      csvContent.writeln('# Transactions Section');
       csvContent.writeln(
-          'ID,Title,Categories,Place,Price,Date,Is Recurrent,Original Recurrent ID,Split Amount,Split Percentage,Split Notes');
+          'ID,Title,Categories,Place,Price,Date,Is Recurrent,Original Recurrent ID,Split Amount,Split Percentage,Split Notes,Image Paths');
 
       // Add transactions grouped by month
       for (var monthKey in sortedMonths) {
@@ -87,6 +105,7 @@ class CsvService {
             transaction.splitInfo != null
                 ? _escapeCsvField(transaction.splitInfo!.notes)
                 : '',
+            _escapeCsvField(transaction.imagePaths.join('; ')), // Join image paths with semicolon
           ];
 
           csvContent.writeln(row.join(','));
@@ -126,20 +145,78 @@ class CsvService {
       final lines = content.split('\n');
 
       final List<Transaction> transactions = [];
-      final categories = ref.read(categoriesProvider);
+      final categoriesNotifier = ref.read(categoriesProvider.notifier);
+      final existingCategories = ref.read(categoriesProvider);
+      
+      bool inCategoriesSection = false;
+      bool inTransactionsSection = false;
 
-      // Skip header and process lines
+      // Process lines
       for (var line in lines) {
         line = line.trim();
         
-        // Skip empty lines and comments
-        if (line.isEmpty || line.startsWith('#')) {
+        // Skip empty lines
+        if (line.isEmpty) {
           continue;
         }
 
-        // Skip header line
-        if (line.startsWith('ID,Title,Categories')) {
+        // Check for section headers
+        if (line == '# Categories Section') {
+          inCategoriesSection = true;
+          inTransactionsSection = false;
           continue;
+        }
+        if (line == '# Transactions Section') {
+          inCategoriesSection = false;
+          inTransactionsSection = true;
+          continue;
+        }
+        if (line.startsWith('#')) {
+          continue; // Skip other comments
+        }
+
+        // Process Categories Section
+        if (inCategoriesSection && line.startsWith('Category ID')) {
+          continue; // Skip category header
+        }
+        if (inCategoriesSection && !line.startsWith('ID,Title,Categories')) {
+          final categoryFields = _parseCsvLine(line);
+          if (categoryFields.length >= 4) {
+            try {
+              final categoryId = categoryFields[0];
+              final categoryTitle = categoryFields[1];
+              final iconCodePoint = int.parse(categoryFields[2]);
+              final colorValue = int.parse(categoryFields[3]);
+              
+              // Check if category already exists
+              final exists = existingCategories.any((cat) => cat.id == categoryId);
+              if (!exists) {
+                // Create category
+                final category = TransactionCategory(
+                  id: categoryId,
+                  title: categoryTitle,
+                  iconCodePoint: iconCodePoint,
+                  color: Color(colorValue),
+                );
+                categoriesNotifier.addCategory(category);
+              }
+            } catch (e) {
+              print('Error parsing category: $e');
+            }
+          }
+          continue;
+        }
+
+        // Process Transactions Section
+        if (inTransactionsSection && line.startsWith('ID,Title,Categories')) {
+          continue; // Skip transaction header
+        }
+        if (!inTransactionsSection && line.startsWith('ID,Title,Categories')) {
+          inTransactionsSection = true;
+          continue;
+        }
+        if (!inTransactionsSection) {
+          continue; // Skip lines before transactions section
         }
 
         // Parse CSV row
@@ -149,12 +226,15 @@ class CsvService {
         }
 
         try {
+          // Get updated categories list (after importing new ones)
+          final currentCategories = ref.read(categoriesProvider);
+          
           // Map category names to IDs
           final categoryNames = fields[2].split(';').map((s) => s.trim()).toList();
           final categoryIds = categoryNames.map((name) {
-            final category = categories.firstWhere(
+            final category = currentCategories.firstWhere(
               (cat) => cat.title == name,
-              orElse: () => categories.firstWhere(
+              orElse: () => currentCategories.firstWhere(
                 (cat) => cat.id == '0',
                 orElse: () => throw Exception('Category not found: $name'),
               ),
@@ -183,6 +263,17 @@ class CsvService {
             );
           }
 
+          // Parse image paths (if present)
+          List<String> imagePaths = [];
+          if (fields.length >= 12 && fields[11].isNotEmpty) {
+            // Split by semicolon and trim each path
+            imagePaths = fields[11]
+                .split(';')
+                .map((path) => path.trim())
+                .where((path) => path.isNotEmpty)
+                .toList();
+          }
+
           final transaction = Transaction(
             id: fields[0],
             title: fields[1],
@@ -194,6 +285,7 @@ class CsvService {
             recurrent: fields.length > 6 && fields[6] == '1',
             originalRecurrentId:
                 fields.length > 7 && fields[7].isNotEmpty ? fields[7] : null,
+            imagePaths: imagePaths, // Note: paths may not be valid on import device
           );
 
           transactions.add(transaction);

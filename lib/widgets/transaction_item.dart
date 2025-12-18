@@ -122,39 +122,61 @@ class TransactionItem extends ConsumerWidget {
               ],
             ),
           ),
-          // Price
-          item.splitInfo != null
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      '${item.splitInfo!.share.toStringAsFixed(2)} €',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.tertiary,
-                                ),
+              // Price with photo icon if images exist
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (item.imagePaths.isNotEmpty) ...[
+                    Icon(
+                      Icons.photo,
+                      size: 20,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
-                    Text(
-                        'of ${item.splitInfo!.amount.toStringAsFixed(2)} €',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                            ),
-                    ),
+                    const SizedBox(width: 8),
                   ],
-                )
-              : Text(
-            '${item.price > 0 ? '+' : ''}${item.price.toStringAsFixed(2)} €',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: item.price > 0
-                              ? Theme.of(context).colorScheme.secondary
-                              : Theme.of(context).colorScheme.error,
+                  item.splitInfo != null
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              '${item.splitInfo!.share.toStringAsFixed(2)} €',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        Theme.of(context).colorScheme.tertiary,
+                                  ),
+                            ),
+                            Text(
+                              'of ${item.splitInfo!.amount.toStringAsFixed(2)} €',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          '${item.price > 0 ? '+' : ''}${item.price.toStringAsFixed(2)} €',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: item.price > 0
+                                    ? Theme.of(context).colorScheme.secondary
+                                    : Theme.of(context).colorScheme.error,
+                              ),
                         ),
-                )
+                ],
+              )
         ],
       ),
         ),

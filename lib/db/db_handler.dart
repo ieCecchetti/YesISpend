@@ -23,7 +23,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 5,
+        version: 7,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -101,16 +101,30 @@ class DatabaseHelper {
           date TEXT NOT NULL,
           splittedInfo TEXT,
           recurrent INTEGER NOT NULL DEFAULT 0,
-          originalRecurrentId TEXT
+          originalRecurrentId TEXT,
+          imagePaths TEXT
         )
       ''');
 
       // Copy data from old table to new table
-      await db.execute('''
-        INSERT INTO financial_record_new 
-        SELECT id, title, place, price, date, splittedInfo, recurrent, originalRecurrentId
-        FROM financial_record
-      ''');
+      // Check if imagePaths column exists in the old table
+      try {
+        await db.rawQuery('SELECT imagePaths FROM financial_record LIMIT 1');
+        // Column exists, use it
+        await db.execute('''
+          INSERT INTO financial_record_new 
+          SELECT id, title, place, price, date, splittedInfo, recurrent, originalRecurrentId,
+                 COALESCE(imagePaths, '') as imagePaths
+          FROM financial_record
+        ''');
+      } catch (e) {
+        // Column doesn't exist, use empty string
+        await db.execute('''
+          INSERT INTO financial_record_new 
+          SELECT id, title, place, price, date, splittedInfo, recurrent, originalRecurrentId, '' as imagePaths
+          FROM financial_record
+        ''');
+      }
 
       // Drop old table and rename new one
       await db.execute('DROP TABLE financial_record');
@@ -149,16 +163,30 @@ class DatabaseHelper {
             date TEXT NOT NULL,
             splittedInfo TEXT,
             recurrent INTEGER NOT NULL DEFAULT 0,
-            originalRecurrentId TEXT
+            originalRecurrentId TEXT,
+            imagePaths TEXT
           )
         ''');
 
         // Copy data from old table to new table
-        await db.execute('''
-          INSERT INTO financial_record_new 
-          SELECT id, title, place, price, date, splittedInfo, recurrent, originalRecurrentId
-          FROM financial_record
-        ''');
+        // Check if imagePaths column exists in the old table
+        try {
+          await db.rawQuery('SELECT imagePaths FROM financial_record LIMIT 1');
+          // Column exists, use it
+          await db.execute('''
+            INSERT INTO financial_record_new 
+            SELECT id, title, place, price, date, splittedInfo, recurrent, originalRecurrentId,
+                   COALESCE(imagePaths, '') as imagePaths
+            FROM financial_record
+          ''');
+        } catch (e) {
+          // Column doesn't exist, use empty string
+          await db.execute('''
+            INSERT INTO financial_record_new 
+            SELECT id, title, place, price, date, splittedInfo, recurrent, originalRecurrentId, '' as imagePaths
+            FROM financial_record
+          ''');
+        }
 
         // Drop old table and rename new one
         await db.execute('DROP TABLE financial_record');
@@ -208,16 +236,30 @@ class DatabaseHelper {
             date TEXT NOT NULL,
             splittedInfo TEXT,
             recurrent INTEGER NOT NULL DEFAULT 0,
-            originalRecurrentId TEXT
+            originalRecurrentId TEXT,
+            imagePaths TEXT
           )
         ''');
 
         // Copy data from old table to new table
-        await db.execute('''
-          INSERT INTO financial_record_new 
-          SELECT id, title, place, price, date, splittedInfo, recurrent, originalRecurrentId
-          FROM financial_record
-        ''');
+        // Check if imagePaths column exists in the old table
+        try {
+          await db.rawQuery('SELECT imagePaths FROM financial_record LIMIT 1');
+          // Column exists, use it
+          await db.execute('''
+            INSERT INTO financial_record_new 
+            SELECT id, title, place, price, date, splittedInfo, recurrent, originalRecurrentId,
+                   COALESCE(imagePaths, '') as imagePaths
+            FROM financial_record
+          ''');
+        } catch (e) {
+          // Column doesn't exist, use empty string
+          await db.execute('''
+            INSERT INTO financial_record_new 
+            SELECT id, title, place, price, date, splittedInfo, recurrent, originalRecurrentId, '' as imagePaths
+            FROM financial_record
+          ''');
+        }
 
         // Drop old table and rename new one
         await db.execute('DROP TABLE financial_record');
@@ -228,6 +270,22 @@ class DatabaseHelper {
       } catch (e) {
         // Column doesn't exist, which is fine
         print('category_id column already removed or never existed: $e');
+      }
+    }
+    if (oldVersion < 6) {
+      // Add imagePaths column to financial_record
+      try {
+        // Check if column exists
+        await db.rawQuery('SELECT imagePaths FROM financial_record LIMIT 1');
+        print('imagePaths column already exists');
+      } catch (e) {
+        // Column doesn't exist, add it
+        try {
+          await db.execute('ALTER TABLE financial_record ADD COLUMN imagePaths TEXT DEFAULT \'\'');
+          print('Added imagePaths column to financial_record table (migration 6)');
+        } catch (e2) {
+          print('Error adding imagePaths column: $e2');
+        }
       }
     }
   }
@@ -246,16 +304,17 @@ class DatabaseHelper {
 
     // Create financial_record table (without category_id foreign key)
     await db.execute('''
-      CREATE TABLE financial_record (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        place TEXT NOT NULL,
-        price REAL NOT NULL,
-        date TEXT NOT NULL,
-        splittedInfo TEXT,
-        recurrent INTEGER NOT NULL DEFAULT 0,
-        originalRecurrentId TEXT
-      )
+        CREATE TABLE financial_record (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          place TEXT NOT NULL,
+          price REAL NOT NULL,
+          date TEXT NOT NULL,
+          splittedInfo TEXT,
+          recurrent INTEGER NOT NULL DEFAULT 0,
+          originalRecurrentId TEXT,
+          imagePaths TEXT
+        )
     ''');
     print('Created financial_record table');
     

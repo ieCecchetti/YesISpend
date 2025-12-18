@@ -21,6 +21,9 @@ Open the xCode Simulator with:
 ```bash
 open -a Simulator
 flutter run 
+# or for your own iphone
+flutter device # show devices list
+flutter run -d <device_id> # run the app on your device
 ```
 
 or go to View > Command Palette or press + Shift + P.
