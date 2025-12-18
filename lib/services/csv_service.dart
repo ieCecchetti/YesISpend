@@ -285,7 +285,7 @@ class CsvService {
             recurrent: fields.length > 6 && fields[6] == '1',
             originalRecurrentId:
                 fields.length > 7 && fields[7].isNotEmpty ? fields[7] : null,
-            imagePaths: imagePaths, // Note: paths may not be valid on import device
+            imagePaths: imagePaths, // Empty - images are device-specific and not portable
           );
 
           transactions.add(transaction);

@@ -145,34 +145,13 @@ class _MultiCategoryIconState extends ConsumerState<MultiCategoryIcon>
                 ),
               ),
             ),
-          if (widget.showShared)
-            Positioned(
-              top: -2,
-              right: -2,
-              child: Container(
-                padding: const EdgeInsets.all(4.0),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.people,
-                  size: 12.0,
-                  color: Colors.white,
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 
   Widget _buildOverlappingCategories(List<TransactionCategory> categories) {
-    final offset = 12.0; // Margin between overlapping circles
+    const offset = 12.0; // Margin between overlapping circles
 
     // Build list with front category last (highest z-index in Stack)
     final orderedCategories = <MapEntry<int, TransactionCategory>>[];
@@ -242,27 +221,6 @@ class _MultiCategoryIconState extends ConsumerState<MultiCategoryIcon>
                         ),
                         child: const Icon(
                           Icons.repeat,
-                          size: 12.0,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  if (isFront && widget.showShared)
-                    Positioned(
-                      top: -2,
-                      right: -2,
-                      child: Container(
-                        padding: const EdgeInsets.all(4.0),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 2,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.people,
                           size: 12.0,
                           color: Colors.white,
                         ),

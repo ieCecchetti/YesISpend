@@ -53,7 +53,7 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
             isDeletionMode
               ? IconButton(
                   onPressed: _toggleDeletionMode,
-                  icon: const Icon(Icons.edit),
+                  icon: const Icon(Icons.cancel),
                   tooltip: 'Exit Edit Mode',
                 )
               : IconButton(
