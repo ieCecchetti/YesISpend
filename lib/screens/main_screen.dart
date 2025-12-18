@@ -13,6 +13,7 @@ import 'package:monthly_count/screens/analytics_screen.dart';
 import 'package:monthly_count/screens/changelog_screen.dart';
 
 import 'package:monthly_count/widgets/transaction_item.dart';
+import 'package:monthly_count/widgets/animations/balance_emoji.dart';
 
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
 import 'package:monthly_count/db/db_handler.dart';
@@ -383,10 +384,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
           ),
           // Summary Card (scrollable, can disappear)
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4.0),
-              child: _buildSummaryCard(context, ref, allMonthlyTransactions),
-            ),
+            child: _buildSummaryCard(context, ref, allMonthlyTransactions),
           ),
           // Tabs (always visible, pinned with top margin)
           SliverPersistentHeader(
@@ -643,8 +641,8 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
     final expenseProjection = dailyExpense * daysInMonth;
 
     return Container(
-      margin: const EdgeInsets.only(left: 16, right: 16, top: 8),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 0),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -678,37 +676,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                       fontWeight: FontWeight.w600,
                     ),
               ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'in-out',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.white70,
-                            fontSize: 9,
-                          ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${balance >= 0 ? '+' : ''}${balance.toStringAsFixed(2)}€',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: balance >= 0
-                                ? Theme.of(context).colorScheme.secondary
-                                : Theme.of(context).colorScheme.error,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
+              BalanceEmoji(balance: balance),
             ],
           ),
           const SizedBox(height: 16),
