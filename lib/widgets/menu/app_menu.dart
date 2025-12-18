@@ -18,68 +18,31 @@ class AppMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return PopupMenuButton<String>(
-      onSelected: (value) {
-        if (value == "Export") {
-          _exportToCsv(context, ref);
-        }
-        if (value == "Import") {
-          _importFromCsv(context, ref);
-        }
-        if (value == "Settings") {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const SettingsScreen(),
-            ),
-          );
-        }
-        if (value == "PatchNotes") {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ChangelogScreen(),
-            ),
-          );
-        }
-        if (value == "CleanUp") {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('Confirm Cleanup'),
-                content: const Text(
-                    'Are you sure you want to delete all the data (transactions/categories)? This action cannot be undone.'),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      await DatabaseHelper.instance.deleteAll();
-                      ref
-                          .read(transactionsProvider.notifier)
-                          .refreshTransactions();
-                      ref
-                          .read(categoriesProvider.notifier)
-                          .refreshCategories();
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Confirm'),
-                  ),
-                ],
-              );
-            },
-          );
-        }
+    return MenuAnchor(
+      style: MenuStyle(
+        backgroundColor: WidgetStateProperty.all(Colors.white),
+        elevation: WidgetStateProperty.all(4),
+      ),
+      builder:
+          (BuildContext context, MenuController controller, Widget? child) {
+        return IconButton(
+          onPressed: () {
+            if (controller.isOpen) {
+              controller.close();
+            } else {
+              controller.open();
+            }
+          },
+          icon: const Icon(Icons.more_vert),
+          tooltip: 'Show menu',
+        );
       },
-      itemBuilder: (BuildContext context) => [
-        const PopupMenuItem<String>(
-          value: "Export",
-          child: Row(
+      menuChildren: [
+        MenuItemButton(
+          onPressed: () {
+            _exportToCsv(context, ref);
+          },
+          child: const Row(
             children: [
               Icon(Icons.download),
               SizedBox(width: 8),
@@ -87,9 +50,11 @@ class AppMenu extends ConsumerWidget {
             ],
           ),
         ),
-        const PopupMenuItem<String>(
-          value: "Import",
-          child: Row(
+        MenuItemButton(
+          onPressed: () {
+            _importFromCsv(context, ref);
+          },
+          child: const Row(
             children: [
               Icon(Icons.upload),
               SizedBox(width: 8),
@@ -97,9 +62,16 @@ class AppMenu extends ConsumerWidget {
             ],
           ),
         ),
-        const PopupMenuItem<String>(
-          value: "Settings",
-          child: Row(
+        MenuItemButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SettingsScreen(),
+              ),
+            );
+          },
+          child: const Row(
             children: [
               Icon(Icons.settings),
               SizedBox(width: 8),
@@ -107,9 +79,16 @@ class AppMenu extends ConsumerWidget {
             ],
           ),
         ),
-        const PopupMenuItem<String>(
-          value: "PatchNotes",
-          child: Row(
+        MenuItemButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ChangelogScreen(),
+              ),
+            );
+          },
+          child: const Row(
             children: [
               Icon(Icons.description),
               SizedBox(width: 8),
@@ -117,9 +96,41 @@ class AppMenu extends ConsumerWidget {
             ],
           ),
         ),
-        const PopupMenuItem<String>(
-          value: "CleanUp",
-          child: Row(
+        MenuItemButton(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Confirm Cleanup'),
+                  content: const Text(
+                      'Are you sure you want to delete all the data (transactions/categories)? This action cannot be undone.'),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        await DatabaseHelper.instance.deleteAll();
+                        ref
+                            .read(transactionsProvider.notifier)
+                            .refreshTransactions();
+                        ref
+                            .read(categoriesProvider.notifier)
+                            .refreshCategories();
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Confirm'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+          child: const Row(
             children: [
               Icon(Icons.delete_forever, color: Colors.red),
               SizedBox(width: 8),
