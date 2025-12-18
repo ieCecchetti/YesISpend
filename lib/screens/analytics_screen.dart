@@ -3,18 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import 'package:monthly_count/providers/settings_provider.dart';
-import 'package:monthly_count/providers/categories_provider.dart';
-import 'package:monthly_count/providers/transactions_provider.dart';
 import 'package:monthly_count/widgets/in_out_item.dart';
 import 'package:monthly_count/widgets/expense_graph.dart';
 import 'package:monthly_count/widgets/cathegory_chart.dart';
 import 'package:monthly_count/widgets/statistics_view.dart';
 import 'package:monthly_count/widgets/day_cost_histogram.dart';
 import 'package:monthly_count/screens/category_screen.dart';
-import 'package:monthly_count/screens/settings_screen.dart';
 import 'package:monthly_count/screens/filter_screen.dart';
-import 'package:monthly_count/screens/changelog_screen.dart';
-import 'package:monthly_count/db/db_handler.dart';
+import 'package:monthly_count/widgets/menu/app_menu.dart';
 
 class AnalyticsScreen extends ConsumerStatefulWidget {
   const AnalyticsScreen({super.key});
@@ -160,110 +156,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
               );
             },
           ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == "Export") {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content:
-                        Text("Function will be available in the next patch"),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              }
-              if (value == "Settings") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SettingsScreen(),
-                  ),
-                );
-              }
-              if (value == "PatchNotes") {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ChangelogScreen(),
-                  ),
-                );
-              }
-              if (value == "CleanUp") {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Confirm Cleanup'),
-                      content: const Text(
-                          'Are you sure you want to delete all the data (transactions/categories)? This action cannot be undone.'),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () async {
-                            await DatabaseHelper.instance.deleteAll();
-                            ref
-                                .read(transactionsProvider.notifier)
-                                .refreshTransactions();
-                            ref
-                                .read(categoriesProvider.notifier)
-                                .refreshCategories();
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('Confirm'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              }
-            },
-            itemBuilder: (BuildContext context) => [
-              const PopupMenuItem<String>(
-                value: "Export",
-                child: Row(
-                  children: [
-                    Icon(Icons.download),
-                    SizedBox(width: 8),
-                    Text("Export"),
-                  ],
-                ),
-              ),
-              const PopupMenuItem<String>(
-                value: "Settings",
-                child: Row(
-                  children: [
-                    Icon(Icons.settings),
-                    SizedBox(width: 8),
-                    Text("Settings"),
-                  ],
-                ),
-              ),
-              const PopupMenuItem<String>(
-                value: "PatchNotes",
-                child: Row(
-                  children: [
-                    Icon(Icons.description),
-                    SizedBox(width: 8),
-                    Text("Patch Notes"),
-                  ],
-                ),
-              ),
-              const PopupMenuItem<String>(
-                value: "CleanUp",
-                child: Row(
-                  children: [
-                    Icon(Icons.delete_forever, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text("Clean Up", style: TextStyle(color: Colors.red)),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          const AppMenu(),
         ],
       ),
       body: Column(
