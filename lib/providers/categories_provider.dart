@@ -35,7 +35,47 @@ class CategoriesNotifier extends StateNotifier<List<TransactionCategory>> {
   }
 
   void removeCategory(TransactionCategory category) async {
-    // Remove from the database
+    // Prevent deletion of Uncategorized category
+    if (category.id == '0') {
+      print('Cannot delete Uncategorized category');
+      return;
+    }
+
+    final db = await _dbHelper.database;
+    final uncategorizedId = '0';
+
+    // Find all transactions that have this category
+    final transactionsWithCategory = await db.query(
+      'transaction_categories',
+      columns: ['transaction_id'],
+      where: 'category_id = ?',
+      whereArgs: [category.id],
+    );
+
+    // Replace the deleted category with Uncategorized for all affected transactions
+    for (var row in transactionsWithCategory) {
+      final transactionId = row['transaction_id'] as String;
+
+      // Get all current categories for this transaction
+      final currentCategories =
+          await _dbHelper.getTransactionCategories(transactionId);
+
+      // Remove the deleted category and add Uncategorized if not already present
+      final updatedCategories =
+          currentCategories.where((catId) => catId != category.id).toList();
+
+      // If transaction would have no categories, add Uncategorized
+      if (updatedCategories.isEmpty ||
+          !updatedCategories.contains(uncategorizedId)) {
+        updatedCategories.add(uncategorizedId);
+      }
+
+      // Update transaction categories
+      await _dbHelper.setTransactionCategories(
+          transactionId, updatedCategories);
+    }
+
+    // Now remove the category from the database
     await _dbHelper.delete('transaction_category', category.id);
 
     state = state.where((element) => element.id != category.id).toList();

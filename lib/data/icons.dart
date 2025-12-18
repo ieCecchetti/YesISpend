@@ -34,6 +34,7 @@ const List<IconData> availableIcons = [
   Icons.flight,
   Icons.train,
   Icons.celebration,
+  Icons.more_horiz,
 ];
 
 /// Function to get IconData by integer (codePoint)

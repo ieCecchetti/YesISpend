@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:monthly_count/data/icons.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -22,7 +23,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 5,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -52,9 +53,24 @@ class DatabaseHelper {
       ''');
       print('Created transaction_categories table');
       
+      // Ensure Uncategorized category exists
+      final uncategorizedCheck = await db.query(
+        'transaction_category',
+        where: 'id = ?',
+        whereArgs: ['0'],
+      );
+      if (uncategorizedCheck.isEmpty) {
+        await db.execute('''
+          INSERT INTO transaction_category (id, title, iconCodePoint, color) VALUES
+            ('0', 'Uncategorized', ${Icons.more_horiz.codePoint}, 0xFF9E9E9E)
+        ''');
+        print('Created Uncategorized category');
+      }
+      
       // Migrate existing category_id data to transaction_categories
       final transactions = await db.query('financial_record');
       final batch = db.batch();
+      const uncategorizedId = '0';
       for (var transaction in transactions) {
         final transactionId = transaction['id'] as String;
         final categoryId = transaction['category_id'] as String?;
@@ -63,10 +79,156 @@ class DatabaseHelper {
             'transaction_id': transactionId,
             'category_id': categoryId,
           });
+        } else {
+          // Assign to Uncategorized if no category
+          batch.insert('transaction_categories', {
+            'transaction_id': transactionId,
+            'category_id': uncategorizedId,
+          });
         }
       }
       await batch.commit(noResult: true);
       print('Migrated existing category data to transaction_categories');
+      
+      // Remove the old category_id column from financial_record
+      // SQLite doesn't support DROP COLUMN directly, so we need to recreate the table
+      await db.execute('''
+        CREATE TABLE financial_record_new (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          place TEXT NOT NULL,
+          price REAL NOT NULL,
+          date TEXT NOT NULL,
+          splittedInfo TEXT,
+          recurrent INTEGER NOT NULL DEFAULT 0,
+          originalRecurrentId TEXT
+        )
+      ''');
+
+      // Copy data from old table to new table
+      await db.execute('''
+        INSERT INTO financial_record_new 
+        SELECT id, title, place, price, date, splittedInfo, recurrent, originalRecurrentId
+        FROM financial_record
+      ''');
+
+      // Drop old table and rename new one
+      await db.execute('DROP TABLE financial_record');
+      await db.execute(
+          'ALTER TABLE financial_record_new RENAME TO financial_record');
+      print('Removed category_id column from financial_record table');
+    }
+    if (oldVersion < 4) {
+      // Ensure Uncategorized category exists for existing databases
+      final uncategorizedCheck = await db.query(
+        'transaction_category',
+        where: 'id = ?',
+        whereArgs: ['0'],
+      );
+      if (uncategorizedCheck.isEmpty) {
+        await db.execute('''
+          INSERT INTO transaction_category (id, title, iconCodePoint, color) VALUES
+            ('0', 'Uncategorized', ${Icons.more_horiz.codePoint}, 0xFF9E9E9E)
+        ''');
+        print('Created Uncategorized category in migration');
+      }
+
+      // Check if category_id column still exists and remove it
+      try {
+        // Try to query the category_id column - if it fails, it doesn't exist
+        await db.rawQuery('SELECT category_id FROM financial_record LIMIT 1');
+        // If we get here, the column exists - we need to remove it
+        print(
+            'Removing category_id column from financial_record (migration 4)');
+        await db.execute('''
+          CREATE TABLE financial_record_new (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            place TEXT NOT NULL,
+            price REAL NOT NULL,
+            date TEXT NOT NULL,
+            splittedInfo TEXT,
+            recurrent INTEGER NOT NULL DEFAULT 0,
+            originalRecurrentId TEXT
+          )
+        ''');
+
+        // Copy data from old table to new table
+        await db.execute('''
+          INSERT INTO financial_record_new 
+          SELECT id, title, place, price, date, splittedInfo, recurrent, originalRecurrentId
+          FROM financial_record
+        ''');
+
+        // Drop old table and rename new one
+        await db.execute('DROP TABLE financial_record');
+        await db.execute(
+            'ALTER TABLE financial_record_new RENAME TO financial_record');
+        print(
+            'Removed category_id column from financial_record table (migration 4)');
+      } catch (e) {
+        // Column doesn't exist, which is fine
+        print('category_id column already removed or never existed');
+      }
+
+      // Assign Uncategorized to transactions without categories
+      final allTransactions = await db.query('financial_record');
+      final allCategoryLinks = await db.query('transaction_categories');
+      final transactionsWithCategories = allCategoryLinks
+          .map((row) => row['transaction_id'] as String)
+          .toSet();
+
+      final batch = db.batch();
+      for (var transaction in allTransactions) {
+        final transactionId = transaction['id'] as String;
+        if (!transactionsWithCategories.contains(transactionId)) {
+          batch.insert('transaction_categories', {
+            'transaction_id': transactionId,
+            'category_id': '0',
+          });
+        }
+      }
+      await batch.commit(noResult: true);
+      print('Assigned Uncategorized to transactions without categories');
+    }
+    if (oldVersion < 5) {
+      // Force removal of category_id column if it still exists
+      try {
+        // Try to query the category_id column - if it fails, it doesn't exist
+        await db.rawQuery('SELECT category_id FROM financial_record LIMIT 1');
+        // If we get here, the column exists - we need to remove it
+        print(
+            'Removing category_id column from financial_record (migration 5)');
+        await db.execute('''
+          CREATE TABLE financial_record_new (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            place TEXT NOT NULL,
+            price REAL NOT NULL,
+            date TEXT NOT NULL,
+            splittedInfo TEXT,
+            recurrent INTEGER NOT NULL DEFAULT 0,
+            originalRecurrentId TEXT
+          )
+        ''');
+
+        // Copy data from old table to new table
+        await db.execute('''
+          INSERT INTO financial_record_new 
+          SELECT id, title, place, price, date, splittedInfo, recurrent, originalRecurrentId
+          FROM financial_record
+        ''');
+
+        // Drop old table and rename new one
+        await db.execute('DROP TABLE financial_record');
+        await db.execute(
+            'ALTER TABLE financial_record_new RENAME TO financial_record');
+        print(
+            'Removed category_id column from financial_record table (migration 5)');
+      } catch (e) {
+        // Column doesn't exist, which is fine
+        print('category_id column already removed or never existed: $e');
+      }
     }
   }
 
@@ -113,6 +275,12 @@ class DatabaseHelper {
   }
 
   Future<void> _insertDefaultCategories(Database db) async {
+    // Insert Uncategorized category first (ID '0' - special category that cannot be deleted)
+    await db.execute('''
+    INSERT INTO transaction_category (id, title, iconCodePoint, color) VALUES
+      ('0', 'Uncategorized', ${Icons.more_horiz.codePoint}, 0xFF9E9E9E)
+    ''');
+    
     await db.execute('''
     INSERT INTO transaction_category (id, title, iconCodePoint, color) VALUES
       ('1', 'Food', ${availableIcons[15].codePoint}, 0xFFFF5722),  

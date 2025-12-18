@@ -328,25 +328,6 @@ class _CreateTransactionScreenState
             ),
             const SizedBox(height: 20.0),
 
-            // Place Field
-            TextFormField(
-              controller: _placeController,
-              enabled: !_isReadOnly,
-              readOnly: _isReadOnly,
-              decoration: InputDecoration(
-                labelText: 'Place',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surface,
-              ),
-              validator: (value) {
-                return null;
-              },
-            ),
-            const SizedBox(height: 20.0),
-
             // Price Field
             priceTextView(
               selectedType: _transactionType,
@@ -360,199 +341,277 @@ class _CreateTransactionScreenState
             ),
             const SizedBox(height: 20.0),
 
-            // Split Toggle
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                ),
+            // Advanced Section
+            Theme(
+              data: Theme.of(context).copyWith(
+                dividerColor:
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
-              child: Row(
+              child: ExpansionTile(
+                title: Text(
+                  'Advanced',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                leading: Icon(
+                  Icons.settings_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                initiallyExpanded: false,
                 children: [
-                  Icon(
-                    Icons.people_outline,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Split with someone',
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  ),
-                  Switch(
-                    value: _isSplitWithSomeone,
-                    onChanged: _isReadOnly
-                        ? null
-                        : (bool? value) {
-                      if (_priceController.text.isNotEmpty &&
-                          double.tryParse(
-                                  _priceController.text.replaceAll(',', '.')) !=
-                              null) {
-                        setState(() {
-                          _isSplitWithSomeone = value ?? false;
-                          if (!_isSplitWithSomeone) {
-                            _selectedPercentage = null;
-                          } else {
-                            _selectedPercentage = 50;
-                          }
-                        });
-                      } else if (_transactionType == "+") {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  'Income transactions cannot be splitted')),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content:
-                                  Text('Please enter a valid price first')),
-                        );
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-            if (_isSplitWithSomeone) ...[
-              const SizedBox(height: 20.0),
-              Container(
-                padding: const EdgeInsets.all(20.0),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color:
-                        Theme.of(context).colorScheme.surfaceContainerHighest,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Split Percentage',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 16),
-                    Slider(
-                      value: (_selectedPercentage ?? 50).toDouble(),
-                      min: 0,
-                      max: 100,
-                      divisions: 4,
-                      label: '${_selectedPercentage ?? 50}%',
-                      onChanged: _isReadOnly
-                          ? null
-                          : (double newValue) {
-                        setState(() {
-                          _selectedPercentage = newValue.toInt();
-                        });
-                      },
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Your Share:',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          Text(
-                            '${(getTransactionAmount(_transactionType, _priceController.text) * (_selectedPercentage ?? 50) / 100).toStringAsFixed(2)} €',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16.0),
-                    TextFormField(
-                      controller: _splitNoteController,
-                      enabled: !_isReadOnly,
-                      readOnly: _isReadOnly,
-                      decoration: InputDecoration(
-                        labelText: 'Notes about the split',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.surface,
-                      ),
-                      validator: (value) {
-                        return null;
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: 20.0),
-
-            // Recurrent Toggle
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.repeat,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Recurrent transaction',
-                          style: Theme.of(context).textTheme.bodyLarge,
+                        // Place Field
+                        TextFormField(
+                          controller: _placeController,
+                          enabled: !_isReadOnly,
+                          readOnly: _isReadOnly,
+                          decoration: InputDecoration(
+                            labelText: 'Place',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            filled: true,
+                            fillColor: Theme.of(context).colorScheme.surface,
+                          ),
+                          validator: (value) {
+                            return null;
+                          },
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'This transaction will repeat every month on the same day',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                        const SizedBox(height: 20.0),
+                        // Split Toggle
+                        Container(
+                          padding: const EdgeInsets.all(16.0),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.people_outline,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Split with someone',
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ),
+                              Switch(
+                                value: _isSplitWithSomeone,
+                                onChanged: _isReadOnly
+                                    ? null
+                                    : (bool? value) {
+                                        if (_priceController.text.isNotEmpty &&
+                                            double.tryParse(_priceController
+                                                    .text
+                                                    .replaceAll(',', '.')) !=
+                                                null) {
+                                          setState(() {
+                                            _isSplitWithSomeone =
+                                                value ?? false;
+                                            if (!_isSplitWithSomeone) {
+                                              _selectedPercentage = null;
+                                            } else {
+                                              _selectedPercentage = 50;
+                                            }
+                                          });
+                                        } else if (_transactionType == "+") {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                                content: Text(
+                                                    'Income transactions cannot be splitted')),
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                                content: Text(
+                                                    'Please enter a valid price first')),
+                                          );
+                                        }
+                                      },
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_isSplitWithSomeone) ...[
+                          const SizedBox(height: 20.0),
+                          Container(
+                            padding: const EdgeInsets.all(20.0),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest
+                                  .withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Split Percentage',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                                const SizedBox(height: 16),
+                                Slider(
+                                  value: (_selectedPercentage ?? 50).toDouble(),
+                                  min: 0,
+                                  max: 100,
+                                  divisions: 4,
+                                  label: '${_selectedPercentage ?? 50}%',
+                                  onChanged: _isReadOnly
+                                      ? null
+                                      : (double newValue) {
+                                          setState(() {
+                                            _selectedPercentage =
+                                                newValue.toInt();
+                                          });
+                                        },
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
                                     color: Theme.of(context)
                                         .colorScheme
-                                        .onSurfaceVariant,
+                                        .primary
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Your Share:',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
+                                      ),
+                                      Text(
+                                        '${(getTransactionAmount(_transactionType, _priceController.text) * (_selectedPercentage ?? 50) / 100).toStringAsFixed(2)} €',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 16.0),
+                                TextFormField(
+                                  controller: _splitNoteController,
+                                  enabled: !_isReadOnly,
+                                  readOnly: _isReadOnly,
+                                  decoration: InputDecoration(
+                                    labelText: 'Notes about the split',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    filled: true,
+                                    fillColor:
+                                        Theme.of(context).colorScheme.surface,
+                                  ),
+                                  validator: (value) {
+                                    return null;
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 20.0),
+                        // Recurrent Toggle
+                        Container(
+                          padding: const EdgeInsets.all(16.0),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.repeat,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Recurrent transaction',
+                                      style:
+                                          Theme.of(context).textTheme.bodyLarge,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'This transaction will repeat every month on the same day',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch(
+                                value: _isRecurrent,
+                                onChanged: _isReadOnly
+                                    ? null
+                                    : (bool? value) {
+                                        setState(() {
+                                          _isRecurrent = value ?? false;
+                                        });
+                                      },
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                  Switch(
-                    value: _isRecurrent,
-                    onChanged: _isReadOnly
-                        ? null
-                        : (bool? value) {
-                            setState(() {
-                              _isRecurrent = value ?? false;
-                            });
-                          },
                   ),
                 ],
               ),

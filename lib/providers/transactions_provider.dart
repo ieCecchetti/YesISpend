@@ -15,11 +15,20 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
     try {
       final transactionData = await _dbHelper.queryAll('financial_record');
       final transactions = <Transaction>[];
+      const uncategorizedId = '0';
       
       for (var transactionMap in transactionData) {
         final transaction = Transaction.fromMap(transactionMap);
         // Load categories from join table
-        final categoryIds = await _dbHelper.getTransactionCategories(transaction.id);
+        var categoryIds =
+            await _dbHelper.getTransactionCategories(transaction.id);
+
+        // If transaction has no categories, assign to Uncategorized
+        if (categoryIds.isEmpty) {
+          categoryIds = [uncategorizedId];
+          await _dbHelper.setTransactionCategories(transaction.id, categoryIds);
+        }
+        
         transaction.category_ids = categoryIds;
         transactions.add(transaction);
       }

@@ -201,8 +201,8 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
                       ],
                     ),
                   ),
-                  // Delete Button
-                  if (isDeletionMode)
+                        // Delete Button (hidden for Uncategorized category)
+                        if (isDeletionMode && category.id != '0')
                     Positioned(
                       top: 8,
                       right: 8,

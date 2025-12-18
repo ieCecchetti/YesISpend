@@ -74,17 +74,22 @@ class _MultiCategoryIconState extends ConsumerState<MultiCategoryIcon>
         .toList();
 
     if (transactionCategories.isEmpty) {
-      // Default grey circle if no categories
+      // Default grey circle with more_horiz icon if no categories found
       return Container(
         width: widget.size,
         height: widget.size,
         decoration: BoxDecoration(
-          color: Colors.grey.withOpacity(0.2),
+          color: Colors.grey,
           shape: BoxShape.circle,
           border: Border.all(
-            color: Colors.grey.withOpacity(0.3),
+            color: Colors.white,
             width: 2,
           ),
+        ),
+        child: Icon(
+          Icons.more_horiz,
+          size: widget.size * 0.5,
+          color: Colors.white,
         ),
       );
     }
