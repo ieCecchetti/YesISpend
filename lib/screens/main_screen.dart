@@ -272,55 +272,110 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
           ),
           SliverToBoxAdapter(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                border: Border(
-                  bottom: BorderSide(
-                    color:
-                        Theme.of(context).colorScheme.surfaceContainerHighest,
-                    width: 1,
-                  ),
-                ),
-              ),
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Left Arrow
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                    onPressed: () {
-                      final currentMonth = ref.read(selectedMonthProvider);
-                      final newMonth = DateTime(
-                        currentMonth.year,
-                        currentMonth.month - 1,
-                      );
-                      ref
-                          .read(selectedMonthProvider.notifier)
-                          .setSelectedMonth(newMonth);
-                    },
-                  ),
-                  // Centered Month Text
-                  Text(
-                    DateFormat('MMMM yyyy')
-                        .format(ref.watch(selectedMonthProvider)),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        final currentMonth = ref.read(selectedMonthProvider);
+                        final newMonth = DateTime(
+                          currentMonth.year,
+                          currentMonth.month - 1,
+                        );
+                        ref
+                            .read(selectedMonthProvider.notifier)
+                            .setSelectedMonth(newMonth);
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(6.0),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest
+                              .withOpacity(0.5),
+                          shape: BoxShape.circle,
                         ),
+                        child: Icon(
+                          Icons.chevron_left_rounded,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
                   ),
+                  const SizedBox(width: 16),
+                  // Centered Month Text with badge style
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      DateFormat('MMM yyyy')
+                          .format(ref.watch(selectedMonthProvider)),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: Colors.white,
+                          ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
                   // Right Arrow
-                  IconButton(
-                    icon: const Icon(Icons.arrow_forward_ios, size: 20),
-                    onPressed: () {
-                      final currentMonth = ref.read(selectedMonthProvider);
-                      final newMonth = DateTime(
-                        currentMonth.year,
-                        currentMonth.month + 1,
-                      );
-                      ref
-                          .read(selectedMonthProvider.notifier)
-                          .setSelectedMonth(newMonth);
-                    },
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        final currentMonth = ref.read(selectedMonthProvider);
+                        final newMonth = DateTime(
+                          currentMonth.year,
+                          currentMonth.month + 1,
+                        );
+                        ref
+                            .read(selectedMonthProvider.notifier)
+                            .setSelectedMonth(newMonth);
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(6.0),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest
+                              .withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),

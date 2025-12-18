@@ -167,26 +167,66 @@ class TransactionListScreen extends ConsumerWidget {
                         children: [
                           // Month Header
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            child: Row(
                               children: [
+                                Container(
+                                  width: 3,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Theme.of(context).colorScheme.primary,
+                                        Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(0.5),
+                                      ],
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                    ),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
                                 Text(
                                   monthKey,
                                   style: Theme.of(context)
                                       .textTheme
-                                      .titleMedium
+                                      .titleSmall
                                       ?.copyWith(
-                                        fontWeight: FontWeight.bold,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 1.0,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.8),
                                       ),
                                 ),
-                                const SizedBox(height: 8),
-                                Divider(
-                                  thickness: 1,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainerHighest,
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    '${monthTransactions.length}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                        ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -313,3 +353,4 @@ List<Transaction> filterTransactions(
 
   return filteredTransactions;
 }
+
