@@ -88,21 +88,21 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
               ),
             )
           : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        padding: const EdgeInsets.all(16.0),
+        child: GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  crossAxisSpacing: 16.0,
-                  mainAxisSpacing: 16.0,
+            crossAxisSpacing: 16.0,
+            mainAxisSpacing: 16.0,
                   childAspectRatio: 1.2,
-                ),
-                itemCount: categoriesList.length,
-                itemBuilder: (context, index) {
-                  final category = categoriesList[index];
+          ),
+          itemCount: categoriesList.length,
+          itemBuilder: (context, index) {
+            final category = categoriesList[index];
                   final transactionCount = allTransactions
                       .where((t) => t.category_id == category.id)
                       .length;
-                  return GestureDetector(
+            return GestureDetector(
                     onTap: isDeletionMode
                         ? null
                         : () {
@@ -117,15 +117,15 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
                               ),
                             );
                           },
-                    onLongPress: _toggleDeletionMode,
-                    child: Stack(
+              onLongPress: _toggleDeletionMode,
+              child: Stack(
                       fit: StackFit.expand,
-                      children: [
-                        // Category Item
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                          decoration: BoxDecoration(
+                children: [
+                  // Category Item
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
@@ -146,10 +146,10 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
                                 offset: const Offset(0, 2),
                               ),
                             ],
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
@@ -161,21 +161,21 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
                                   ),
                                 ),
                                 child: Icon(
-                                  category.icon,
+                          category.icon,
                                   size: 32,
                                   color: category.color,
                                 ),
-                              ),
+                        ),
                               const SizedBox(height: 12),
-                              Text(
-                                category.title,
+                        Text(
+                          category.title,
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleMedium
                                     ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                textAlign: TextAlign.center,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -197,26 +197,26 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
                                         fontWeight: FontWeight.w600,
                                       ),
                                 ),
-                              ),
-                            ],
-                          ),
                         ),
-                        // Delete Button
-                        if (isDeletionMode)
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: GestureDetector(
-                              onTap: () {
-                                ref
-                                    .read(categoriesProvider.notifier)
-                                    .removeCategory(category);
-                              },
-                              child: Container(
+                      ],
+                    ),
+                  ),
+                  // Delete Button
+                  if (isDeletionMode)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: () {
+                          ref
+                              .read(categoriesProvider.notifier)
+                              .removeCategory(category);
+                        },
+                        child: Container(
                                 padding: const EdgeInsets.all(6.0),
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).colorScheme.error,
-                                  shape: BoxShape.circle,
+                            shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
                                       color: Theme.of(context)
@@ -227,20 +227,20 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
                                       offset: const Offset(0, 2),
                                     ),
                                   ],
-                                ),
-                                child: const Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ),
-                            ),
                           ),
-                      ],
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                                  size: 18,
+                          ),
+                        ),
+                      ),
                     ),
-                  );
-                },
+                ],
               ),
+            );
+          },
+        ),
             ),
     );
   }

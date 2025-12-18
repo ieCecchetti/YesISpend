@@ -124,36 +124,36 @@ class TransactionListScreen extends ConsumerWidget {
           Expanded(
             child: sortedMonths.length == 1
                 ? ListView.builder(
-                    key: ValueKey(filteredTransactions.length),
-                    itemCount: filteredTransactions.length,
-                    itemBuilder: (context, index) {
-                      final item = filteredTransactions[index];
-                      return Dismissible(
-                        key: ValueKey(item.id),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: const Icon(
-                            Icons.delete,
-                            color: Colors.white,
-                          ),
-                        ),
-                        onDismissed: (direction) {
-                          ref
-                              .read(transactionsProvider.notifier)
-                              .removeTransaction(item);
-                          ScaffoldMessenger.of(context).showSnackBar(
+              key: ValueKey(filteredTransactions.length),
+              itemCount: filteredTransactions.length,
+              itemBuilder: (context, index) {
+                final item = filteredTransactions[index];
+                return Dismissible(
+                  key: ValueKey(item.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: const Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                    ),
+                  ),
+                  onDismissed: (direction) {
+                    ref
+                        .read(transactionsProvider.notifier)
+                        .removeTransaction(item);
+                    ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text('Transaction dismissed')),
-                          );
-                        },
-                        child: TransactionItem(
-                          item: item,
-                        ),
-                      );
-                    },
+                    );
+                  },
+                  child: TransactionItem(
+                    item: item,
+                  ),
+                );
+              },
                   )
                 : ListView.builder(
                     key: ValueKey(filteredTransactions.length),
@@ -223,7 +223,7 @@ class TransactionListScreen extends ConsumerWidget {
                         ],
                       );
                     },
-                  ),
+            ),
           ),
         ],
       ),

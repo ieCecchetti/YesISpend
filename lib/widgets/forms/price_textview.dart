@@ -8,14 +8,14 @@ Widget priceTextView({
 }) {
   return Builder(
     builder: (context) => Row(
-      children: [
-        Expanded(
-          flex: 1,
-          child: DropdownButtonFormField<String>(
-            value: selectedType,
+    children: [
+      Expanded(
+        flex: 1,
+        child: DropdownButtonFormField<String>(
+          value: selectedType,
             onChanged: readOnly ? null : onTypeChanged,
             isExpanded: true,
-            decoration: InputDecoration(
+          decoration: InputDecoration(
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -38,73 +38,73 @@ Widget priceTextView({
                 );
               }).toList();
             },
-            items: ['-', '+'].map<DropdownMenuItem<String>>((String value) {
+          items: ['-', '+'].map<DropdownMenuItem<String>>((String value) {
               final isIncome = value == '+';
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Center(
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Center(
                   child: Icon(
                     isIncome ? Icons.arrow_upward : Icons.arrow_downward,
                     color: isIncome
                         ? Theme.of(context).colorScheme.secondary
                         : Theme.of(context).colorScheme.error,
                     size: 24,
-                  ),
                 ),
-              );
-            }).toList(),
+              ),
+            );
+          }).toList(),
             icon: Icon(
               Icons.arrow_drop_down,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            style: const TextStyle(
-              fontSize: 16.0,
+          style: const TextStyle(
+            fontSize: 16.0,
             ),
           ),
         ),
         const SizedBox(width: 12.0),
-        Expanded(
-          flex: 5,
-          child: TextFormField(
-            controller: priceController,
+      Expanded(
+        flex: 5,
+        child: TextFormField(
+          controller: priceController,
             enabled: !readOnly,
             readOnly: readOnly,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
-              labelText: 'Price',
-              suffixText: '€',
+            labelText: 'Price',
+            suffixText: '€',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
               filled: true,
               fillColor: Theme.of(context).colorScheme.surface,
-            ),
-            validator: (value) {
-              // Ensure the value is not null or empty
-              if (value == null || value.isEmpty) {
-                return 'Please enter a price';
-              }
-
-              try {
-                // Normalize the input by replacing ',' with '.'
-                final normalizedValue = value.replaceAll(',', '.');
-
-                // Try parsing the value
-                final price = double.parse(normalizedValue);
-
-                // Additional check: Ensure the price is positive or within a valid range
-                if (price < 0) {
-                  return 'Price cannot be negative';
-                }
-                return null; // Input is valid
-              } catch (e) {
-                // Handle invalid input gracefully
-                return 'Please enter a valid number';
-              }
-            },
           ),
+          validator: (value) {
+            // Ensure the value is not null or empty
+            if (value == null || value.isEmpty) {
+              return 'Please enter a price';
+            }
+
+            try {
+              // Normalize the input by replacing ',' with '.'
+              final normalizedValue = value.replaceAll(',', '.');
+
+              // Try parsing the value
+              final price = double.parse(normalizedValue);
+
+              // Additional check: Ensure the price is positive or within a valid range
+              if (price < 0) {
+                return 'Price cannot be negative';
+              }
+              return null; // Input is valid
+            } catch (e) {
+              // Handle invalid input gracefully
+              return 'Please enter a valid number';
+            }
+          },
         ),
-      ],
+      ),
+    ],
     ),
   );
 }

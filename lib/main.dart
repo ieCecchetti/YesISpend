@@ -29,8 +29,8 @@ final theme = ThemeData(
       letterSpacing: -0.5,
     ),
     headlineMedium: GoogleFonts.inter(
-      fontSize: 24,
-      fontWeight: FontWeight.bold,
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
       color: const Color(0xFF1A1A1A),
       letterSpacing: -0.5,
     ),
@@ -48,7 +48,7 @@ final theme = ThemeData(
       fontSize: 14,
       fontWeight: FontWeight.normal,
       color: const Color(0xFF6C7A89),
-    ),
+        ),
     labelLarge: GoogleFonts.inter(
       fontSize: 14,
       fontWeight: FontWeight.w600,
