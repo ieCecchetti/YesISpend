@@ -22,7 +22,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -39,6 +39,35 @@ class DatabaseHelper {
       ''');
       print('Upgraded database to version 2: added recurrent fields');
     }
+    if (oldVersion < 3) {
+      // Create transaction_categories join table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS transaction_categories (
+          transaction_id TEXT NOT NULL,
+          category_id TEXT NOT NULL,
+          PRIMARY KEY (transaction_id, category_id),
+          FOREIGN KEY (transaction_id) REFERENCES financial_record (id) ON DELETE CASCADE,
+          FOREIGN KEY (category_id) REFERENCES transaction_category (id) ON DELETE CASCADE
+        )
+      ''');
+      print('Created transaction_categories table');
+      
+      // Migrate existing category_id data to transaction_categories
+      final transactions = await db.query('financial_record');
+      final batch = db.batch();
+      for (var transaction in transactions) {
+        final transactionId = transaction['id'] as String;
+        final categoryId = transaction['category_id'] as String?;
+        if (categoryId != null && categoryId.isNotEmpty) {
+          batch.insert('transaction_categories', {
+            'transaction_id': transactionId,
+            'category_id': categoryId,
+          });
+        }
+      }
+      await batch.commit(noResult: true);
+      print('Migrated existing category data to transaction_categories');
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -53,22 +82,33 @@ class DatabaseHelper {
     ''');
     print('Created transaction_category table');
 
-    // Create financial_record table
+    // Create financial_record table (without category_id foreign key)
     await db.execute('''
       CREATE TABLE financial_record (
         id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
-        category_id TEXT NOT NULL,
         place TEXT NOT NULL,
         price REAL NOT NULL,
         date TEXT NOT NULL,
         splittedInfo TEXT,
         recurrent INTEGER NOT NULL DEFAULT 0,
-        originalRecurrentId TEXT,
-        FOREIGN KEY (category_id) REFERENCES transaction_category (id) ON DELETE CASCADE
+        originalRecurrentId TEXT
       )
     ''');
     print('Created financial_record table');
+    
+    // Create transaction_categories join table
+    await db.execute('''
+      CREATE TABLE transaction_categories (
+        transaction_id TEXT NOT NULL,
+        category_id TEXT NOT NULL,
+        PRIMARY KEY (transaction_id, category_id),
+        FOREIGN KEY (transaction_id) REFERENCES financial_record (id) ON DELETE CASCADE,
+        FOREIGN KEY (category_id) REFERENCES transaction_category (id) ON DELETE CASCADE
+      )
+    ''');
+    print('Created transaction_categories table');
+    
     _insertDefaultCategories(db);
   }
 
@@ -89,8 +129,6 @@ class DatabaseHelper {
 
   // Delete all records and drop the database
   Future<void> deleteAll() async {
-    final db = await instance.database;
-
     // Delete the database file, effectively dropping all tables
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'monthly_count.db');
@@ -124,5 +162,45 @@ class DatabaseHelper {
   Future close() async {
     final db = await instance.database;
     db.close();
+  }
+
+  // Get category IDs for a transaction
+  Future<List<String>> getTransactionCategories(String transactionId) async {
+    final db = await instance.database;
+    final results = await db.query(
+      'transaction_categories',
+      columns: ['category_id'],
+      where: 'transaction_id = ?',
+      whereArgs: [transactionId],
+    );
+    return results.map((row) => row['category_id'] as String).toList();
+  }
+
+  // Set categories for a transaction (replaces existing)
+  Future<void> setTransactionCategories(
+      String transactionId, List<String> categoryIds) async {
+    final db = await instance.database;
+    final batch = db.batch();
+    
+    // Delete existing categories
+    batch.delete('transaction_categories',
+        where: 'transaction_id = ?', whereArgs: [transactionId]);
+    
+    // Insert new categories
+    for (var categoryId in categoryIds) {
+      batch.insert('transaction_categories', {
+        'transaction_id': transactionId,
+        'category_id': categoryId,
+      });
+    }
+    
+    await batch.commit(noResult: true);
+  }
+
+  // Delete all categories for a transaction
+  Future<void> deleteTransactionCategories(String transactionId) async {
+    final db = await instance.database;
+    await db.delete('transaction_categories',
+        where: 'transaction_id = ?', whereArgs: [transactionId]);
   }
 }

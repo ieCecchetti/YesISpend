@@ -5,12 +5,14 @@ import 'package:flutter/services.dart';
 
 import 'package:monthly_count/screens/opening_screen.dart';
 
+const primaryBlue = Color(0xFF0075FF);
+
 final theme = ThemeData(
   useMaterial3: true,
   colorScheme: ColorScheme.fromSeed(
-    seedColor: const Color(0xFF0075FF), // Vibrant Revolut-style blue
+    seedColor: primaryBlue, // Vibrant Revolut-style blue
     brightness: Brightness.light,
-    primary: const Color(0xFF0075FF), // Vibrant blue - Revolut style
+    primary: primaryBlue, // Vibrant blue - Revolut style
     secondary: const Color(0xFF00D4AA), // Vibrant teal/green
     tertiary: const Color(0xFFFF6B6B), // Vibrant coral/red
     error: const Color(0xFFFF3B30), // Bright red
@@ -69,7 +71,7 @@ final theme = ThemeData(
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFF0075FF),
+      backgroundColor: primaryBlue,
       foregroundColor: Colors.white,
       elevation: 0,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -83,7 +85,7 @@ final theme = ThemeData(
     ),
   ),
   floatingActionButtonTheme: FloatingActionButtonThemeData(
-    backgroundColor: const Color(0xFF0075FF),
+    backgroundColor: primaryBlue,
     foregroundColor: Colors.white,
     elevation: 4,
     shape: RoundedRectangleBorder(
@@ -103,7 +105,7 @@ final theme = ThemeData(
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Color(0xFF0075FF), width: 2),
+      borderSide: const BorderSide(color: primaryBlue, width: 2),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
@@ -127,16 +129,18 @@ final theme = ThemeData(
     ),
   ),
   bottomNavigationBarTheme: BottomNavigationBarThemeData(
-    backgroundColor: Colors.white,
-    selectedItemColor: const Color(0xFF0075FF),
-    unselectedItemColor: const Color(0xFF9CA3AF),
+    backgroundColor: primaryBlue, // Primary blue background
+    selectedItemColor: Colors.white,
+    unselectedItemColor: Colors.white.withOpacity(0.7),
     selectedLabelStyle: GoogleFonts.inter(
       fontSize: 12,
       fontWeight: FontWeight.w600,
+      color: Colors.white,
     ),
     unselectedLabelStyle: GoogleFonts.inter(
       fontSize: 12,
       fontWeight: FontWeight.normal,
+      color: Colors.white.withOpacity(0.7),
     ),
     type: BottomNavigationBarType.fixed,
     elevation: 8,

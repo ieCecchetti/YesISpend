@@ -32,7 +32,7 @@ class _CreateTransactionScreenState
   final _placeController = TextEditingController();
   String _transactionType = '-';
   final _priceController = TextEditingController();
-  TransactionCategory? _selectedCategory;
+  List<TransactionCategory> _selectedCategories = [];
   DateTime _selectedDate = DateTime.now();
   // split controllers
   bool _isSplitWithSomeone = false;
@@ -55,13 +55,14 @@ class _CreateTransactionScreenState
       _transactionType = tx.price < 0 ? '-' : '+';
       _selectedDate = tx.date;
       try {
-        _selectedCategory = ref
-            .read(categoriesProvider)
-            .firstWhere((cat) => cat.id == tx.category_id);
+        final allCategories = ref.read(categoriesProvider);
+        _selectedCategories = allCategories
+            .where((cat) => tx.category_ids.contains(cat.id))
+            .toList();
       } catch (_) {
         // should never happen, but in case of a missing category
-        print('errors in category id');
-        _selectedCategory = null;
+        print('errors in category ids');
+        _selectedCategories = [];
       }
 
       if (tx.splitInfo != null) {
@@ -102,12 +103,12 @@ class _CreateTransactionScreenState
   }
 
   void _submitForm() {
-    if (_formKey.currentState!.validate() && _selectedCategory != null) {
+    if (_formKey.currentState!.validate() && _selectedCategories.isNotEmpty) {
       final transactionId = widget.transaction?.id ?? const Uuid().v4();
       final newTransaction = Transaction(
         id: transactionId,
         title: _titleController.text,
-        category_id: _selectedCategory!.id,
+        category_ids: _selectedCategories.map((cat) => cat.id).toList(),
         place: _placeController.text,
         price: !_isSplitWithSomeone
             ? getTransactionAmount(_transactionType, _priceController.text)
@@ -246,50 +247,84 @@ class _CreateTransactionScreenState
             ),
             const SizedBox(height: 20.0),
 
-            // Category Dropdown
-            DropdownButtonFormField<TransactionCategory>(
-              value: _selectedCategory,
-              items: categoryList
-                  .map(
-                    (category) => DropdownMenuItem(
-                      value: category,
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: category.color.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8),
+            // Categories Selection
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Categories',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8.0,
+                    runSpacing: 8.0,
+                    children: categoryList.map((category) {
+                      final isSelected = _selectedCategories.contains(category);
+                      return FilterChip(
+                        selected: isSelected,
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              category.icon,
+                              size: 18,
+                              color: isSelected
+                                  ? Colors.white
+                                  : category.color,
                             ),
-                            child: Icon(category.icon,
-                                color: category.color, size: 20),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(category.title),
-                        ],
+                            const SizedBox(width: 6),
+                            Text(category.title),
+                          ],
+                        ),
+                        onSelected: _isReadOnly
+                            ? null
+                            : (bool selected) {
+                                setState(() {
+                                  if (selected) {
+                                    if (!_selectedCategories.contains(category)) {
+                                      _selectedCategories.add(category);
+                                    }
+                                  } else {
+                                    _selectedCategories.remove(category);
+                                  }
+                                });
+                              },
+                        selectedColor: category.color,
+                        checkmarkColor: Colors.white,
+                        backgroundColor: category.color.withOpacity(0.1),
+                        side: BorderSide(
+                          color: isSelected
+                              ? category.color
+                              : category.color.withOpacity(0.3),
+                          width: isSelected ? 2 : 1,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  if (!_isReadOnly && _selectedCategories.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        'Please select at least one category',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
                       ),
                     ),
-                  )
-                  .toList(),
-              onChanged: _isReadOnly
-                  ? null
-                  : (category) {
-                setState(() {
-                  _selectedCategory = category;
-                });
-              },
-              decoration: InputDecoration(
-                labelText: 'Category',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surface,
+                ],
               ),
-              validator: (value) =>
-                  !_isReadOnly && value == null
-                  ? 'Please select a category'
-                  : null,
             ),
             const SizedBox(height: 20.0),
 

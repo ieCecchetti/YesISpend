@@ -25,11 +25,20 @@ class CategoryPieChart extends ConsumerWidget {
     final Map<TransactionCategory, double> categoryTotals = {};
     for (var transaction in validTransactions) {
       if (transaction.price < 0) {
-      categoryTotals.update(
-        categories.firstWhere((c) => c.id == transaction.category_id),
-        (value) => value + transaction.price.abs(),
-        ifAbsent: () => transaction.price.abs(),
-      );
+        // Distribute expense across all categories
+        final amountPerCategory = transaction.price.abs() / transaction.category_ids.length;
+        for (var categoryId in transaction.category_ids) {
+          try {
+            final category = categories.firstWhere((c) => c.id == categoryId);
+            categoryTotals.update(
+              category,
+              (value) => value + amountPerCategory,
+              ifAbsent: () => amountPerCategory,
+            );
+          } catch (_) {
+            // Category not found, skip
+          }
+        }
       }
     }
     // Add categories that do not exist in transactions with a total of 0

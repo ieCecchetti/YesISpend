@@ -46,7 +46,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't1',
     title: 'Weekly Groceries',
-    category_id: mockCategories[0].id,
+    category_ids: [mockCategories[0].id],
     place: 'Supermarket',
     price: -54.99,
     date: DateTime.parse('2024-12-01 15:01:00'),
@@ -54,7 +54,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't0',
     title: 'Monthly Salary',
-    category_id: mockCategories[4].id,
+    category_ids: [mockCategories[4].id],
     place: 'Septeo Proptech',
     price: 3400.0,
     date: DateTime.parse('2024-12-10 15:01:00'),
@@ -62,7 +62,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't2',
     title: 'Restaurant',
-    category_id: mockCategories[5].id,
+    category_ids: [mockCategories[5].id],
     place: 'Chamade',
     price: -37.00,
     date: DateTime.parse('2024-12-02 21:01:00'),
@@ -70,7 +70,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't3',
     title: 'Cinema',
-    category_id: mockCategories[5].id,
+    category_ids: [mockCategories[5].id],
     place: 'Geometti Jesi',
     price: -12.50,
     date: DateTime.parse('2024-12-03 22:01:00'),
@@ -78,7 +78,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't4',
     title: 'TARI',
-    category_id: mockCategories[2].id,
+    category_ids: [mockCategories[2].id],
     place: 'Geometti Jesi',
     price: -12.50,
     date: DateTime.parse('2024-12-04 22:01:00'),
@@ -86,7 +86,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't5',
     title: 'Gym Membership',
-    category_id: mockCategories[1].id,
+    category_ids: [mockCategories[1].id],
     place: 'Fitness Center',
     price: -45.00,
     date: DateTime.parse('2024-12-05 18:00:00'),
@@ -94,7 +94,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't6',
     title: 'Fuel',
-    category_id: mockCategories[3].id,
+    category_ids: [mockCategories[3].id],
     place: 'Gas Station',
     price: -60.00,
     date: DateTime.parse('2024-12-06 09:00:00'),
@@ -102,7 +102,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't7',
     title: 'Office Supplies',
-    category_id: mockCategories[4].id,
+    category_ids: [mockCategories[4].id],
     place: 'Stationery Shop',
     price: -23.75,
     date: DateTime.parse('2024-12-07 14:30:00'),
@@ -110,7 +110,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't8',
     title: 'Dinner',
-    category_id: mockCategories[5].id,
+    category_ids: [mockCategories[5].id],
     place: 'Restaurant',
     price: -50.00,
     date: DateTime.parse('2024-12-08 20:00:00'),
@@ -118,7 +118,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't9',
     title: 'Electricity Bill',
-    category_id: mockCategories[2].id,
+    category_ids: [mockCategories[2].id],
     place: 'Online Payment',
     price: -75.00,
     date: DateTime.parse('2024-12-09 10:00:00'),
@@ -126,7 +126,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't10',
     title: 'Movie Night',
-    category_id: mockCategories[5].id,
+    category_ids: [mockCategories[5].id],
     place: 'Cinema',
     price: -15.00,
     date: DateTime.parse('2024-12-10 19:00:00'),
@@ -134,7 +134,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't11',
     title: 'Lunch',
-    category_id: mockCategories[5].id,
+    category_ids: [mockCategories[5].id],
     place: 'Cafe',
     price: -20.00,
     date: DateTime.parse('2024-12-11 12:00:00'),
@@ -142,7 +142,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't12',
     title: 'Book Purchase',
-    category_id: mockCategories[4].id,
+    category_ids: [mockCategories[4].id],
     place: 'Bookstore',
     price: -30.00,
     date: DateTime.parse('2024-12-12 16:00:00'),
@@ -150,7 +150,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't13',
     title: 'Concert Ticket',
-    category_id: mockCategories[5].id,
+    category_ids: [mockCategories[5].id],
     place: 'Concert Hall',
     price: -80.00,
     date: DateTime.parse('2024-12-13 20:00:00'),
@@ -158,7 +158,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't14',
     title: 'Grocery Shopping',
-    category_id: mockCategories[0].id,
+    category_ids: [mockCategories[0].id],
     place: 'Supermarket',
     price: -65.00,
     date: DateTime.parse('2024-12-14 10:00:00'),
@@ -166,7 +166,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't15',
     title: 'Taxi Ride',
-    category_id: mockCategories[3].id,
+    category_ids: [mockCategories[3].id],
     place: 'City Center',
     price: -25.00,
     date: DateTime.parse('2024-12-15 22:00:00'),
@@ -174,7 +174,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't16',
     title: 'Dinner',
-    category_id: mockCategories[5].id,
+    category_ids: [mockCategories[5].id],
     place: 'Restaurant',
     price: -45.00,
     date: DateTime.parse('2024-12-16 20:00:00'),
@@ -182,7 +182,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't17',
     title: 'Internet Bill',
-    category_id: mockCategories[2].id,
+    category_ids: [mockCategories[2].id],
     place: 'Online Payment',
     price: -50.00,
     date: DateTime.parse('2024-12-17 10:00:00'),
@@ -190,7 +190,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't18',
     title: 'Gym Membership',
-    category_id: mockCategories[1].id,
+    category_ids: [mockCategories[1].id],
     place: 'Fitness Center',
     price: -45.00,
     date: DateTime.parse('2024-12-18 18:00:00'),
@@ -198,7 +198,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't19',
     title: 'Fuel',
-    category_id: mockCategories[3].id,
+    category_ids: [mockCategories[3].id],
     place: 'Gas Station',
     price: -60.00,
     date: DateTime.parse('2024-12-19 09:00:00'),
@@ -206,7 +206,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't20',
     title: 'Office Supplies',
-    category_id: mockCategories[4].id,
+    category_ids: [mockCategories[4].id],
     place: 'Stationery Shop',
     price: -23.75,
     date: DateTime.parse('2024-12-20 14:30:00'),
@@ -214,7 +214,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't21',
     title: 'Dinner',
-    category_id: mockCategories[5].id,
+    category_ids: [mockCategories[5].id],
     place: 'Restaurant',
     price: -50.00,
     date: DateTime.parse('2024-12-21 20:00:00'),
@@ -222,7 +222,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't22',
     title: 'Electricity Bill',
-    category_id: mockCategories[2].id,
+    category_ids: [mockCategories[2].id],
     place: 'Online Payment',
     price: -75.00,
     date: DateTime.parse('2024-12-22 10:00:00'),
@@ -230,7 +230,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't23',
     title: 'Movie Night',
-    category_id: mockCategories[5].id,
+    category_ids: [mockCategories[5].id],
     place: 'Cinema',
     price: -15.00,
     date: DateTime.parse('2024-12-23 19:00:00'),
@@ -238,7 +238,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't24',
     title: 'Lunch',
-    category_id: mockCategories[5].id,
+    category_ids: [mockCategories[5].id],
     place: 'Cafe',
     price: -20.00,
     date: DateTime.parse('2024-12-24 12:00:00'),
@@ -246,7 +246,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't25',
     title: 'Book Purchase',
-    category_id: mockCategories[4].id,
+    category_ids: [mockCategories[4].id],
     place: 'Bookstore',
     price: -30.00,
     date: DateTime.parse('2024-12-25 16:00:00'),
@@ -254,7 +254,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't26',
     title: 'Concert Ticket',
-    category_id: mockCategories[5].id,
+    category_ids: [mockCategories[5].id],
     place: 'Concert Hall',
     price: -80.00,
     date: DateTime.parse('2024-12-26 20:00:00'),
@@ -262,7 +262,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't27',
     title: 'Grocery Shopping',
-    category_id: mockCategories[0].id,
+    category_ids: [mockCategories[0].id],
     place: 'Supermarket',
     price: -65.00,
     date: DateTime.parse('2024-12-27 10:00:00'),
@@ -270,7 +270,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't28',
     title: 'Taxi Ride',
-    category_id: mockCategories[3].id,
+    category_ids: [mockCategories[3].id],
     place: 'City Center',
     price: -25.00,
     date: DateTime.parse('2024-12-28 22:00:00'),
@@ -278,7 +278,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't29',
     title: 'Dinner',
-    category_id: mockCategories[5].id,
+    category_ids: [mockCategories[5].id],
     place: 'Restaurant',
     price: -45.00,
     date: DateTime.parse('2024-12-29 20:00:00'),
@@ -286,7 +286,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't30',
     title: 'Internet Bill',
-    category_id: mockCategories[2].id,
+    category_ids: [mockCategories[2].id],
     place: 'Online Payment',
     price: -50.00,
     date: DateTime.parse('2024-12-30 10:00:00'),
@@ -294,7 +294,7 @@ final List<Transaction> mockTransactions = [
   Transaction(
     id: 't31',
     title: 'New Year Party',
-    category_id: mockCategories[5].id,
+    category_ids: [mockCategories[5].id],
     place: 'Party Venue',
     price: -100.00,
     date: DateTime.parse('2024-12-31 23:00:00'),

@@ -14,8 +14,16 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
   Future<void> _initializeTransactions() async {
     try {
       final transactionData = await _dbHelper.queryAll('financial_record');
-      final transactions =
-          transactionData.map((e) => Transaction.fromMap(e)).toList();
+      final transactions = <Transaction>[];
+      
+      for (var transactionMap in transactionData) {
+        final transaction = Transaction.fromMap(transactionMap);
+        // Load categories from join table
+        final categoryIds = await _dbHelper.getTransactionCategories(transaction.id);
+        transaction.category_ids = categoryIds;
+        transactions.add(transaction);
+      }
+      
       state = transactions;
       // Check and create recurrent transactions
       _checkAndCreateRecurrentTransactions(transactions);
@@ -50,7 +58,7 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
           final newTx = Transaction(
             id: '${recurrentTx.id}_${currentDate.millisecondsSinceEpoch}',
             title: recurrentTx.title,
-            category_id: recurrentTx.category_id,
+            category_ids: List.from(recurrentTx.category_ids),
             place: recurrentTx.place,
             price: recurrentTx.price,
             date: currentDate,
@@ -59,6 +67,7 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
             originalRecurrentId: recurrentTx.id,
           );
           await _dbHelper.insert('financial_record', newTx.toMap());
+          await _dbHelper.setTransactionCategories(newTx.id, newTx.category_ids);
           state = [...state, newTx];
         }
       }
@@ -88,6 +97,8 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
   void addTransaction(Transaction transaction) async {
     // Insert into the database
     await _dbHelper.insert('financial_record', transaction.toMap());
+    // Insert categories into join table
+    await _dbHelper.setTransactionCategories(transaction.id, transaction.category_ids);
     state = [...state, transaction];
     // Check if we need to create recurrent transactions
     _checkAndCreateRecurrentTransactions(state);
@@ -95,7 +106,7 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
 
   // Remove a transaction
   void removeTransaction(Transaction transaction) async {
-    // Remove from the database
+    // Remove from the database (cascade will delete from transaction_categories)
     await _dbHelper.delete('financial_record', transaction.id);
     state = state.where((element) => element.id != transaction.id).toList();
   }
@@ -104,6 +115,8 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
   void updateTransaction(Transaction transaction) async {
     // Update the transaction in the database
     await _dbHelper.update('financial_record', transaction.toMap());
+    // Update categories in join table
+    await _dbHelper.setTransactionCategories(transaction.id, transaction.category_ids);
     // Update the transaction in the state
     state = state.map((item) => item.id == transaction.id ? transaction : item).toList();
   }

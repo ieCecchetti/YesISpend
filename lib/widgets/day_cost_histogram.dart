@@ -49,12 +49,15 @@ class DayCostHistogram extends ConsumerWidget {
       if (transaction.price >= 0) continue; // Only expenses
 
       final day = transaction.date.day;
-      final categoryId = transaction.category_id;
       final amount = transaction.price.abs();
+      // Distribute amount across all categories
+      final amountPerCategory = amount / transaction.category_ids.length;
 
       dailyCategoryExpenses.putIfAbsent(day, () => {});
-      dailyCategoryExpenses[day]![categoryId] =
-          (dailyCategoryExpenses[day]![categoryId] ?? 0) + amount;
+      for (var categoryId in transaction.category_ids) {
+        dailyCategoryExpenses[day]![categoryId] =
+            (dailyCategoryExpenses[day]![categoryId] ?? 0) + amountPerCategory;
+      }
     }
 
     // Prepare chart data
@@ -239,7 +242,7 @@ class DayCostHistogram extends ConsumerWidget {
             spacing: 12,
             runSpacing: 8,
             children: categories.where((category) {
-              return transactions.any((transaction) => transaction.category_id == category.id);
+              return transactions.any((transaction) => transaction.category_ids.contains(category.id));
             }).map((category) {
               return Row(
               mainAxisSize: MainAxisSize.min,

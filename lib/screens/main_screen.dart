@@ -79,7 +79,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
           final previewTx = Transaction(
             id: '${recurrentTx.id}_preview_${nextDate.millisecondsSinceEpoch}',
             title: recurrentTx.title,
-            category_id: recurrentTx.category_id,
+            category_ids: List.from(recurrentTx.category_ids),
             place: recurrentTx.place,
             price: recurrentTx.price,
             date: nextDate,
@@ -114,19 +114,25 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
 
     return Scaffold(
       body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long),
-            label: 'Transactions',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.analytics),
-            label: 'Analytics',
-          ),
-        ],
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long),
+              label: 'Transactions',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.analytics),
+              label: 'Analytics',
+            ),
+          ],
+        ),
       ),
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton(

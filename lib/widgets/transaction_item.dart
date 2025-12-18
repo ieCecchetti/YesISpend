@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:monthly_count/models/transaction.dart';
-import 'package:monthly_count/models/transaction_category.dart';
-import 'package:collection/collection.dart';
-import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:monthly_count/screens/create_transaction_screen.dart';
+import 'package:monthly_count/widgets/multi_category_icon.dart';
 import 'package:intl/intl.dart';
 
 class TransactionItem extends ConsumerWidget {
@@ -15,22 +13,6 @@ class TransactionItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final categories = ref.watch(categoriesProvider);
-    if (categories.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    TransactionCategory? category = categories.firstWhereOrNull(
-      (element) => element.id == item.category_id,
-    );
-
-    category ??= TransactionCategory(
-      id: '0',
-      title: 'Unknown',
-      color: Colors.grey,
-      iconCodePoint: Icons.help_outline.codePoint,
-    );
-
     final String formattedDate = DateFormat('dd MMM yyyy').format(item.date);
 
     return Card(
@@ -53,29 +35,19 @@ class TransactionItem extends ConsumerWidget {
           child: Row(
         children: [
           // Circular background for the icon
-          item.splitInfo != null
+              item.splitInfo != null || item.recurrent
               ? Stack(
                   alignment: Alignment.center,
                   children: [
-                      // Outer Circle (Indicator of Split)
-                    Container(
-                        padding: const EdgeInsets.all(10.0),
-                      decoration: BoxDecoration(
-                          color: category.color.withOpacity(0.15),
-                        shape: BoxShape.circle,
-                          border: Border.all(
-                            color: category.color.withOpacity(0.3),
-                            width: 2,
-                          ),
-                      ),
-                      child: Icon(
-                        category.icon,
-                          size: 28.0,
-                          color: category.color,
-                      ),
-                    ),
+                        // Multi-category icon widget
+                        MultiCategoryIcon(
+                          categoryIds: item.category_ids,
+                          showRecurrent: item.recurrent,
+                          showShared: item.splitInfo != null,
+                        ),
 
-                    // Percentage Indicator (Positioned on Top)
+                        // Percentage Indicator (Positioned on Top) - for split
+                        if (item.splitInfo != null)
                     Positioned(
                         top: -2,
                       right: -2,
@@ -101,7 +73,8 @@ class TransactionItem extends ConsumerWidget {
                     ),
 
                     // Return Icon if hasReturned is true
-                    if (item.splitInfo!.hasReturned)
+                        if (item.splitInfo != null &&
+                            item.splitInfo!.hasReturned)
                         Positioned(
                           bottom: -2,
                           left: -2,
@@ -123,22 +96,9 @@ class TransactionItem extends ConsumerWidget {
                         ),
                       ),
                   ],
-                )
-              : Container(
-                    padding: const EdgeInsets.all(10.0),
-                  decoration: BoxDecoration(
-                      color: category.color.withOpacity(0.15),
-                    shape: BoxShape.circle,
-                      border: Border.all(
-                        color: category.color.withOpacity(0.3),
-                        width: 2,
-                      ),
-                  ),
-                  child: Icon(
-                    category.icon,
-                      size: 28.0,
-                      color: category.color,
-                  ),
+                    )
+                  : MultiCategoryIcon(
+                      categoryIds: item.category_ids,
                 ),
           const SizedBox(width: 16.0),
           // Title and Date at Place

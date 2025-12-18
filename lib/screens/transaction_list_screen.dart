@@ -291,7 +291,7 @@ List<Transaction> filterTransactions(
     var selectedCategories =
         filters[FilterStyle.categoryFilter] as List<String>;
     filteredTransactions = filteredTransactions
-        .where((element) => selectedCategories.contains(element.category_id))
+        .where((element) => element.category_ids.any((catId) => selectedCategories.contains(catId)))
         .toList();
   }
 

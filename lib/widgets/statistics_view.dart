@@ -172,9 +172,12 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
     final Map<String, double> categoryExpenses = {};
     for (var transaction in validTransactions) {
       if (transaction.price < 0) {
-        categoryExpenses[transaction.category_id] =
-            (categoryExpenses[transaction.category_id] ?? 0.0) +
-                transaction.price.abs();
+        // Distribute expense across all categories
+        final amountPerCategory = transaction.price.abs() / transaction.category_ids.length;
+        for (var categoryId in transaction.category_ids) {
+          categoryExpenses[categoryId] =
+              (categoryExpenses[categoryId] ?? 0.0) + amountPerCategory;
+        }
       }
     }
     String? mostExpensiveCategoryId;

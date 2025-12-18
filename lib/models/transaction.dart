@@ -4,7 +4,7 @@ import 'dart:convert';
 class Transaction {
   String id;
   String title;
-  String category_id;
+  List<String> category_ids;
   String place;
   double price;
   DateTime date;
@@ -15,7 +15,7 @@ class Transaction {
   Transaction({
     required this.id,
     required this.title,
-    required this.category_id,
+    required this.category_ids,
     required this.place,
     required this.price,
     required this.date,
@@ -26,7 +26,7 @@ class Transaction {
 
   @override
   String toString() {
-    return 'Transaction{id: $id, title: $title, category_id: $category_id, place: $place, price: $price, date: $date, splittedInfo: $splitInfo}';
+    return 'Transaction{id: $id, title: $title, category_ids: $category_ids, place: $place, price: $price, date: $date, splittedInfo: $splitInfo}';
   }
 
   // Convert a Transaction into a Map
@@ -34,7 +34,6 @@ class Transaction {
     return {
       'id': id,
       'title': title,
-      'category_id': category_id,
       'place': place,
       'price': price,
       'date': date.toIso8601String(),
@@ -49,7 +48,7 @@ class Transaction {
     return Transaction(
       id: map['id'] as String,
       title: map['title'] as String,
-      category_id: map['category_id'] as String,
+      category_ids: [], // Will be populated from transaction_categories table
       place: map['place'] as String,
       price: map['price'] as double,
       date: DateTime.parse(map['date'] as String),
@@ -63,5 +62,8 @@ class Transaction {
               : null,
     );
   }
+
+  // Helper method for backward compatibility (returns first category or empty string)
+  String get category_id => category_ids.isNotEmpty ? category_ids.first : '';
 
 }

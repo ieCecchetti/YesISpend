@@ -100,7 +100,7 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
           itemBuilder: (context, index) {
             final category = categoriesList[index];
                   final transactionCount = allTransactions
-                      .where((t) => t.category_id == category.id)
+                      .where((t) => t.category_ids.contains(category.id))
                       .length;
             return GestureDetector(
                     onTap: isDeletionMode
