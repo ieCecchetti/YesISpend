@@ -34,6 +34,20 @@ class CategoriesNotifier extends StateNotifier<List<TransactionCategory>> {
     state = [...state, category];
   }
 
+  void updateCategory(TransactionCategory category) async {
+    // Prevent editing of Uncategorized category
+    if (category.id == '0') {
+      print('Cannot edit Uncategorized category');
+      return;
+    }
+
+    // Update in the database
+    await _dbHelper.update('transaction_category', category.toMap());
+
+    state =
+        state.map((item) => item.id == category.id ? category : item).toList();
+  }
+
   void removeCategory(TransactionCategory category) async {
     // Prevent deletion of Uncategorized category
     if (category.id == '0') {

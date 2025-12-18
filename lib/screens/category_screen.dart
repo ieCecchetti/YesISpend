@@ -51,16 +51,16 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
               tooltip: 'Create new category',
             ),
             isDeletionMode
-                ? IconButton(
-                    onPressed: _toggleDeletionMode,
-                    icon: const Icon(Icons.close),
-                    tooltip: 'Exit Deletion Mode',
-                  )
-                : IconButton(
-                    onPressed: _toggleDeletionMode,
-                    icon: const Icon(Icons.delete),
-                    tooltip: 'Enter Deletion Mode',
-                  ),
+              ? IconButton(
+                  onPressed: _toggleDeletionMode,
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Exit Edit Mode',
+                )
+              : IconButton(
+                  onPressed: _toggleDeletionMode,
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Enter Edit Mode',
+                ),
         ],
       ),
       body: categoriesList.isEmpty
@@ -201,41 +201,88 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
                       ],
                     ),
                   ),
-                        // Delete Button (hidden for Uncategorized category)
+                        // Edit and Delete Buttons (hidden for Uncategorized category)
                         if (isDeletionMode && category.id != '0')
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: GestureDetector(
-                        onTap: () {
-                          ref
-                              .read(categoriesProvider.notifier)
-                              .removeCategory(category);
-                        },
-                        child: Container(
-                                padding: const EdgeInsets.all(6.0),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.error,
-                            shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .error
-                                          .withOpacity(0.5),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
+                          Stack(
+                            children: [
+                              // Edit Button
+                              Positioned(
+                                top: 8,
+                                right: 48,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            CreateCategoryScreen(
+                                          category: category,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6.0),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withOpacity(0.5),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                    child: const Icon(
+                                      Icons.edit,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Delete Button
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    ref
+                                        .read(categoriesProvider.notifier)
+                                        .removeCategory(category);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6.0),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Theme.of(context).colorScheme.error,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .error
+                                              .withOpacity(0.5),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          child: const Icon(
-                            Icons.close,
-                            color: Colors.white,
-                                  size: 18,
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               ),
             );

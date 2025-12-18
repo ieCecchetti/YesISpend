@@ -3,12 +3,15 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:monthly_count/data/icons.dart';
 import 'package:monthly_count/models/transaction_category.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:monthly_count/widgets/icon_picker_dialog.dart';
 
 class CreateCategoryScreen extends ConsumerStatefulWidget {
-  const CreateCategoryScreen({super.key});
+  final TransactionCategory? category;
+
+  const CreateCategoryScreen({super.key, this.category});
 
   @override
   ConsumerState<CreateCategoryScreen> createState() {
@@ -18,9 +21,31 @@ class CreateCategoryScreen extends ConsumerStatefulWidget {
 
 class _CreateCategoryScreenState extends ConsumerState<CreateCategoryScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  IconData _selectedIcon = Icons.category;
-  Color _selectedColor = Colors.blue;
+  late final TextEditingController _titleController;
+  late IconData _selectedIcon;
+  late Color _selectedColor;
+  late bool _isEditMode;
+
+  @override
+  void initState() {
+    super.initState();
+    _isEditMode = widget.category != null;
+    if (_isEditMode) {
+      _titleController = TextEditingController(text: widget.category!.title);
+      _selectedIcon = getIconByCodePoint(widget.category!.iconCodePoint);
+      _selectedColor = widget.category!.color;
+    } else {
+      _titleController = TextEditingController();
+      _selectedIcon = Icons.category;
+      _selectedColor = Colors.blue;
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
+  }
 
   void _pickIcon() async {
     final selectedIcon = await showDialog<IconData>(
@@ -62,7 +87,7 @@ class _CreateCategoryScreenState extends ConsumerState<CreateCategoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Category'),
+        title: Text(_isEditMode ? 'Edit Category' : 'Create Category'),
       ),
       body: Form(
         key: _formKey,
@@ -208,22 +233,41 @@ class _CreateCategoryScreenState extends ConsumerState<CreateCategoryScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
-                    final newCategory = TransactionCategory(
-                      id: const Uuid().v4(),
-                      title: _titleController.text,
-                      iconCodePoint: _selectedIcon.codePoint,
-                      color: _selectedColor,
-                    );
+                    if (_isEditMode) {
+                      // Update existing category
+                      final updatedCategory = TransactionCategory(
+                        id: widget.category!.id,
+                        title: _titleController.text,
+                        iconCodePoint: _selectedIcon.codePoint,
+                        color: _selectedColor,
+                      );
 
-                    ref
-                        .read(categoriesProvider.notifier)
-                        .addCategory(newCategory);
-                    ScaffoldMessenger.of(context).clearSnackBars();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Category created')),
-                    );
+                      ref
+                          .read(categoriesProvider.notifier)
+                          .updateCategory(updatedCategory);
+                      ScaffoldMessenger.of(context).clearSnackBars();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Category updated')),
+                      );
+                    } else {
+                      // Create new category
+                      final newCategory = TransactionCategory(
+                        id: const Uuid().v4(),
+                        title: _titleController.text,
+                        iconCodePoint: _selectedIcon.codePoint,
+                        color: _selectedColor,
+                      );
 
-                    Navigator.pop(context, newCategory);
+                      ref
+                          .read(categoriesProvider.notifier)
+                          .addCategory(newCategory);
+                      ScaffoldMessenger.of(context).clearSnackBars();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Category created')),
+                      );
+                    }
+
+                    Navigator.pop(context);
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -231,9 +275,9 @@ class _CreateCategoryScreenState extends ConsumerState<CreateCategoryScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: const Text(
-                  'Create Category',
-                  style: TextStyle(
+                child: Text(
+                  _isEditMode ? 'Update Category' : 'Create Category',
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
