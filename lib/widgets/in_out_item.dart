@@ -47,6 +47,7 @@ class IncomeOutcomeWidget extends ConsumerWidget {
                   .surfaceContainerHighest
                   .withOpacity(0.3),
         ),
+      child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -67,8 +68,9 @@ class IncomeOutcomeWidget extends ConsumerWidget {
                   const SizedBox(height: 8),
                   Text(
                     '${balance.toStringAsFixed(2)}€',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
+                          fontSize: 24,
                           color: balance >= 0
                               ? Theme.of(context).colorScheme.secondary
                               : Theme.of(context).colorScheme.error,
@@ -174,7 +176,9 @@ class IncomeOutcomeWidget extends ConsumerWidget {
               ],
             ),
           ],
-        ));
+        ),
+      ),
+    );
   }
 }
 
@@ -205,16 +209,18 @@ Widget _infoCard(String title, double amount, Color color, IconData icon) {
             const SizedBox(height: 12),
             Text(
               title,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w600,
+                    fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
             ),
             const SizedBox(height: 4),
             Text(
               '${amount.toStringAsFixed(2)}€',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
+                    fontSize: 18,
                     color: color,
                   ),
             ),

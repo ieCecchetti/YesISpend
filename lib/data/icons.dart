@@ -34,6 +34,8 @@ const List<IconData> availableIcons = [
   Icons.flight,
   Icons.train,
   Icons.celebration,
+  Icons.downhill_skiing, // Ski icon
+  Icons.terrain, // Mountaineering/climbing icon
   Icons.more_horiz,
 ];
 

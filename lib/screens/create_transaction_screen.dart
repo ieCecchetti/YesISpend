@@ -13,6 +13,7 @@ import 'package:monthly_count/widgets/forms/price_textview.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:monthly_count/services/image_service.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:monthly_count/widgets/expand_panel.dart';
 
 class CreateTransactionScreen extends ConsumerStatefulWidget {
   final Transaction? transaction;
@@ -426,57 +427,31 @@ class _CreateTransactionScreenState
             if (!_isReadOnly ||
                 _imagePaths.isNotEmpty ||
                 _selectedImages.isNotEmpty)
-              Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color:
-                        Theme.of(context).colorScheme.surfaceContainerHighest,
-                  ),
-                ),
+              ExpandPanel(
+                title: 'Receipt Images',
+                icon: Icons.receipt_long,
+                initiallyExpanded: _imagePaths.isNotEmpty || _selectedImages.isNotEmpty,
+                trailing: _isReadOnly &&
+                        (_imagePaths.isNotEmpty ||
+                            _selectedImages.isNotEmpty)
+                    ? IconButton(
+                        onPressed: () => _shareReceipts([
+                          ..._imagePaths,
+                          ..._selectedImages.map((img) => img.path)
+                        ]),
+                        icon: Icon(
+                          Icons.share,
+                          size: 20,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        tooltip: 'Share receipts',
+                      )
+                    : null,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.receipt_long,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Receipt Images',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ),
-                        if (_isReadOnly &&
-                            (_imagePaths.isNotEmpty ||
-                                _selectedImages.isNotEmpty))
-                          IconButton(
-                            onPressed: () => _shareReceipts([
-                              ..._imagePaths,
-                              ..._selectedImages.map((img) => img.path)
-                            ]),
-                            icon: Icon(
-                              Icons.share,
-                              size: 20,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            tooltip: 'Share receipts',
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
                     // Display images - carousel for read-only, grid for edit
                     if (_imagePaths.isNotEmpty || _selectedImages.isNotEmpty)
                       _isReadOnly
@@ -577,29 +552,12 @@ class _CreateTransactionScreenState
             const SizedBox(height: 20.0),
 
             // Advanced Section
-            Theme(
-              data: Theme.of(context).copyWith(
-                dividerColor:
-                    Theme.of(context).colorScheme.surfaceContainerHighest,
-              ),
-              child: ExpansionTile(
-                title: Text(
-                  'Advanced',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-                leading: Icon(
-                  Icons.settings_outlined,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                initiallyExpanded: false,
+            ExpandPanel(
+              title: 'Advanced',
+              icon: Icons.settings_outlined,
+              initiallyExpanded: false,
+              child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 8.0),
-                    child: Column(
-                      children: [
                         // Place Field
                         TextFormField(
                           controller: _placeController,
@@ -847,9 +805,6 @@ class _CreateTransactionScreenState
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
             ),
             const SizedBox(height: 20.0),
 
