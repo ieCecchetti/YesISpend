@@ -146,15 +146,106 @@ class CsvService {
 
       final List<Transaction> transactions = [];
       final categoriesNotifier = ref.read(categoriesProvider.notifier);
-      final existingCategories = ref.read(categoriesProvider);
       
+      // First pass: Import all categories
       bool inCategoriesSection = false;
       bool inTransactionsSection = false;
-
-      // Process lines
+      final List<Map<String, dynamic>> categoriesToImport = [];
+      
       for (var line in lines) {
         line = line.trim();
         
+        // Skip empty lines
+        if (line.isEmpty) {
+          continue;
+        }
+
+        // Check for section headers
+        if (line == '# Categories Section') {
+          inCategoriesSection = true;
+          inTransactionsSection = false;
+          continue;
+        }
+        if (line == '# Transactions Section') {
+          inCategoriesSection = false;
+          inTransactionsSection = true;
+          break; // Stop after categories section
+        }
+        if (line.startsWith('#')) {
+          continue; // Skip other comments
+        }
+
+        // Process Categories Section
+        if (inCategoriesSection && line.startsWith('Category ID')) {
+          continue; // Skip category header
+        }
+        if (inCategoriesSection && !line.startsWith('ID,Title,Categories')) {
+          final categoryFields = _parseCsvLine(line);
+          if (categoryFields.length >= 4) {
+            try {
+              final categoryId = categoryFields[0];
+              final categoryTitle = categoryFields[1].trim();
+              final iconCodePoint = int.parse(categoryFields[2]);
+              final colorValue = int.parse(categoryFields[3]);
+              
+              categoriesToImport.add({
+                'id': categoryId,
+                'title': categoryTitle,
+                'iconCodePoint': iconCodePoint,
+                'colorValue': colorValue,
+              });
+            } catch (e) {
+              print('Error parsing category: $e');
+            }
+          }
+        }
+      }
+
+      // Now import all categories and maintain a local list for matching
+      final initialCategories = ref.read(categoriesProvider);
+      final allCategories = List<TransactionCategory>.from(initialCategories);
+
+      for (var catData in categoriesToImport) {
+        // Check if category already exists by ID
+        final existsById = allCategories.any((cat) => cat.id == catData['id']);
+        // Also check if category exists by name (case-insensitive)
+        final existsByName = allCategories.any(
+          (cat) =>
+              cat.title.toLowerCase().trim() ==
+              (catData['title'] as String).toLowerCase().trim(),
+        );
+
+        if (!existsById && !existsByName) {
+          // Create category only if it doesn't exist by ID or name
+          final category = TransactionCategory(
+            id: catData['id'] as String,
+            title: catData['title'] as String,
+            iconCodePoint: catData['iconCodePoint'] as int,
+            color: Color(catData['colorValue'] as int),
+          );
+          categoriesNotifier.addCategory(category);
+          // Add to local list immediately for transaction matching
+          allCategories.add(category);
+          print(
+              'Imported category: "${catData['title']}" (ID: ${catData['id']})');
+        } else if (existsByName && !existsById) {
+          // Category with same name exists but different ID - log for debugging
+          print(
+              'Category "${catData['title']}" already exists with different ID, skipping import');
+        } else if (existsById) {
+          print(
+              'Category "${catData['title']}" already exists (ID: ${catData['id']}), skipping import');
+        }
+      }
+
+      // Second pass: Import transactions (now categories are available)
+      inCategoriesSection = false;
+      inTransactionsSection = false;
+
+      // Process lines for transactions
+      for (var line in lines) {
+        line = line.trim();
+
         // Skip empty lines
         if (line.isEmpty) {
           continue;
@@ -175,35 +266,8 @@ class CsvService {
           continue; // Skip other comments
         }
 
-        // Process Categories Section
-        if (inCategoriesSection && line.startsWith('Category ID')) {
-          continue; // Skip category header
-        }
-        if (inCategoriesSection && !line.startsWith('ID,Title,Categories')) {
-          final categoryFields = _parseCsvLine(line);
-          if (categoryFields.length >= 4) {
-            try {
-              final categoryId = categoryFields[0];
-              final categoryTitle = categoryFields[1];
-              final iconCodePoint = int.parse(categoryFields[2]);
-              final colorValue = int.parse(categoryFields[3]);
-              
-              // Check if category already exists
-              final exists = existingCategories.any((cat) => cat.id == categoryId);
-              if (!exists) {
-                // Create category
-                final category = TransactionCategory(
-                  id: categoryId,
-                  title: categoryTitle,
-                  iconCodePoint: iconCodePoint,
-                  color: Color(colorValue),
-                );
-                categoriesNotifier.addCategory(category);
-              }
-            } catch (e) {
-              print('Error parsing category: $e');
-            }
-          }
+        // Skip categories section in second pass
+        if (inCategoriesSection) {
           continue;
         }
 
@@ -226,20 +290,57 @@ class CsvService {
         }
 
         try {
-          // Get updated categories list (after importing new ones)
-          final currentCategories = ref.read(categoriesProvider);
-          
+          // Use the local allCategories list which includes newly imported categories
           // Map category names to IDs
-          final categoryNames = fields[2].split(';').map((s) => s.trim()).toList();
+          // Handle both '; ' and ';' separators, and trim whitespace
+          final rawCategoryField = fields[2];
+          final categoryNames = rawCategoryField
+              .split(RegExp(
+                  r';\s*')) // Split by semicolon with optional whitespace
+              .map((s) => s.trim())
+              .where((s) => s.isNotEmpty) // Remove empty strings
+              .toList();
+
+          print(
+              'Processing transaction categories. Raw field: "$rawCategoryField"');
+          print('Parsed category names: $categoryNames');
+          print(
+              'Available categories: ${allCategories.map((c) => '"${c.title}"').join(", ")}');
+          
           final categoryIds = categoryNames.map((name) {
-            final category = currentCategories.firstWhere(
-              (cat) => cat.title == name,
-              orElse: () => currentCategories.firstWhere(
-                (cat) => cat.id == '0',
-                orElse: () => throw Exception('Category not found: $name'),
-              ),
-            );
-            return category.id;
+            // Try exact match first (case-sensitive, trimmed)
+            try {
+              final category = allCategories.firstWhere(
+                (cat) => cat.title.trim() == name.trim(),
+              );
+              print('Found exact match for "$name" -> ${category.id}');
+              return category.id;
+            } catch (e) {
+              // If exact match failed, try case-insensitive match
+              try {
+                final category = allCategories.firstWhere(
+                  (cat) =>
+                      cat.title.toLowerCase().trim() ==
+                      name.toLowerCase().trim(),
+                );
+                print(
+                    'Found case-insensitive match for "$name" -> ${category.id} (actual name: "${category.title}")');
+                return category.id;
+              } catch (e2) {
+                // Category not found - log warning and use uncategorized
+                print('ERROR: Category not found: "$name"');
+                print('  Looking for: "$name" (length: ${name.length})');
+                print(
+                    '  Available categories: ${allCategories.map((c) => '"${c.title}" (length: ${c.title.length})').join(", ")}');
+                // Return uncategorized category ID
+                final uncategorized = allCategories.firstWhere(
+                  (cat) => cat.id == '0',
+                  orElse: () => allCategories
+                      .first, // Fallback to first category if uncategorized doesn't exist
+                );
+                return uncategorized.id;
+              }
+            }
           }).toList();
 
           // Parse date

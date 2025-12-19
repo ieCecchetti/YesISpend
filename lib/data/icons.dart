@@ -36,7 +36,12 @@ const List<IconData> availableIcons = [
   Icons.celebration,
   Icons.downhill_skiing, // Ski icon
   Icons.terrain, // Mountaineering/climbing icon
+  Icons.hiking,
+  Icons.computer,
   Icons.more_horiz,
+  Icons.question_mark,
+  Icons.nightlight_round,
+  Icons.rocket,
 ];
 
 /// Function to get IconData by integer (codePoint)

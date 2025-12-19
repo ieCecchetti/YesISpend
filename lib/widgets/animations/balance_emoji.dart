@@ -56,7 +56,7 @@ class _BalanceEmojiState extends State<BalanceEmoji>
   @override
   Widget build(BuildContext context) {
     final isPositive = widget.balance >= 0;
-    final emoji = isPositive ? '😊' : '😢';
+    final emoji = isPositive ? Icons.thumb_up : Icons.thumb_down;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -75,10 +75,7 @@ class _BalanceEmojiState extends State<BalanceEmoji>
                 scale: _scaleAnimation.value,
                 child: Transform.rotate(
                   angle: _rotationAnimation.value,
-                  child: Text(
-                    emoji,
-                    style: const TextStyle(fontSize: 28),
-                  ),
+                  child: Icon(emoji, size: 24, color: Colors.white),
                 ),
               );
             },

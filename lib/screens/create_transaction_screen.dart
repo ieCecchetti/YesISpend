@@ -407,6 +407,16 @@ class _CreateTransactionScreenState
                             ),
                       ),
                     ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      'Long tap to see the category names',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -877,8 +887,7 @@ class _CreateTransactionScreenState
                   ),
                   child: Text(
                     widget.transaction == null
-                        ? 'Create Transaction'
-                        : 'Update Transaction',
+                        ? 'Create' : 'Update',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

@@ -132,19 +132,6 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
           ],
         ),
       ),
-      floatingActionButton: _selectedIndex == 0
-          ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CreateTransactionScreen(),
-                  ),
-                );
-              },
-              child: const Icon(Icons.add),
-            )
-          : null,
     );
   }
 
@@ -162,6 +149,17 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
               title: const Text('YesISpend'),
               actions: [
               IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CreateTransactionScreen(),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
                 icon: const Icon(Icons.search),
                 onPressed: () {
                   Navigator.push(
@@ -173,7 +171,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.category_outlined),
+                  icon: const Icon(Icons.apps),
                 onPressed: () {
                   Navigator.push(
                     context,
