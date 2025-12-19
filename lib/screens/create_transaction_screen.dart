@@ -354,43 +354,45 @@ class _CreateTransactionScreenState
                     runSpacing: 8.0,
                     children: categoryList.map((category) {
                       final isSelected = _selectedCategories.contains(category);
-                      return FilterChip(
-                        selected: isSelected,
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
+                      return GestureDetector(
+                        onTap: _isReadOnly
+                            ? null
+                            : () {
+                                setState(() {
+                                  if (isSelected) {
+                                    _selectedCategories.remove(category);
+                                  } else {
+                                    if (!_selectedCategories.contains(category)) {
+                                      _selectedCategories.add(category);
+                                    }
+                                  }
+                                });
+                              },
+                        child: Tooltip(
+                          message: category.title,
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? category.color
+                                  : category.color.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected
+                                    ? category.color
+                                    : category.color.withOpacity(0.3),
+                                width: isSelected ? 3 : 2,
+                              ),
+                            ),
+                            child: Icon(
                               category.icon,
-                              size: 18,
+                              size: 24,
                               color: isSelected
                                   ? Colors.white
                                   : category.color,
                             ),
-                            const SizedBox(width: 6),
-                            Text(category.title),
-                          ],
-                        ),
-                        onSelected: _isReadOnly
-                            ? null
-                            : (bool selected) {
-                                setState(() {
-                                  if (selected) {
-                                    if (!_selectedCategories.contains(category)) {
-                                      _selectedCategories.add(category);
-                                    }
-                                  } else {
-                                    _selectedCategories.remove(category);
-                                  }
-                                });
-                              },
-                        selectedColor: category.color,
-                        checkmarkColor: Colors.white,
-                        backgroundColor: category.color.withOpacity(0.1),
-                        side: BorderSide(
-                          color: isSelected
-                              ? category.color
-                              : category.color.withOpacity(0.3),
-                          width: isSelected ? 2 : 1,
+                          ),
                         ),
                       );
                     }).toList(),
