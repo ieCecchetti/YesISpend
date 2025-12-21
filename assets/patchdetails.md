@@ -1,5 +1,14 @@
 # YesISpend Changelog
 
+## Version 1.2.0 - December 2024
+
+- 📸 Receipt Photos - Attach photos of receipts to your transactions and swipe through them
+- 📤 Backup & Restore - Export all your data to CSV and import it back whenever you need
+- 📊 Better Graphs - Improved touch interactions on expense graphs for easier navigation
+- 🎨 Cleaner Interface - Updated buttons and improved category selection
+- 🎯 Easier Navigation - Quick access to create new transactions from the app bar
+- 🔄 Reliable Import - Your categories are now correctly preserved when importing data
+
 ## Version 1.1.0 - November 2024
 
 - 📊 New Statistics Dashboard - Get deeper insights into your finances with comprehensive metrics
@@ -43,4 +52,3 @@
 - 📊 Category management
 - 📈 Basic analytics and charts
 - 🔍 Transaction filtering
-
