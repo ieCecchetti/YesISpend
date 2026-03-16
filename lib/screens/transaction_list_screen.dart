@@ -7,6 +7,8 @@ import 'package:monthly_count/widgets/transaction_item.dart';
 
 import 'package:monthly_count/providers/transactions_provider.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
+import 'package:monthly_count/screens/main_screen.dart'
+    show showRecurrenceDeleteDialog, RecurrenceDeleteChoice;
 
 enum FilterStyle {
   nameFilter,
@@ -140,14 +142,66 @@ class TransactionListScreen extends ConsumerWidget {
                       color: Colors.white,
                     ),
                   ),
-                  onDismissed: (direction) {
-                    ref
-                        .read(transactionsProvider.notifier)
-                        .removeTransaction(item);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Transaction dismissed')),
+                  confirmDismiss: (direction) async {
+                    final isOriginalRecurrent = item.recurrent &&
+                        item.originalRecurrentId == item.id;
+                    if (isOriginalRecurrent) {
+                      final choice =
+                          await showRecurrenceDeleteDialog(context);
+                      if (!context.mounted) return false;
+                      if (choice == null ||
+                          choice == RecurrenceDeleteChoice.cancel) {
+                        return false;
+                      }
+                      final notifier =
+                          ref.read(transactionsProvider.notifier);
+                      if (choice == RecurrenceDeleteChoice.keepPast) {
+                        await notifier.cancelRecurrenceAndMaintains(
+                            item.originalRecurrentId!);
+                      } else {
+                        await notifier
+                            .cancelAllRecurrences(item.originalRecurrentId!);
+                      }
+                      if (!context.mounted) return false;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(choice ==
+                                    RecurrenceDeleteChoice.keepPast
+                                ? 'Recurrence cancelled. Past months kept.'
+                                : 'All recurring expenses deleted.')),
+                      );
+                      return true;
+                    }
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Delete transaction'),
+                        content: const Text(
+                            'Are you sure you want to delete this transaction?'),
+                        actions: [
+                          TextButton(
+                              onPressed: () =>
+                                  Navigator.of(ctx).pop(false),
+                              child: const Text('Cancel')),
+                          TextButton(
+                              onPressed: () =>
+                                  Navigator.of(ctx).pop(true),
+                              child: const Text('Delete')),
+                        ],
+                      ),
                     );
+                    if (confirm == true) {
+                      await ref
+                          .read(transactionsProvider.notifier)
+                          .removeTransaction(item);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Transaction deleted')));
+                      }
+                      return true;
+                    }
+                    return false;
                   },
                   child: TransactionItem(
                     item: item,
@@ -246,14 +300,69 @@ class TransactionListScreen extends ConsumerWidget {
                                   color: Colors.white,
                                 ),
                               ),
-                              onDismissed: (direction) {
-                                ref
-                                    .read(transactionsProvider.notifier)
-                                    .removeTransaction(item);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Transaction dismissed')),
+                              confirmDismiss: (direction) async {
+                                final isOriginalRecurrent = item.recurrent &&
+                                    item.originalRecurrentId == item.id;
+                                if (isOriginalRecurrent) {
+                                  final choice =
+                                      await showRecurrenceDeleteDialog(context);
+                                  if (!context.mounted) return false;
+                                  if (choice == null ||
+                                      choice == RecurrenceDeleteChoice.cancel) {
+                                    return false;
+                                  }
+                                  final notifier =
+                                      ref.read(transactionsProvider.notifier);
+                                  if (choice ==
+                                      RecurrenceDeleteChoice.keepPast) {
+                                    await notifier.cancelRecurrenceAndMaintains(
+                                        item.originalRecurrentId!);
+                                  } else {
+                                    await notifier
+                                        .cancelAllRecurrences(
+                                            item.originalRecurrentId!);
+                                  }
+                                  if (!context.mounted) return false;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(choice ==
+                                                RecurrenceDeleteChoice.keepPast
+                                            ? 'Recurrence cancelled. Past months kept.'
+                                            : 'All recurring expenses deleted.')),
+                                  );
+                                  return true;
+                                }
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Delete transaction'),
+                                    content: const Text(
+                                        'Are you sure you want to delete this transaction?'),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(ctx).pop(false),
+                                          child: const Text('Cancel')),
+                                      TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(ctx).pop(true),
+                                          child: const Text('Delete')),
+                                    ],
+                                  ),
                                 );
+                                if (confirm == true) {
+                                  await ref
+                                      .read(transactionsProvider.notifier)
+                                      .removeTransaction(item);
+                                  if (context.mounted) {
+ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                                content: Text(
+                                                    'Transaction deleted')));
+                                  }
+                                  return true;
+                                }
+                                return false;
                               },
                               child: TransactionItem(
                                 item: item,

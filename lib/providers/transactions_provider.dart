@@ -52,7 +52,8 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
     }
   }
 
-  /// Check and create recurrent transactions that should have occurred
+  /// Check and create recurrent transactions that should have occurred.
+  /// Backfills from the original's month up to current month (respects endDate).
   void _checkAndCreateRecurrentTransactions(
       List<Transaction> allTransactions) async {
     final now = DateTime.now();
@@ -62,26 +63,38 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
 
     for (var recurrentTx in recurrentTransactions) {
       final originalDate = recurrentTx.date;
-      var currentDate = DateTime(now.year, now.month, originalDate.day);
+      // Backfill from original month up to and including current month (respect endDate)
+      var monthToCreate = DateTime(recurrentTx.date.year, recurrentTx.date.month, originalDate.day);
+      final currentMonthDate = DateTime(now.year, now.month, originalDate.day);
+      final endLimit = recurrentTx.endDate != null &&
+              recurrentTx.endDate!.isBefore(currentMonthDate)
+          ? recurrentTx.endDate!
+          : currentMonthDate;
 
-      // If today is the day or past the day, create the transaction if it doesn't exist
-      if (currentDate.isBefore(now) || currentDate.isAtSameMomentAs(now)) {
-        // Check if this month's recurrent transaction already exists
+      while (!monthToCreate.isAfter(endLimit)) {
+        // Only create for past and current month, never future
+        if (monthToCreate.year > now.year ||
+            (monthToCreate.year == now.year && monthToCreate.month > now.month)) {
+          break;
+        }
+        if (recurrentTx.endDate != null && monthToCreate.isAfter(recurrentTx.endDate!)) {
+          break;
+        }
+
         final exists = allTransactions.any((t) =>
             t.originalRecurrentId == recurrentTx.id &&
-            t.date.year == currentDate.year &&
-            t.date.month == currentDate.month &&
+            t.date.year == monthToCreate.year &&
+            t.date.month == monthToCreate.month &&
             !t.id.contains('_preview_'));
 
         if (!exists) {
-          // Create the actual transaction for this month
           final newTx = Transaction(
-            id: '${recurrentTx.id}_${currentDate.millisecondsSinceEpoch}',
+            id: '${recurrentTx.id}_${monthToCreate.millisecondsSinceEpoch}',
             title: recurrentTx.title,
             category_ids: List.from(recurrentTx.category_ids),
             place: recurrentTx.place,
             price: recurrentTx.price,
-            date: currentDate,
+            date: monthToCreate,
             splitInfo: recurrentTx.splitInfo,
             recurrent: true,
             originalRecurrentId: recurrentTx.id,
@@ -89,6 +102,14 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
           await _dbHelper.insert('financial_record', newTx.toMap());
           await _dbHelper.setTransactionCategories(newTx.id, newTx.category_ids);
           state = [...state, newTx];
+          allTransactions.add(newTx); // so next iteration sees it
+        }
+
+        // Next month (same day)
+        if (monthToCreate.month == 12) {
+          monthToCreate = DateTime(monthToCreate.year + 1, 1, originalDate.day);
+        } else {
+          monthToCreate = DateTime(monthToCreate.year, monthToCreate.month + 1, originalDate.day);
         }
       }
     }
@@ -124,11 +145,45 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
     _checkAndCreateRecurrentTransactions(state);
   }
 
-  // Remove a transaction
-  void removeTransaction(Transaction transaction) async {
-    // Remove from the database (cascade will delete from transaction_categories)
+  /// Removes a single transaction (instance or non-recurrent). For recurrence
+  /// series actions use [cancelRecurrenceAndMaintains] or [cancelAllRecurrences].
+  Future<void> removeTransaction(Transaction transaction) async {
     await _dbHelper.delete('financial_record', transaction.id);
     state = state.where((element) => element.id != transaction.id).toList();
+  }
+
+  /// Keeps past months by setting endDate on the original
+  /// to the last day of previous month.
+  Future<void> cancelRecurrenceAndMaintains(String originalId) async {
+    final originalList = state.where((t) => t.id == originalId).toList();
+    if (originalList.isEmpty) return;
+    final original = originalList.first;
+    final now = DateTime.now();
+    final lastDayPrevMonth =
+        DateTime(now.year, now.month, 1).subtract(const Duration(days: 1));
+    final updated = Transaction(
+      id: original.id,
+      title: original.title,
+      category_ids: original.category_ids,
+      place: original.place,
+      price: original.price,
+      date: original.date,
+      splitInfo: original.splitInfo,
+      recurrent: original.recurrent,
+      originalRecurrentId: original.originalRecurrentId,
+      endDate: lastDayPrevMonth,
+      imagePaths: original.imagePaths,
+    );
+    await _dbHelper.update('financial_record', updated.toMap());
+    state = state.map((t) => t.id == original.id ? updated : t).toList();
+  }
+
+  /// Deletes the original and all recurrence instances.
+  Future<void> cancelAllRecurrences(String originalId) async {
+    await _dbHelper.deleteRecurrenceChain(originalId);
+    state = state
+        .where((t) => t.id != originalId && t.originalRecurrentId != originalId)
+        .toList();
   }
 
   // Update an existing transaction

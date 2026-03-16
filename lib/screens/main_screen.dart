@@ -58,6 +58,12 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
         .toList();
 
     for (var recurrentTx in recurrentTransactions) {
+      // Recurrence has ended: no preview for future months
+      if (recurrentTx.endDate != null &&
+          DateTime(selectedMonth.year, selectedMonth.month, 1)
+              .isAfter(recurrentTx.endDate!)) {
+        continue;
+      }
       final originalDate = recurrentTx.date;
       var nextDate =
           DateTime(selectedMonth.year, selectedMonth.month, originalDate.day);
@@ -66,6 +72,10 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
       if (nextDate.isAfter(now) &&
           nextDate.year == selectedMonth.year &&
           nextDate.month == selectedMonth.month) {
+        // Respect endDate: no preview after recurrence end
+        if (recurrentTx.endDate != null && nextDate.isAfter(recurrentTx.endDate!)) {
+          continue;
+        }
         // Check if this recurrent transaction for this month already exists
         final exists = allTransactions.any((t) =>
             t.originalRecurrentId == recurrentTx.id &&
@@ -446,6 +456,49 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
 
                                   if (direction ==
                                       DismissDirection.endToStart) {
+                                    final isRecurringSeriesItem =
+                                        item.recurrent &&
+                                            item.originalRecurrentId != null;
+                                    if (isRecurringSeriesItem) {
+                                      final originalId =
+                                          item.originalRecurrentId!;
+                                      final choice =
+                                          await showRecurrenceDeleteDialog(
+                                              context);
+                                      if (!context.mounted) return false;
+                                      if (choice == null ||
+                                          choice ==
+                                              RecurrenceDeleteChoice.cancel) {
+                                        return false;
+                                      }
+                                      final notifier = ref.read(
+                                          transactionsProvider.notifier);
+                                      if (choice ==
+                                          RecurrenceDeleteChoice.keepPast) {
+                                        await notifier
+                                            .cancelRecurrenceAndMaintains(
+                                                originalId);
+                                        if (!context.mounted) return true;
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Recurrence cancelled. Past months kept.')),
+                                        );
+                                      } else {
+                                        await notifier
+                                            .cancelAllRecurrences(
+                                                originalId);
+                                        if (!context.mounted) return true;
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'All recurring expenses deleted.')),
+                                        );
+                                      }
+                                      return true;
+                                    }
                                     final confirm =
                                         await showConfirmationDialog(
                                       context: context,
@@ -454,9 +507,10 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                                           "Are you sure you want to delete this transaction?",
                                     );
                                     if (confirm) {
-                                      ref
+                                      await ref
                                           .read(transactionsProvider.notifier)
                                           .removeTransaction(item);
+                                      if (!context.mounted) return confirm;
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
                                         const SnackBar(
@@ -701,6 +755,43 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
       ),
     );
   }
+}
+
+/// User choice when deleting the original recurrent transaction.
+enum RecurrenceDeleteChoice { cancel, keepPast, deleteAll }
+
+Future<RecurrenceDeleteChoice?> showRecurrenceDeleteDialog(
+    BuildContext context) async {
+  return showDialog<RecurrenceDeleteChoice>(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Delete recurring expense'),
+        content: const Text(
+          'Are you sure? This will affect all past operations.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(RecurrenceDeleteChoice.cancel),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.of(context).pop(RecurrenceDeleteChoice.keepPast),
+            child: const Text('Keep past months'),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.of(context).pop(RecurrenceDeleteChoice.deleteAll),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete all'),
+          ),
+        ],
+      );
+    },
+  );
 }
 
 Future<bool> showConfirmationDialog({

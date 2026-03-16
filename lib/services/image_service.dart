@@ -6,16 +6,38 @@ import 'package:path/path.dart' as path;
 class ImageService {
   static final ImagePicker _picker = ImagePicker();
 
-  // Pick one or more images (always uses camera)
-  static Future<List<XFile>> pickImages({bool allowMultiple = true}) async {
+  // Pick images from camera or gallery
+  static Future<List<XFile>> pickImages({
+    bool allowMultiple = true,
+    ImageSource source = ImageSource.camera,
+  }) async {
     try {
-      // Always use camera
+      if (source == ImageSource.gallery) {
+        if (allowMultiple) {
+          try {
+            final images = await _picker.pickMultiImage();
+            return images;
+          } catch (_) {
+            // Fallback for platforms/environments where multi pick is unavailable
+            final XFile? image = await _picker.pickImage(
+              source: ImageSource.gallery,
+            );
+            return image != null ? [image] : [];
+          }
+        }
+        final XFile? image = await _picker.pickImage(
+          source: ImageSource.gallery,
+        );
+        return image != null ? [image] : [];
+      }
+
+      // Camera: single capture per invocation
       final XFile? image = await _picker.pickImage(
         source: ImageSource.camera,
       );
       return image != null ? [image] : [];
     } catch (e, stackTrace) {
-      print('Error picking image from camera: $e');
+      print('Error picking image: $e');
       print('Stack trace: $stackTrace');
       rethrow;
     }

@@ -14,6 +14,8 @@ import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:monthly_count/services/image_service.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:monthly_count/widgets/expand_panel.dart';
+import 'package:monthly_count/screens/main_screen.dart'
+    show showRecurrenceDeleteDialog, RecurrenceDeleteChoice;
 
 class CreateTransactionScreen extends ConsumerStatefulWidget {
   final Transaction? transaction;
@@ -45,6 +47,8 @@ class _CreateTransactionScreenState
   final _splitNoteController = TextEditingController();
   // recurrent
   bool _isRecurrent = false;
+  bool _specifyEndDate = false;
+  DateTime? _selectedEndDate;
   late bool _isReadOnly;
   // images
   List<String> _imagePaths = [];
@@ -79,6 +83,10 @@ class _CreateTransactionScreenState
         _splitNoteController.text = tx.splitInfo!.notes;
       }
       _isRecurrent = tx.recurrent;
+      if (tx.recurrent && tx.endDate != null) {
+        _specifyEndDate = true;
+        _selectedEndDate = tx.endDate;
+      }
       _imagePaths = List.from(tx.imagePaths);
 
       // Verify image paths exist after first frame
@@ -111,6 +119,7 @@ class _CreateTransactionScreenState
           splitInfo: tx.splitInfo,
           recurrent: tx.recurrent,
           originalRecurrentId: tx.originalRecurrentId,
+          endDate: tx.endDate,
           imagePaths: validPaths,
         );
         // Update in database
@@ -200,6 +209,9 @@ class _CreateTransactionScreenState
         recurrent: _isRecurrent,
         originalRecurrentId: widget.transaction?.originalRecurrentId ??
             (_isRecurrent ? transactionId : null),
+        endDate: _isRecurrent && _specifyEndDate && _selectedEndDate != null
+            ? _selectedEndDate
+            : null,
         imagePaths: savedImagePaths, // Include saved image paths
       );
 
@@ -259,7 +271,34 @@ class _CreateTransactionScreenState
           if (widget.transaction != null)
             IconButton(
               icon: const Icon(Icons.delete),
-              onPressed: () {
+              onPressed: () async {
+                final tx = widget.transaction!;
+                final isOriginalRecurrent =
+                    tx.recurrent && tx.originalRecurrentId == tx.id;
+                if (isOriginalRecurrent) {
+                  final choice = await showRecurrenceDeleteDialog(context);
+                  if (!context.mounted) return;
+                  if (choice == null ||
+                      choice == RecurrenceDeleteChoice.cancel) {
+                    return;
+                  }
+                  final notifier = ref.read(transactionsProvider.notifier);
+                  if (choice == RecurrenceDeleteChoice.keepPast) {
+                    await notifier
+                        .cancelRecurrenceAndMaintains(tx.originalRecurrentId!);
+                  } else {
+                    await notifier.cancelAllRecurrences(tx.originalRecurrentId!);
+                  }
+                  if (!context.mounted) return;
+                  Navigator.of(context).pop(); // Close transaction screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(choice == RecurrenceDeleteChoice.keepPast
+                            ? 'Recurrence cancelled. Past months kept.'
+                            : 'All recurring expenses deleted.')),
+                  );
+                  return;
+                }
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
@@ -275,13 +314,13 @@ class _CreateTransactionScreenState
                           child: const Text('Cancel'),
                         ),
                         TextButton(
-                          onPressed: () {
-                            ref
+                          onPressed: () async {
+                            await ref
                                 .read(transactionsProvider.notifier)
                                 .removeTransaction(widget.transaction!);
-                            Navigator.of(context).pop(); // Close dialog
-                            Navigator.of(context)
-                                .pop(); // Close transaction screen
+                            if (!context.mounted) return;
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                   content: Text('Transaction deleted')),
@@ -809,6 +848,10 @@ class _CreateTransactionScreenState
                                     : (bool? value) {
                                         setState(() {
                                           _isRecurrent = value ?? false;
+                                    if (!_isRecurrent) {
+                                      _specifyEndDate = false;
+                                      _selectedEndDate = null;
+                                    }
                                         });
                                       },
                               ),
@@ -842,7 +885,7 @@ class _CreateTransactionScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Date',
+                          _isRecurrent ? 'Start date' : 'Date',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Theme.of(context)
@@ -858,18 +901,123 @@ class _CreateTransactionScreenState
                     ),
                   ),
                   if (!_isReadOnly)
-                    ElevatedButton.icon(
+                    ElevatedButton(
                       onPressed: _pickDate,
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Change'),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 12),
                       ),
+                      child: const Text('Change'),
                     ),
                 ],
               ),
             ),
+            // End date (only for recurrent)
+            if (_isRecurrent) ...[
+              const SizedBox(height: 16.0),
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.event_busy,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Specify end date',
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ),
+                        Switch(
+                          value: _specifyEndDate,
+                          onChanged: _isReadOnly
+                              ? null
+                              : (bool? value) {
+                                  setState(() {
+                                    _specifyEndDate = value ?? false;
+                                    if (_specifyEndDate &&
+                                        _selectedEndDate == null) {
+                                      final now = DateTime.now();
+                                      _selectedEndDate = DateTime(
+                                              now.year, now.month + 1, 1)
+                                          .subtract(const Duration(days: 1));
+                                    } else if (!_specifyEndDate) {
+                                      _selectedEndDate = null;
+                                    }
+                                  });
+                                },
+                        ),
+                      ],
+                    ),
+                    if (_specifyEndDate && _selectedEndDate != null) ...[
+                      const SizedBox(height: 12.0),
+                      Row(
+                        children: [
+                          const SizedBox(width: 34),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'End date',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                      ),
+                                ),
+                                Text(
+                                  DateFormat.yMMMd().format(_selectedEndDate!),
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (!_isReadOnly) ...[
+                            const SizedBox(width: 12),
+                            ElevatedButton(
+                              onPressed: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: _selectedEndDate!,
+                                  firstDate: _selectedDate,
+                                  lastDate: DateTime(2100),
+                                );
+                                if (picked != null) {
+                                  setState(() => _selectedEndDate = picked);
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                              ),
+                              child: const Text('Change'),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
             if (!_isReadOnly) ...[
               const SizedBox(height: 24.0),
               // Submit Button
@@ -903,9 +1051,34 @@ class _CreateTransactionScreenState
   }
 
   Future<void> _pickImages() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera),
+              title: const Text('Camera'),
+              onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Photo library'),
+              onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+
     try {
       print('Starting image picker...');
-      final images = await ImageService.pickImages(allowMultiple: true);
+      final images = await ImageService.pickImages(
+        allowMultiple: true,
+        source: source,
+      );
       print('Picked ${images.length} images');
       if (images.isNotEmpty) {
         setState(() {
@@ -940,7 +1113,7 @@ class _CreateTransactionScreenState
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Error picking image from camera.'),
+                const Text('Error picking image.'),
                 const SizedBox(height: 4),
                 Text(
                   'Please stop the app completely and restart it (not just hot restart).',
@@ -958,6 +1131,7 @@ class _CreateTransactionScreenState
   Widget _buildImageThumbnail(String imagePath, int index,
       {required bool isExisting}) {
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         Container(
           width: 80,

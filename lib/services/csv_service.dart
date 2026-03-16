@@ -58,7 +58,7 @@ class CsvService {
       // Transactions CSV Header
       csvContent.writeln('# Transactions Section');
       csvContent.writeln(
-          'ID,Title,Categories,Place,Price,Date,Is Recurrent,Original Recurrent ID,Split Amount,Split Percentage,Split Notes,Image Paths');
+          'ID,Title,Categories,Place,Price,Date,Is Recurrent,Original Recurrent ID,End Date,Split Amount,Split Percentage,Split Notes,Image Paths');
 
       // Add transactions grouped by month
       for (var monthKey in sortedMonths) {
@@ -96,6 +96,9 @@ class CsvService {
             DateFormat('yyyy-MM-dd HH:mm:ss').format(transaction.date),
             transaction.recurrent ? '1' : '0',
             transaction.originalRecurrentId ?? '',
+            transaction.endDate != null
+                ? DateFormat('yyyy-MM-dd').format(transaction.endDate!)
+                : '',
             transaction.splitInfo != null
                 ? transaction.splitInfo!.amount.toStringAsFixed(2)
                 : '',
@@ -352,23 +355,35 @@ class CsvService {
             date = DateFormat('yyyy-MM-dd').parse(fields[5]);
           }
 
-          // Parse split info if present
+          // Parse end date (new format has End Date at index 8)
+          DateTime? endDate;
+          final hasEndDateColumn = fields.length >= 13;
+          if (hasEndDateColumn && fields[8].isNotEmpty) {
+            try {
+              endDate = DateFormat('yyyy-MM-dd').parse(fields[8]);
+            } catch (_) {}
+          }
+
+          // Parse split info (index 9,10,11 in new format; 8,9,10 in old format)
+          final splitAmountIdx = hasEndDateColumn ? 9 : 8;
+          final splitPctIdx = hasEndDateColumn ? 10 : 9;
+          final splitNotesIdx = hasEndDateColumn ? 11 : 10;
           SplitInfo? splitInfo;
-          if (fields.length >= 11 &&
-              fields[8].isNotEmpty &&
-              fields[9].isNotEmpty) {
+          if (fields.length > splitPctIdx + 1 &&
+              fields[splitAmountIdx].isNotEmpty &&
+              fields[splitPctIdx].isNotEmpty) {
             splitInfo = SplitInfo(
-              amount: double.parse(fields[8]),
-              percentage: int.parse(fields[9]),
-              notes: fields.length > 10 ? fields[10] : '',
+              amount: double.parse(fields[splitAmountIdx]),
+              percentage: int.parse(fields[splitPctIdx]),
+              notes: fields.length > splitNotesIdx ? fields[splitNotesIdx] : '',
             );
           }
 
-          // Parse image paths (if present)
+          // Parse image paths (index 12 in new format, 11 in old format)
+          final imagePathsIdx = hasEndDateColumn ? 12 : 11;
           List<String> imagePaths = [];
-          if (fields.length >= 12 && fields[11].isNotEmpty) {
-            // Split by semicolon and trim each path
-            imagePaths = fields[11]
+          if (fields.length > imagePathsIdx && fields[imagePathsIdx].isNotEmpty) {
+            imagePaths = fields[imagePathsIdx]
                 .split(';')
                 .map((path) => path.trim())
                 .where((path) => path.isNotEmpty)
@@ -386,6 +401,7 @@ class CsvService {
             recurrent: fields.length > 6 && fields[6] == '1',
             originalRecurrentId:
                 fields.length > 7 && fields[7].isNotEmpty ? fields[7] : null,
+            endDate: endDate,
             imagePaths: imagePaths, // Empty - images are device-specific and not portable
           );
 

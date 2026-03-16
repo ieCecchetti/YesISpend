@@ -11,6 +11,7 @@ class Transaction {
   SplitInfo? splitInfo;
   bool recurrent;
   String? originalRecurrentId; // ID of the original recurrent transaction
+  DateTime? endDate; // When set, recurrence stops after this date (last day of validity)
   List<String> imagePaths; // Paths to receipt images
 
   Transaction({
@@ -23,6 +24,7 @@ class Transaction {
     this.splitInfo,
     this.recurrent = false,
     this.originalRecurrentId,
+    this.endDate,
     this.imagePaths = const [],
   });
 
@@ -42,6 +44,7 @@ class Transaction {
       'splittedInfo': splitInfo != null ? jsonEncode(splitInfo!.toMap()) : '',
       'recurrent': recurrent ? 1 : 0,
       'originalRecurrentId': originalRecurrentId ?? '',
+      'endDate': endDate?.toIso8601String() ?? '',
       'imagePaths': jsonEncode(imagePaths),
     };
   }
@@ -63,6 +66,9 @@ class Transaction {
           (map['originalRecurrentId'] as String?)?.isNotEmpty == true
               ? map['originalRecurrentId'] as String
               : null,
+      endDate: (map['endDate'] as String?)?.isNotEmpty == true
+          ? DateTime.parse(map['endDate'] as String)
+          : null,
       imagePaths: (map['imagePaths'] as String?)?.isNotEmpty == true
           ? (jsonDecode(map['imagePaths'] as String) as List)
               .map((e) => e as String)

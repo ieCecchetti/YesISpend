@@ -23,7 +23,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-        version: 7,
+        version: 9,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -275,14 +275,50 @@ class DatabaseHelper {
     if (oldVersion < 6) {
       // Add imagePaths column to financial_record
       try {
-        // Check if column exists
         await db.rawQuery('SELECT imagePaths FROM financial_record LIMIT 1');
         print('imagePaths column already exists');
       } catch (e) {
-        // Column doesn't exist, add it
         try {
           await db.execute('ALTER TABLE financial_record ADD COLUMN imagePaths TEXT DEFAULT \'\'');
           print('Added imagePaths column to financial_record table (migration 6)');
+        } catch (e2) {
+          print('Error adding imagePaths column: $e2');
+        }
+      }
+    }
+    if (oldVersion < 8) {
+      // Ensure imagePaths exists (fix DBs that skipped migration 6 or were created without it)
+      try {
+        await db.rawQuery('SELECT imagePaths FROM financial_record LIMIT 1');
+      } catch (e) {
+        try {
+          await db.execute('ALTER TABLE financial_record ADD COLUMN imagePaths TEXT DEFAULT \'\'');
+          print('Added imagePaths column to financial_record table (migration 8 fallback)');
+        } catch (e2) {
+          print('Error adding imagePaths column: $e2');
+        }
+      }
+      // Add endDate column for recurrent transactions (when set, recurrence stops after this date)
+      try {
+        await db.rawQuery('SELECT endDate FROM financial_record LIMIT 1');
+        print('endDate column already exists');
+      } catch (e) {
+        try {
+          await db.execute('ALTER TABLE financial_record ADD COLUMN endDate TEXT');
+          print('Added endDate column to financial_record table (migration 8)');
+        } catch (e2) {
+          print('Error adding endDate column: $e2');
+        }
+      }
+    }
+    if (oldVersion < 9) {
+      // Ensure imagePaths exists (fix DBs already at v8 that were missing this column)
+      try {
+        await db.rawQuery('SELECT imagePaths FROM financial_record LIMIT 1');
+      } catch (e) {
+        try {
+          await db.execute('ALTER TABLE financial_record ADD COLUMN imagePaths TEXT DEFAULT \'\'');
+          print('Added imagePaths column to financial_record table (migration 9)');
         } catch (e2) {
           print('Error adding imagePaths column: $e2');
         }
@@ -313,6 +349,7 @@ class DatabaseHelper {
           splittedInfo TEXT,
           recurrent INTEGER NOT NULL DEFAULT 0,
           originalRecurrentId TEXT,
+          endDate TEXT,
           imagePaths TEXT
         )
     ''');
@@ -378,6 +415,15 @@ class DatabaseHelper {
   Future<int> delete(String table, String id) async {
     final db = await instance.database;
     return await db.delete(table, where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// Deletes the original recurrent transaction and all its instances (same originalRecurrentId).
+  /// Use for "Elimina Tutto" on a recurrent expense.
+  Future<int> deleteRecurrenceChain(String originalId) async {
+    final db = await instance.database;
+    return await db.delete('financial_record',
+        where: 'id = ? OR originalRecurrentId = ?',
+        whereArgs: [originalId, originalId]);
   }
 
   Future<int> update(String table, Map<String, Object> data) async {
