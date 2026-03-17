@@ -28,9 +28,19 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
   int _selectedIndex = 0;
   int _selectedTab = 0; // 0: All, 1: Shared, 2: Recurrent
 
-  void _onItemTapped(int index) {
+  Future<void> _onItemTapped(int index) async {
+    if (index == 1) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const CreateTransactionScreen(),
+        ),
+      );
+      return;
+    }
+
     setState(() {
-      _selectedIndex = index;
+      _selectedIndex = index == 2 ? 1 : 0;
     });
   }
 
@@ -105,14 +115,13 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
     // Filter by tab
     List filteredTransactions = montlyTransactions;
     if (_selectedTab == 1) {
-      // Shared = transactions with split
       filteredTransactions =
           montlyTransactions.where((t) => t.splitInfo != null).toList();
     } else if (_selectedTab == 2) {
-      // Recurrent = transactions that are recurrent
       filteredTransactions =
           montlyTransactions.where((t) => t.recurrent).toList();
     }
+
 
     final List<Widget> _screens = [
       _buildTransactionsScreen(
@@ -127,27 +136,63 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
         ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long),
-              label: 'Transactions',
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          color: Theme.of(context).colorScheme.primary,
+          child: MediaQuery.removePadding(
+            context: context,
+            removeBottom: true,
+            child: BottomNavigationBar(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+                  currentIndex: _selectedIndex == 0 ? 0 : 2,
+              onTap: _onItemTapped,
+              type: BottomNavigationBarType.fixed,
+              elevation: 0,
+              items: [
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.receipt_long),
+                  label: 'Transactions',
+                ),
+                    BottomNavigationBarItem(
+                      icon: Icon(
+                        Icons.add_circle_outline,
+                        size: 34,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                      activeIcon: Icon(
+                        Icons.add_circle,
+                        size: 36,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                      label: 'Add',
+                    ),
+                const BottomNavigationBarItem(
+                  icon: Icon(Icons.analytics),
+                  label: 'Analytics',
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.analytics),
-              label: 'Analytics',
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTransactionsScreen(
-      BuildContext context,
+  Widget _buildTransactionsScreen(BuildContext context,
       List filteredTransactions, List allMonthlyTransactions) {
+    // Build alternating [DateTime, List<Transaction>] groups
+    final List<dynamic> rows = [];
+    String? lastDayKey;
+    for (final tx in filteredTransactions) {
+      final dayKey = DateFormat('yyyy-MM-dd').format(tx.date);
+      if (dayKey != lastDayKey) {
+        rows.add(tx.date as DateTime);
+        rows.add(<Transaction>[]);
+        lastDayKey = dayKey;
+      }
+      (rows.last as List<Transaction>).add(tx);
+    }
+
     return NestedScrollView(
       headerSliverBuilder: (context, innerBoxIsScrolled) {
         return [
@@ -158,17 +203,6 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
               forceElevated: innerBoxIsScrolled,
               title: const Text('YesISpend'),
               actions: [
-              IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CreateTransactionScreen(),
-                      ),
-                    );
-                  },
-                ),
                 IconButton(
                 icon: const Icon(Icons.search),
                 onPressed: () {
@@ -195,120 +229,12 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
             ],
             ),
           ),
+          // Summary Card with embedded month selector (swipe left/right)
           SliverToBoxAdapter(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Left Arrow
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        final currentMonth = ref.read(selectedMonthProvider);
-                        final newMonth = DateTime(
-                          currentMonth.year,
-                          currentMonth.month - 1,
-                        );
-                        ref
-                            .read(selectedMonthProvider.notifier)
-                            .setSelectedMonth(newMonth);
-                      },
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.all(6.0),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest
-                              .withOpacity(0.5),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.chevron_left_rounded,
-                          size: 18,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  // Centered Month Text with badge style
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 8),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Theme.of(context).colorScheme.primary,
-                          Theme.of(context).colorScheme.primary.withOpacity(0.8),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      DateFormat('MMM yyyy')
-                          .format(ref.watch(selectedMonthProvider)),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: Colors.white,
-                          ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  // Right Arrow
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        final currentMonth = ref.read(selectedMonthProvider);
-                        final newMonth = DateTime(
-                          currentMonth.year,
-                          currentMonth.month + 1,
-                        );
-                        ref
-                            .read(selectedMonthProvider.notifier)
-                            .setSelectedMonth(newMonth);
-                      },
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.all(6.0),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest
-                              .withOpacity(0.5),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.chevron_right_rounded,
-                          size: 18,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: _buildSummaryCard(context, ref, allMonthlyTransactions),
             ),
-          ),
-          // Summary Card (scrollable, can disappear)
-          SliverToBoxAdapter(
-            child: _buildSummaryCard(context, ref, allMonthlyTransactions),
           ),
           // Tabs (always visible, pinned with top margin)
           SliverPersistentHeader(
@@ -407,126 +333,34 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
-                            final item = filteredTransactions[index];
-                            // Check if this is a future recurrent transaction (preview)
+                            final row = rows[index];
+
+                            if (row is DateTime) {
+                              return _DayHeader(date: row);
+                            }
+
+                            final group = row as List<Transaction>;
                             final now = DateTime.now();
                             final today =
                                 DateTime(now.year, now.month, now.day);
-                            final itemDate = DateTime(
-                                item.date.year, item.date.month, item.date.day);
-                            // Only show as future if the date is AFTER today (not today itself)
-                            final isFutureRecurrent = item.recurrent &&
-                                item.originalRecurrentId != null &&
-                                itemDate.isAfter(today) &&
-                                item.id.contains('_preview_');
 
-                            return Opacity(
-                              opacity: isFutureRecurrent ? 0.5 : 1.0,
-                              child: Dismissible(
-                                key: ValueKey(item.id),
-                                direction: DismissDirection.horizontal,
-                                background: Container(
-                                  color:
-                                      Theme.of(context).colorScheme.secondary,
-                                  alignment: Alignment.centerLeft,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0),
-                                  child: const Icon(Icons.edit,
-                                      color: Colors.white),
-                                ),
-                                secondaryBackground: Container(
-                                  color: Theme.of(context).colorScheme.error,
-                                  alignment: Alignment.centerRight,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0),
-                                  child: const Icon(Icons.delete,
-                                      color: Colors.white),
-                                ),
-                                confirmDismiss: (direction) async {
-                                  if (direction ==
-                                      DismissDirection.startToEnd) {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => CreateTransactionScreen(
-                                            transaction: item),
-                                      ),
-                                    );
-                                    return false;
-                                  }
-
-                                  if (direction ==
-                                      DismissDirection.endToStart) {
-                                    final isRecurringSeriesItem =
-                                        item.recurrent &&
-                                            item.originalRecurrentId != null;
-                                    if (isRecurringSeriesItem) {
-                                      final originalId =
-                                          item.originalRecurrentId!;
-                                      final choice =
-                                          await showRecurrenceDeleteDialog(
-                                              context);
-                                      if (!context.mounted) return false;
-                                      if (choice == null ||
-                                          choice ==
-                                              RecurrenceDeleteChoice.cancel) {
-                                        return false;
-                                      }
-                                      final notifier = ref.read(
-                                          transactionsProvider.notifier);
-                                      if (choice ==
-                                          RecurrenceDeleteChoice.keepPast) {
-                                        await notifier
-                                            .cancelRecurrenceAndMaintains(
-                                                originalId);
-                                        if (!context.mounted) return true;
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                              content: Text(
-                                                  'Recurrence cancelled. Past months kept.')),
-                                        );
-                                      } else {
-                                        await notifier
-                                            .cancelAllRecurrences(
-                                                originalId);
-                                        if (!context.mounted) return true;
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                              content: Text(
-                                                  'All recurring expenses deleted.')),
-                                        );
-                                      }
-                                      return true;
-                                    }
-                                    final confirm =
-                                        await showConfirmationDialog(
-                                      context: context,
-                                      title: "Delete Transaction",
-                                      content:
-                                          "Are you sure you want to delete this transaction?",
-                                    );
-                                    if (confirm) {
-                                      await ref
-                                          .read(transactionsProvider.notifier)
-                                          .removeTransaction(item);
-                                      if (!context.mounted) return confirm;
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content:
-                                                Text('Transaction removed')),
-                                      );
-                                    }
-                                    return confirm;
-                                  }
-                                  return false;
-                                },
-                                child: TransactionItem(item: item),
+                            return Card(
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 2),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              clipBehavior: Clip.hardEdge,
+                              child: Column(
+                                children: [
+                                  for (int i = 0; i < group.length; i++) ...[
+                                    _buildDismissibleItem(
+                                        context, ref, group[i], today),
+                                  ],
+                                ],
                               ),
                             );
                           },
-                          childCount: filteredTransactions.length,
+                          childCount: rows.length,
                         ),
                       ),
                     ),
@@ -534,6 +368,84 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                 );
               },
             ),
+    );
+  }
+
+  Widget _buildDismissibleItem(
+      BuildContext context, WidgetRef ref, Transaction item, DateTime today) {
+    final itemDate = DateTime(item.date.year, item.date.month, item.date.day);
+    final isFutureRecurrent = item.recurrent &&
+        item.originalRecurrentId != null &&
+        itemDate.isAfter(today) &&
+        item.id.contains('_preview_');
+
+    return Opacity(
+      opacity: isFutureRecurrent ? 0.5 : 1.0,
+      child: Dismissible(
+        key: ValueKey(item.id),
+        direction: DismissDirection.horizontal,
+        background: Container(
+          color: Theme.of(context).colorScheme.secondary,
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: const Icon(Icons.edit, color: Colors.white),
+        ),
+        secondaryBackground: Container(
+          color: Theme.of(context).colorScheme.error,
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: const Icon(Icons.delete, color: Colors.white),
+        ),
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.startToEnd) {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => CreateTransactionScreen(transaction: item),
+            ));
+            return false;
+          }
+          if (direction == DismissDirection.endToStart) {
+            final isRecurringSeriesItem =
+                item.recurrent && item.originalRecurrentId != null;
+            if (isRecurringSeriesItem) {
+              final originalId = item.originalRecurrentId!;
+              final choice = await showRecurrenceDeleteDialog(context);
+              if (!context.mounted) return false;
+              if (choice == null || choice == RecurrenceDeleteChoice.cancel) {
+                return false;
+              }
+              final notifier = ref.read(transactionsProvider.notifier);
+              if (choice == RecurrenceDeleteChoice.keepPast) {
+                await notifier.cancelRecurrenceAndMaintains(originalId);
+                if (!context.mounted) return true;
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Recurrence cancelled. Past months kept.')));
+              } else {
+                await notifier.cancelAllRecurrences(originalId);
+                if (!context.mounted) return true;
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('All recurring expenses deleted.')));
+              }
+              return true;
+            }
+            final confirm = await showConfirmationDialog(
+              context: context,
+              title: "Delete Transaction",
+              content: "Are you sure you want to delete this transaction?",
+            );
+            if (confirm) {
+              await ref
+                  .read(transactionsProvider.notifier)
+                  .removeTransaction(item);
+              if (!context.mounted) return confirm;
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Transaction removed')));
+            }
+            return confirm;
+          }
+          return false;
+        },
+        child: TransactionItem(item: item),
+      ),
     );
   }
 
@@ -608,7 +520,27 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
     final dailyExpense = daysPassed > 0 ? totalExpenses / daysPassed : 0.0;
     final expenseProjection = dailyExpense * daysInMonth;
 
-    return Container(
+    void goToPrevMonth() {
+      final m = ref.read(selectedMonthProvider);
+      ref.read(selectedMonthProvider.notifier).setSelectedMonth(
+            DateTime(m.year, m.month - 1),
+          );
+    }
+
+    void goToNextMonth() {
+      final m = ref.read(selectedMonthProvider);
+      ref.read(selectedMonthProvider.notifier).setSelectedMonth(
+            DateTime(m.year, m.month + 1),
+          );
+    }
+
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        final v = details.primaryVelocity ?? 0;
+        if (v < -200) goToNextMonth();
+        if (v > 200) goToPrevMonth();
+      },
+      child: Container(
       margin: const EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -632,21 +564,29 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with title and balance
+            // Month name + swipe hint
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Monthly Summary',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  DateFormat('MMMM yyyy').format(selectedMonth),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       color: Colors.white,
-                      fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                     ),
               ),
               BalanceEmoji(balance: balance),
             ],
           ),
+            const SizedBox(height: 2),
+            Text(
+              'Monthly Summary',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withOpacity(0.7),
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.5,
+                  ),
+            ),
           const SizedBox(height: 16),
           // First row: Income and Expenses
           Row(
@@ -701,7 +641,8 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
           ),
         ],
       ),
-    );
+      ), // Container
+    ); // GestureDetector
   }
 
   Widget _buildSummaryItem(
@@ -852,6 +793,28 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
   @override
   bool shouldRebuild(_TabsHeaderDelegate oldDelegate) {
     return child != oldDelegate.child;
+  }
+}
+
+class _DayHeader extends StatelessWidget {
+  final DateTime date;
+  const _DayHeader({required this.date});
+
+  @override
+  Widget build(BuildContext context) {
+    final isToday = DateFormat('yyyy-MM-dd').format(date) ==
+        DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final label = isToday ? 'Today' : DateFormat('EEE d').format(date);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 6),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+      ),
+    );
   }
 }
 

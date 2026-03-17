@@ -28,27 +28,22 @@ class TransactionListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     var userTransactions = ref.read(transactionsProvider);
     var filteredTransactions = filterTransactions(userTransactions, filters);
-    
+
     // Sort transactions by date (newest first)
     filteredTransactions.sort((a, b) => b.date.compareTo(a.date));
 
-    // Group transactions by month
-    Map<String, List<Transaction>> groupedByMonth = {};
-    for (var transaction in filteredTransactions) {
-      final monthKey = DateFormat('MMMM yyyy').format(transaction.date);
-      if (!groupedByMonth.containsKey(monthKey)) {
-        groupedByMonth[monthKey] = [];
+    // Build alternating [DateTime, List<Transaction>] groups
+    final List<dynamic> rows = [];
+    String? lastDayKey;
+    for (final tx in filteredTransactions) {
+      final dayKey = DateFormat('yyyy-MM-dd').format(tx.date);
+      if (dayKey != lastDayKey) {
+        rows.add(tx.date);
+        rows.add(<Transaction>[]);
+        lastDayKey = dayKey;
       }
-      groupedByMonth[monthKey]!.add(transaction);
+      (rows.last as List<Transaction>).add(tx);
     }
-
-    // Sort months (newest first)
-    final sortedMonths = groupedByMonth.keys.toList()
-      ..sort((a, b) {
-        final dateA = DateFormat('MMMM yyyy').parse(a);
-        final dateB = DateFormat('MMMM yyyy').parse(b);
-        return dateB.compareTo(dateA);
-      });
 
     return Scaffold(
       appBar: AppBar(
@@ -124,257 +119,121 @@ class TransactionListScreen extends ConsumerWidget {
               ],
             ),
           Expanded(
-            child: sortedMonths.length == 1
-                ? ListView.builder(
-              key: ValueKey(filteredTransactions.length),
-              itemCount: filteredTransactions.length,
+            child: ListView.builder(
+              key: ValueKey(rows.length),
+              itemCount: rows.length,
               itemBuilder: (context, index) {
-                final item = filteredTransactions[index];
-                return Dismissible(
-                  key: ValueKey(item.id),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    color: Colors.red,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: const Icon(
-                      Icons.delete,
-                      color: Colors.white,
-                    ),
-                  ),
-                  confirmDismiss: (direction) async {
-                    final isOriginalRecurrent = item.recurrent &&
-                        item.originalRecurrentId == item.id;
-                    if (isOriginalRecurrent) {
-                      final choice =
-                          await showRecurrenceDeleteDialog(context);
-                      if (!context.mounted) return false;
-                      if (choice == null ||
-                          choice == RecurrenceDeleteChoice.cancel) {
-                        return false;
-                      }
-                      final notifier =
-                          ref.read(transactionsProvider.notifier);
-                      if (choice == RecurrenceDeleteChoice.keepPast) {
-                        await notifier.cancelRecurrenceAndMaintains(
-                            item.originalRecurrentId!);
-                      } else {
-                        await notifier
-                            .cancelAllRecurrences(item.originalRecurrentId!);
-                      }
-                      if (!context.mounted) return false;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(choice ==
-                                    RecurrenceDeleteChoice.keepPast
-                                ? 'Recurrence cancelled. Past months kept.'
-                                : 'All recurring expenses deleted.')),
-                      );
-                      return true;
-                    }
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Delete transaction'),
-                        content: const Text(
-                            'Are you sure you want to delete this transaction?'),
-                        actions: [
-                          TextButton(
-                              onPressed: () =>
-                                  Navigator.of(ctx).pop(false),
-                              child: const Text('Cancel')),
-                          TextButton(
-                              onPressed: () =>
-                                  Navigator.of(ctx).pop(true),
-                              child: const Text('Delete')),
-                        ],
-                      ),
-                    );
-                    if (confirm == true) {
-                      await ref
-                          .read(transactionsProvider.notifier)
-                          .removeTransaction(item);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Transaction deleted')));
-                      }
-                      return true;
-                    }
-                    return false;
-                  },
-                  child: TransactionItem(
-                    item: item,
+                final row = rows[index];
+
+                if (row is DateTime) return _DayHeader(date: row);
+
+                final group = row as List<Transaction>;
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 2),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  clipBehavior: Clip.hardEdge,
+                  child: Column(
+                    children: [
+                      for (int i = 0; i < group.length; i++) ...[
+                        _buildDismissible(context, ref, group[i]),
+                      ],
+                    ],
                   ),
                 );
               },
-                  )
-                : ListView.builder(
-                    key: ValueKey(filteredTransactions.length),
-                    itemCount: sortedMonths.length,
-                    itemBuilder: (context, monthIndex) {
-                      final monthKey = sortedMonths[monthIndex];
-                      final monthTransactions = groupedByMonth[monthKey]!;
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Month Header
-                          Container(
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 3,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Theme.of(context).colorScheme.primary,
-                                        Theme.of(context)
-                                            .colorScheme
-                                            .primary
-                                            .withOpacity(0.5),
-                                      ],
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                    ),
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  monthKey,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 1.0,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.8),
-                                      ),
-                                ),
-                                const Spacer(),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .primary
-                                        .withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    '${monthTransactions.length}',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
-                                        ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Transactions for this month
-                          ...monthTransactions.map((item) {
-                            return Dismissible(
-                              key: ValueKey(item.id),
-                              direction: DismissDirection.endToStart,
-                              background: Container(
-                                color: Colors.red,
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20.0),
-                                child: const Icon(
-                                  Icons.delete,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              confirmDismiss: (direction) async {
-                                final isOriginalRecurrent = item.recurrent &&
-                                    item.originalRecurrentId == item.id;
-                                if (isOriginalRecurrent) {
-                                  final choice =
-                                      await showRecurrenceDeleteDialog(context);
-                                  if (!context.mounted) return false;
-                                  if (choice == null ||
-                                      choice == RecurrenceDeleteChoice.cancel) {
-                                    return false;
-                                  }
-                                  final notifier =
-                                      ref.read(transactionsProvider.notifier);
-                                  if (choice ==
-                                      RecurrenceDeleteChoice.keepPast) {
-                                    await notifier.cancelRecurrenceAndMaintains(
-                                        item.originalRecurrentId!);
-                                  } else {
-                                    await notifier
-                                        .cancelAllRecurrences(
-                                            item.originalRecurrentId!);
-                                  }
-                                  if (!context.mounted) return false;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content: Text(choice ==
-                                                RecurrenceDeleteChoice.keepPast
-                                            ? 'Recurrence cancelled. Past months kept.'
-                                            : 'All recurring expenses deleted.')),
-                                  );
-                                  return true;
-                                }
-                                final confirm = await showDialog<bool>(
-                                  context: context,
-                                  builder: (ctx) => AlertDialog(
-                                    title: const Text('Delete transaction'),
-                                    content: const Text(
-                                        'Are you sure you want to delete this transaction?'),
-                                    actions: [
-                                      TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(ctx).pop(false),
-                                          child: const Text('Cancel')),
-                                      TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(ctx).pop(true),
-                                          child: const Text('Delete')),
-                                    ],
-                                  ),
-                                );
-                                if (confirm == true) {
-                                  await ref
-                                      .read(transactionsProvider.notifier)
-                                      .removeTransaction(item);
-                                  if (context.mounted) {
-ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                                content: Text(
-                                                    'Transaction deleted')));
-                                  }
-                                  return true;
-                                }
-                                return false;
-                              },
-                              child: TransactionItem(
-                                item: item,
-                              ),
-                            );
-                          }),
-                        ],
-                      );
-                    },
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+Widget _buildDismissible(
+    BuildContext context, WidgetRef ref, Transaction item) {
+  return Dismissible(
+    key: ValueKey(item.id),
+    direction: DismissDirection.endToStart,
+    background: Container(
+      color: Colors.red,
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: const Icon(Icons.delete, color: Colors.white),
+    ),
+    confirmDismiss: (direction) async {
+      final isOriginalRecurrent =
+          item.recurrent && item.originalRecurrentId == item.id;
+      if (isOriginalRecurrent) {
+        final choice = await showRecurrenceDeleteDialog(context);
+        if (!context.mounted) return false;
+        if (choice == null || choice == RecurrenceDeleteChoice.cancel) {
+          return false;
+        }
+        final notifier = ref.read(transactionsProvider.notifier);
+        if (choice == RecurrenceDeleteChoice.keepPast) {
+          await notifier
+              .cancelRecurrenceAndMaintains(item.originalRecurrentId!);
+        } else {
+          await notifier.cancelAllRecurrences(item.originalRecurrentId!);
+        }
+        if (!context.mounted) return false;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(choice == RecurrenceDeleteChoice.keepPast
+                ? 'Recurrence cancelled. Past months kept.'
+                : 'All recurring expenses deleted.')));
+        return true;
+      }
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Delete transaction'),
+          content: const Text(
+              'Are you sure you want to delete this transaction?'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Delete')),
+          ],
+        ),
+      );
+      if (confirm == true) {
+        await ref
+            .read(transactionsProvider.notifier)
+            .removeTransaction(item);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Transaction deleted')));
+        }
+        return true;
+      }
+      return false;
+    },
+    child: TransactionItem(item: item),
+  );
+}
+
+class _DayHeader extends StatelessWidget {
+  final DateTime date;
+  const _DayHeader({required this.date});
+
+  @override
+  Widget build(BuildContext context) {
+    final isToday = DateFormat('yyyy-MM-dd').format(date) ==
+        DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final label = isToday ? 'Today' : DateFormat('EEE d').format(date);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 6),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
       ),
     );
   }

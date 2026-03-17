@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 
 import 'package:monthly_count/screens/opening_screen.dart';
+import 'package:monthly_count/screens/create_transaction_screen.dart';
+import 'package:monthly_count/services/transaction_share_service.dart';
 
 const primaryBlue = Color(0xFF0075FF);
 
@@ -57,12 +59,12 @@ final theme = ThemeData(
       letterSpacing: 0.5,
     ),
   ),
-  cardTheme: CardTheme(
+  cardTheme: CardThemeData(
     elevation: 0,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
-      side: BorderSide(
-        color: const Color(0xFFE5E7EB),
+      side: const BorderSide(
+        color:  Color(0xFFE5E7EB),
         width: 1,
       ),
     ),
@@ -148,6 +150,8 @@ final theme = ThemeData(
 );
 
 
+final _navigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
@@ -158,17 +162,55 @@ void main() {
   });
 }
 
-
-class MontlyCount extends StatelessWidget {
+class MontlyCount extends StatefulWidget {
   const MontlyCount({super.key});
+
+  @override
+  State<MontlyCount> createState() => _MontlyCountState();
+}
+
+class _MontlyCountState extends State<MontlyCount> {
+  static const _fileChannel = MethodChannel('com.yesispend/file_handler');
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen for files opened while the app is already running.
+    _fileChannel.setMethodCallHandler((call) async {
+      if (call.method == 'handleFile') {
+        final path = call.arguments as String?;
+        if (path != null) _openImportScreen(path);
+      }
+    });
+    // Check for a file that triggered a cold launch.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final path =
+          await _fileChannel.invokeMethod<String>('getPendingFile');
+      if (path != null && mounted) _openImportScreen(path);
+    });
+  }
+
+  Future<void> _openImportScreen(String filePath) async {
+    try {
+      final draft =
+          await TransactionShareService.importFromJsonFile(filePath);
+      final ctx = _navigatorKey.currentContext;
+      if (ctx == null || !ctx.mounted) return;
+      Navigator.of(ctx).push(
+        MaterialPageRoute(
+          builder: (_) => CreateTransactionScreen(importedDraft: draft),
+        ),
+      );
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'YesISpend',
       theme: theme,
-      // home: const MainViewScreen(),
       home: const OpeningScreen(),
     );
   }

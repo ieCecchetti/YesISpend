@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:monthly_count/models/transaction.dart';
 import 'package:monthly_count/screens/create_transaction_screen.dart';
 import 'package:monthly_count/widgets/multi_category_icon.dart';
-import 'package:intl/intl.dart';
 
 class TransactionItem extends ConsumerWidget {
   const TransactionItem({super.key, required this.item});
@@ -13,25 +12,21 @@ class TransactionItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final String formattedDate = DateFormat('dd MMM yyyy').format(item.date);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CreateTransactionScreen(
-                transaction: item,
-                readOnly: true,
-              ),
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CreateTransactionScreen(
+              transaction: item,
+              readOnly: true,
             ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
           child: Row(
         children: [
           // Circular background for the icon
@@ -101,24 +96,26 @@ class TransactionItem extends ConsumerWidget {
                       categoryIds: item.category_ids,
                 ),
           const SizedBox(width: 16.0),
-          // Title and Date at Place
+          // Title and Place
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item.title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
-                const SizedBox(height: 4.0),
-                Text(
-                    '$formattedDate • ${item.place}',
+                if (item.place.isNotEmpty) ...[
+                  const SizedBox(height: 4.0),
+                  Text(
+                    item.place,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
-                ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -179,7 +176,6 @@ class TransactionItem extends ConsumerWidget {
               )
         ],
       ),
-        ),
       ),
     );
   }

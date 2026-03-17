@@ -16,14 +16,17 @@ import 'package:share_plus/share_plus.dart';
 import 'package:monthly_count/widgets/expand_panel.dart';
 import 'package:monthly_count/screens/main_screen.dart'
     show showRecurrenceDeleteDialog, RecurrenceDeleteChoice;
+import 'package:monthly_count/services/transaction_share_service.dart';
 
 class CreateTransactionScreen extends ConsumerStatefulWidget {
   final Transaction? transaction;
   final bool readOnly;
+  final ImportedTransactionDraft? importedDraft;
   const CreateTransactionScreen({
     super.key,
     this.transaction,
     this.readOnly = false,
+    this.importedDraft,
   });
 
   @override
@@ -93,6 +96,36 @@ class _CreateTransactionScreenState
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _verifyImagePaths();
       });
+    }
+
+    // Pre-fill from a shared transaction draft (import flow)
+    final draft = widget.importedDraft;
+    if (tx == null && draft != null) {
+      final dtx = draft.transaction;
+      _titleController.text = dtx.title;
+      _placeController.text = dtx.place;
+      _priceController.text = dtx.price.abs().toStringAsFixed(2);
+      _transactionType = dtx.price < 0 ? '-' : '+';
+      _selectedDate = dtx.date;
+      _selectedImages = List.from(draft.images);
+      try {
+        final allCategories = ref.read(categoriesProvider);
+        _selectedCategories = allCategories
+            .where((cat) => dtx.category_ids.contains(cat.id))
+            .toList();
+      } catch (_) {
+        _selectedCategories = [];
+      }
+      if (dtx.splitInfo != null) {
+        _isSplitWithSomeone = true;
+        _selectedPercentage = dtx.splitInfo!.percentage;
+        _splitNoteController.text = dtx.splitInfo!.notes;
+      }
+      _isRecurrent = dtx.recurrent;
+      if (dtx.recurrent && dtx.endDate != null) {
+        _specifyEndDate = true;
+        _selectedEndDate = dtx.endDate;
+      }
     }
   }
 
@@ -267,6 +300,12 @@ class _CreateTransactionScreenState
                 });
               },
               tooltip: 'Edit',
+            ),
+          if (_isReadOnly && widget.transaction != null)
+            IconButton(
+              icon: const Icon(Icons.ios_share),
+              onPressed: _shareTransaction,
+              tooltip: 'Share transaction',
             ),
           if (widget.transaction != null)
             IconButton(
@@ -474,6 +513,59 @@ class _CreateTransactionScreenState
             ),
             const SizedBox(height: 20.0),
 
+            // Date Picker
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isRecurrent ? 'Start date' : 'Date',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                        ),
+                        Text(
+                          DateFormat.yMMMd().format(_selectedDate),
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!_isReadOnly)
+                    ElevatedButton(
+                      onPressed: _pickDate,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                      ),
+                      child: const Text('Change'),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20.0),
+
             // Receipt Images Section
             if (!_isReadOnly ||
                 _imagePaths.isNotEmpty ||
@@ -627,7 +719,7 @@ class _CreateTransactionScreenState
                           },
                         ),
                         const SizedBox(height: 20.0),
-                        // Split Toggle
+                        // Split Toggle + Percentage (unified card)
                         Container(
                           padding: const EdgeInsets.all(16.0),
                           decoration: BoxDecoration(
@@ -642,89 +734,79 @@ class _CreateTransactionScreenState
                                   .surfaceContainerHighest,
                             ),
                           ),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.people_outline,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Split with someone',
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                ),
-                              ),
-                              Switch(
-                                value: _isSplitWithSomeone,
-                                onChanged: _isReadOnly
-                                    ? null
-                                    : (bool? value) {
-                                        if (_priceController.text.isNotEmpty &&
-                                            double.tryParse(_priceController
-                                                    .text
-                                                    .replaceAll(',', '.')) !=
-                                                null) {
-                                          setState(() {
-                                            _isSplitWithSomeone =
-                                                value ?? false;
-                                            if (!_isSplitWithSomeone) {
-                                              _selectedPercentage = null;
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.people_outline,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Split with someone',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge,
+                                    ),
+                                  ),
+                                  Switch(
+                                    value: _isSplitWithSomeone,
+                                    onChanged: _isReadOnly
+                                        ? null
+                                        : (bool? value) {
+                                            if (_priceController
+                                                    .text.isNotEmpty &&
+                                                double.tryParse(_priceController
+                                                        .text
+                                                        .replaceAll(
+                                                            ',', '.')) !=
+                                                    null) {
+                                              setState(() {
+                                                _isSplitWithSomeone =
+                                                    value ?? false;
+                                                if (!_isSplitWithSomeone) {
+                                                  _selectedPercentage = null;
+                                                } else {
+                                                  _selectedPercentage = 50;
+                                                }
+                                              });
+                                            } else if (_transactionType ==
+                                                "+") {
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                const SnackBar(
+                                                    content: Text(
+                                                        'Income transactions cannot be splitted')),
+                                              );
                                             } else {
-                                              _selectedPercentage = 50;
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                const SnackBar(
+                                                    content: Text(
+                                                        'Please enter a valid price first')),
+                                              );
                                             }
-                                          });
-                                        } else if (_transactionType == "+") {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                                content: Text(
-                                                    'Income transactions cannot be splitted')),
-                                          );
-                                        } else {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                                content: Text(
-                                                    'Please enter a valid price first')),
-                                          );
-                                        }
-                                      },
+                                          },
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
-                        if (_isSplitWithSomeone) ...[
-                          const SizedBox(height: 20.0),
-                          Container(
-                            padding: const EdgeInsets.all(20.0),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest
-                                  .withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHighest,
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
+                              if (_isSplitWithSomeone) ...[
+                                const Divider(height: 28),
                                 Text(
                                   'Split Percentage',
                                   style: Theme.of(context)
                                       .textTheme
                                       .titleMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 12),
                                 Slider(
-                                  value: (_selectedPercentage ?? 50).toDouble(),
+                                  value:
+                                      (_selectedPercentage ?? 50).toDouble(),
                                   min: 0,
                                   max: 100,
                                   divisions: 4,
@@ -783,19 +865,18 @@ class _CreateTransactionScreenState
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     filled: true,
-                                    fillColor:
-                                        Theme.of(context).colorScheme.surface,
+                                    fillColor: Theme.of(context)
+                                        .colorScheme
+                                        .surface,
                                   ),
-                                  validator: (value) {
-                                    return null;
-                                  },
+                                  validator: (value) => null,
                                 ),
                               ],
-                            ),
+                            ],
                           ),
-                        ],
+                        ),
                         const SizedBox(height: 20.0),
-                        // Recurrent Toggle
+                        // Recurrent Toggle + End Date (unified card)
                         Container(
                           padding: const EdgeInsets.all(16.0),
                           decoration: BoxDecoration(
@@ -810,214 +891,169 @@ class _CreateTransactionScreenState
                                   .surfaceContainerHighest,
                             ),
                           ),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.repeat,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Recurrent transaction',
-                                      style:
-                                          Theme.of(context).textTheme.bodyLarge,
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.repeat,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Recurrent transaction',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Repeats every month on the same day',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'This transaction will repeat every month on the same day',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                          ),
+                                  ),
+                                  Switch(
+                                    value: _isRecurrent,
+                                    onChanged: _isReadOnly
+                                        ? null
+                                        : (bool? value) {
+                                            setState(() {
+                                              _isRecurrent = value ?? false;
+                                              if (!_isRecurrent) {
+                                                _specifyEndDate = false;
+                                                _selectedEndDate = null;
+                                              }
+                                            });
+                                          },
+                                  ),
+                                ],
+                              ),
+                              if (_isRecurrent) ...[
+                                const Divider(height: 28),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.event_busy,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        'Specify end date',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge,
+                                      ),
+                                    ),
+                                    Switch(
+                                      value: _specifyEndDate,
+                                      onChanged: _isReadOnly
+                                          ? null
+                                          : (bool? value) {
+                                              setState(() {
+                                                _specifyEndDate =
+                                                    value ?? false;
+                                                if (_specifyEndDate &&
+                                                    _selectedEndDate == null) {
+                                                  final now = DateTime.now();
+                                                  _selectedEndDate = DateTime(
+                                                          now.year,
+                                                          now.month + 1,
+                                                          1)
+                                                      .subtract(const Duration(
+                                                          days: 1));
+                                                } else if (!_specifyEndDate) {
+                                                  _selectedEndDate = null;
+                                                }
+                                              });
+                                            },
                                     ),
                                   ],
                                 ),
-                              ),
-                              Switch(
-                                value: _isRecurrent,
-                                onChanged: _isReadOnly
-                                    ? null
-                                    : (bool? value) {
-                                        setState(() {
-                                          _isRecurrent = value ?? false;
-                                    if (!_isRecurrent) {
-                                      _specifyEndDate = false;
-                                      _selectedEndDate = null;
-                                    }
-                                        });
-                                      },
-                              ),
+                                if (_specifyEndDate &&
+                                    _selectedEndDate != null) ...[
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      const SizedBox(width: 34),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              'End date',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
+                                                  ),
+                                            ),
+                                            Text(
+                                              DateFormat.yMMMd()
+                                                  .format(_selectedEndDate!),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (!_isReadOnly) ...[
+                                        const SizedBox(width: 12),
+                                        ElevatedButton(
+                                          onPressed: () async {
+                                            final picked =
+                                                await showDatePicker(
+                                              context: context,
+                                              initialDate: _selectedEndDate!,
+                                              firstDate: _selectedDate,
+                                              lastDate: DateTime(2100),
+                                            );
+                                            if (picked != null) {
+                                              setState(() =>
+                                                  _selectedEndDate = picked);
+                                            }
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 16, vertical: 12),
+                                          ),
+                                          child: const Text('Change'),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ],
+                              ],
                             ],
                           ),
                         ),
                       ],
                     ),
             ),
-            const SizedBox(height: 20.0),
-
-            // Date Picker
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _isRecurrent ? 'Start date' : 'Date',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                        ),
-                        Text(
-                          DateFormat.yMMMd().format(_selectedDate),
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (!_isReadOnly)
-                    ElevatedButton(
-                      onPressed: _pickDate,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                      ),
-                      child: const Text('Change'),
-                    ),
-                ],
-              ),
-            ),
-            // End date (only for recurrent)
-            if (_isRecurrent) ...[
-              const SizedBox(height: 16.0),
-              Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color:
-                        Theme.of(context).colorScheme.surfaceContainerHighest,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.event_busy,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Specify end date',
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                        ),
-                        Switch(
-                          value: _specifyEndDate,
-                          onChanged: _isReadOnly
-                              ? null
-                              : (bool? value) {
-                                  setState(() {
-                                    _specifyEndDate = value ?? false;
-                                    if (_specifyEndDate &&
-                                        _selectedEndDate == null) {
-                                      final now = DateTime.now();
-                                      _selectedEndDate = DateTime(
-                                              now.year, now.month + 1, 1)
-                                          .subtract(const Duration(days: 1));
-                                    } else if (!_specifyEndDate) {
-                                      _selectedEndDate = null;
-                                    }
-                                  });
-                                },
-                        ),
-                      ],
-                    ),
-                    if (_specifyEndDate && _selectedEndDate != null) ...[
-                      const SizedBox(height: 12.0),
-                      Row(
-                        children: [
-                          const SizedBox(width: 34),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'End date',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant,
-                                      ),
-                                ),
-                                Text(
-                                  DateFormat.yMMMd().format(_selectedEndDate!),
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (!_isReadOnly) ...[
-                            const SizedBox(width: 12),
-                            ElevatedButton(
-                              onPressed: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: _selectedEndDate!,
-                                  firstDate: _selectedDate,
-                                  lastDate: DateTime(2100),
-                                );
-                                if (picked != null) {
-                                  setState(() => _selectedEndDate = picked);
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 12),
-                              ),
-                              child: const Text('Change'),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
             if (!_isReadOnly) ...[
               const SizedBox(height: 24.0),
               // Submit Button
@@ -1228,7 +1264,6 @@ class _CreateTransactionScreenState
     );
   }
 
-  // Share receipts via WhatsApp
   Future<void> _shareReceipts(List<String> imagePaths) async {
     try {
       if (imagePaths.isEmpty) {
@@ -1239,26 +1274,139 @@ class _CreateTransactionScreenState
         }
         return;
       }
-
-      // Convert image paths to XFile for sharing
-      final files = imagePaths.map((path) => XFile(path)).toList();
-
-      // Share images
+      final files = imagePaths.map((p) => XFile(p)).toList();
       await Share.shareXFiles(
         files,
         text: 'Receipt images from transaction: ${_titleController.text}',
         subject: 'Receipt Images',
       );
     } catch (e) {
-      print('Error sharing receipts: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error sharing receipts: ${e.toString()}'),
-            duration: const Duration(seconds: 3),
-          ),
+          SnackBar(content: Text('Error sharing receipts: $e')),
         );
       }
     }
+  }
+
+  Future<void> _shareTransaction() async {
+    final tx = widget.transaction;
+    if (tx == null) return;
+
+    // If the transaction is split, ask the user to confirm/adjust the percentage
+    int? sharePercentage;
+    if (tx.splitInfo != null) {
+      sharePercentage = await showDialog<int>(
+        context: context,
+        builder: (ctx) => _SplitPercentageDialog(
+          currentPercentage: tx.splitInfo!.percentage,
+        ),
+      );
+      if (sharePercentage == null) return; // user cancelled
+    }
+
+    try {
+      final allImagePaths = [
+        ..._imagePaths,
+        ..._selectedImages.map((img) => img.path),
+      ];
+      final filePath = await TransactionShareService.exportTransaction(
+        tx,
+        allImagePaths,
+        overrideSharePercentage: sharePercentage,
+      );
+      final text = TransactionShareService.buildShareText(
+        tx,
+        overridePercentage: sharePercentage,
+      );
+      await Share.shareXFiles(
+        [XFile(filePath)],
+        text: text,
+        subject: 'Transaction: ${tx.title}',
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sharing transaction: $e')),
+        );
+      }
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Split percentage confirmation dialog
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SplitPercentageDialog extends StatefulWidget {
+  final int currentPercentage;
+  const _SplitPercentageDialog({required this.currentPercentage});
+
+  @override
+  State<_SplitPercentageDialog> createState() =>
+      _SplitPercentageDialogState();
+}
+
+class _SplitPercentageDialogState extends State<_SplitPercentageDialog> {
+  late int _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.currentPercentage.clamp(1, 100);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Split percentage to share'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Choose the percentage to communicate in the shared message:',
+            style: TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 20),
+          Slider(
+            value: _selected.toDouble(),
+            min: 1,
+            max: 100,
+            label: '$_selected%',
+            onChanged: (v) => setState(() => _selected = v.round()),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('User share:',
+                    style: Theme.of(context).textTheme.bodyMedium),
+                Text(
+                  '$_selected%',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, _selected),
+          child: const Text('Share'),
+        ),
+      ],
+    );
   }
 }

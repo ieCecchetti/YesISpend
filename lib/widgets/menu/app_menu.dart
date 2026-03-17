@@ -1,12 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:monthly_count/services/csv_service.dart';
-import 'package:monthly_count/models/transaction.dart';
+import 'package:monthly_count/services/transaction_share_service.dart';
 import 'package:monthly_count/providers/transactions_provider.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:monthly_count/screens/settings_screen.dart';
@@ -40,25 +37,25 @@ class AppMenu extends ConsumerWidget {
       menuChildren: [
         MenuItemButton(
           onPressed: () {
-            _exportToCsv(context, ref);
+            _exportToYiSj(context, ref);
           },
           child: const Row(
             children: [
               Icon(Icons.download),
               SizedBox(width: 8),
-              Text("Export CSV"),
+              Text("Export .yisj"),
             ],
           ),
         ),
         MenuItemButton(
           onPressed: () {
-            _importFromCsv(context, ref);
+            _importFromYiSj(context, ref);
           },
           child: const Row(
             children: [
               Icon(Icons.upload),
               SizedBox(width: 8),
-              Text("Import CSV"),
+              Text("Import .yisj"),
             ],
           ),
         ),
@@ -142,135 +139,57 @@ class AppMenu extends ConsumerWidget {
     );
   }
 
-  // Export transactions to CSV
-  Future<void> _exportToCsv(BuildContext context, WidgetRef ref) async {
-    if (!context.mounted) return;
-    
-    try {
-      final allTransactions = ref.read(transactionsProvider);
-      if (allTransactions.isEmpty) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No transactions to export')),
-          );
-        }
-        return;
-      }
-
-      // Show loading dialog with proper background
-      if (!context.mounted) return;
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        barrierColor: Colors.black54,
-        builder: (dialogContext) => WillPopScope(
-          onWillPop: () async => false,
-          child: Dialog(
-            backgroundColor: Colors.transparent,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Exporting transactions...'),
-                ],
-              ),
-            ),
+  Widget _loadingDialog(String message) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(message),
+            ],
           ),
         ),
       );
 
-      String? filePath;
-      try {
-        filePath = await CsvService.exportTransactionsToCsv(
-          allTransactions,
-          ref,
-        );
-      } catch (e) {
-        if (context.mounted) {
-          Navigator.of(context).pop(); // Close loading dialog
-        }
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error exporting: $e')),
-          );
-        }
-        return;
-      }
+  Future<void> _exportToYiSj(BuildContext context, WidgetRef ref) async {
+    if (!context.mounted) return;
 
-      // Close loading dialog
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
+    final allTransactions = ref.read(transactionsProvider);
+    if (allTransactions.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No transactions to export')),
+      );
+      return;
+    }
 
-      if (filePath != null) {
-        try {
-          // Share the file
-          await Share.shareXFiles(
-            [XFile(filePath)],
-            text: 'Transactions Export',
-            subject: 'Transactions Export',
-          );
-          
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Transactions exported successfully'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          }
-        } catch (e) {
-          // If sharing fails, still show success message with file location
-          if (context.mounted) {
-            // Extract just the filename for cleaner display
-            final fileName = filePath.split('/').last;
-            final directory = filePath.substring(0, filePath.lastIndexOf('/'));
-            
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('File exported successfully: $fileName'),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Location: $directory',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ],
-                ),
-                duration: const Duration(seconds: 5),
-                action: SnackBarAction(
-                  label: 'Open',
-                  onPressed: () async {
-                    await _openFileLocation(directory);
-                  },
-                ),
-              ),
-            );
-          }
-        }
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to export transactions')),
-          );
-        }
-      }
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _loadingDialog('Exporting transactions...'),
+    );
+
+    try {
+      final categories = ref.read(categoriesProvider);
+      final filePath = await TransactionShareService.toYiSj(
+          allTransactions, categories);
+
+      if (context.mounted) Navigator.of(context).pop();
+
+      await Share.shareXFiles(
+        [XFile(filePath)],
+        text: 'YesISpend Backup',
+        subject: 'YesISpend Backup',
+      );
     } catch (e) {
-      // Ensure dialog is closed
       if (context.mounted) {
         Navigator.of(context).pop();
-      }
-      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error exporting: $e')),
         );
@@ -278,169 +197,94 @@ class AppMenu extends ConsumerWidget {
     }
   }
 
-  // Import transactions from CSV
-  Future<void> _importFromCsv(BuildContext context, WidgetRef ref) async {
+  Future<void> _importFromYiSj(BuildContext context, WidgetRef ref) async {
     if (!context.mounted) return;
-    
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['yisj'],
+    );
+    if (result == null || result.files.single.path == null) return;
+    final filePath = result.files.single.path!;
+
+    if (!context.mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _loadingDialog('Importing transactions...'),
+    );
+
+    YiSjImportResult importResult;
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['csv'],
-      );
-
-      if (result == null || result.files.single.path == null) {
-        return; // User cancelled
-      }
-
-      final filePath = result.files.single.path!;
-
-      // Show loading dialog with proper background
-      if (!context.mounted) return;
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        barrierColor: Colors.black54,
-        builder: (dialogContext) => WillPopScope(
-          onWillPop: () async => false,
-          child: Dialog(
-            backgroundColor: Colors.transparent,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Importing transactions...'),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-
-      List<Transaction> transactions;
-      try {
-        transactions = await CsvService.importTransactionsFromCsv(
-          filePath,
-          ref,
-        );
-      } catch (e) {
-        if (context.mounted) {
-          Navigator.of(context).pop(); // Close loading dialog
-        }
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error importing: $e')),
-          );
-        }
-        return;
-      }
-
-      // Close loading dialog
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
-
-      if (transactions.isEmpty) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No transactions found in CSV file')),
-          );
-        }
-        return;
-      }
-
-      // Show confirmation dialog
-      if (!context.mounted) return;
-      final shouldImport = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Import Transactions'),
-          content: Text(
-              'Do you want to import ${transactions.length} transactions?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Import'),
-            ),
-          ],
-        ),
-      );
-
-      if (shouldImport == true) {
-        // Import transactions
-        final notifier = ref.read(transactionsProvider.notifier);
-        for (var transaction in transactions) {
-          notifier.addTransaction(transaction);
-        }
-
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('Imported ${transactions.length} transactions')),
-          );
-        }
-      }
+      importResult = await TransactionShareService.fromYiSj(filePath);
     } catch (e) {
-      // Ensure dialog is closed
       if (context.mounted) {
         Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error reading file: $e')),
+        );
       }
+      return;
+    }
+
+    if (context.mounted) Navigator.of(context).pop();
+
+    if (importResult.transactions.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error importing: $e')),
+          const SnackBar(content: Text('No transactions found in file')),
         );
       }
+      return;
     }
-  }
 
-  // Open file location in system file manager
-  Future<void> _openFileLocation(String directoryPath) async {
-    try {
-      if (Platform.isMacOS) {
-        // On macOS, open the directory in Finder
-        // This works even for iOS Simulator paths
-        await Process.run('open', [directoryPath]);
-      } else if (Platform.isLinux) {
-        await Process.run('xdg-open', [directoryPath]);
-      } else if (Platform.isWindows) {
-        await Process.run('explorer', [directoryPath]);
-      } else if (Platform.isAndroid) {
-        // For Android, try to open with file manager intent
-        // This would require platform-specific code or a package
-        print('Opening directory on Android: $directoryPath');
-      } else if (Platform.isIOS) {
-        // For iOS Simulator on macOS, try to open Finder
-        // The simulator path should be accessible from macOS
-        await Process.run('open', [directoryPath]);
-      }
-    } catch (e) {
-      // If opening fails, try alternative methods
-      try {
-        if (Platform.isMacOS || Platform.isIOS) {
-          // Try opening parent directory if direct path fails
-          final parentDir = directoryPath.substring(0, directoryPath.lastIndexOf('/'));
-          await Process.run('open', [parentDir]);
-        }
-      } catch (e2) {
-        print('Error opening file location: $e, $e2');
-        // Last resort: copy to clipboard
-        try {
-          await Clipboard.setData(ClipboardData(text: directoryPath));
-          print('Path copied to clipboard as fallback: $directoryPath');
-        } catch (clipboardError) {
-          print('Error copying to clipboard: $clipboardError');
-        }
-      }
+    if (!context.mounted) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Import Transactions'),
+        content: Text(
+          'Import ${importResult.transactions.length} transactions'
+          '${importResult.categories.isNotEmpty ? ' and ${importResult.categories.length} categories' : ''}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Import'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    // Import categories first
+    final catNotifier = ref.read(categoriesProvider.notifier);
+    final existingCats = ref.read(categoriesProvider);
+    for (final cat in importResult.categories) {
+      final alreadyById = existingCats.any((c) => c.id == cat.id);
+      final alreadyByName = existingCats.any(
+          (c) => c.title.toLowerCase() == cat.title.toLowerCase());
+      if (!alreadyById && !alreadyByName) catNotifier.addCategory(cat);
+    }
+
+    // Import transactions
+    final txNotifier = ref.read(transactionsProvider.notifier);
+    for (final tx in importResult.transactions) {
+      txNotifier.addTransaction(tx);
+    }
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'Imported ${importResult.transactions.length} transactions'),
+        ),
+      );
     }
   }
 }
