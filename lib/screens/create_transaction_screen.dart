@@ -10,6 +10,7 @@ import 'package:monthly_count/models/transaction_category.dart';
 import 'package:monthly_count/models/split_info.dart';
 import 'package:monthly_count/providers/transactions_provider.dart';
 import 'package:monthly_count/widgets/forms/price_textview.dart';
+import 'package:monthly_count/widgets/forms/autofill_textbox.dart';
 import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:monthly_count/services/image_service.dart';
 import 'package:share_plus/share_plus.dart';
@@ -283,6 +284,29 @@ class _CreateTransactionScreenState
         Theme.of(context).colorScheme.surface;
 
     final categoryList = ref.watch(categoriesProvider);
+    final allTransactions = ref.watch(transactionsProvider);
+
+    final seenPlaces = <String>{};
+    final uniquePlaces = <String>[];
+    final seenTitles = <String>{};
+    final uniqueTitles = <String>[];
+    for (final tx in allTransactions) {
+      final title = tx.title.trim();
+      final place = tx.place.trim();
+      if (title.isNotEmpty) {
+        final titleKey = title.toLowerCase();
+        if (seenTitles.add(titleKey)) uniqueTitles.add(title);
+      }
+      if (place.isEmpty) continue;
+      final placeKey = place.toLowerCase();
+      if (seenPlaces.add(placeKey)) uniquePlaces.add(place);
+    }
+    uniqueTitles.sort(
+      (a, b) => a.toLowerCase().compareTo(b.toLowerCase()),
+    );
+    uniquePlaces.sort(
+      (a, b) => a.toLowerCase().compareTo(b.toLowerCase()),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -388,8 +412,10 @@ class _CreateTransactionScreenState
           padding: const EdgeInsets.all(16.0),
           children: [
             // Title Field
-            TextFormField(
+            AutofillTextBox(
               controller: _titleController,
+              labelText: 'Title',
+              options: uniqueTitles,
               enabled: !_isReadOnly,
               readOnly: _isReadOnly,
               decoration: InputDecoration(
@@ -428,8 +454,10 @@ class _CreateTransactionScreenState
             const SizedBox(height: 20.0),
 
             // Place Field
-            TextFormField(
+            AutofillTextBox(
               controller: _placeController,
+              labelText: 'Place',
+              options: uniquePlaces,
               enabled: !_isReadOnly,
               readOnly: _isReadOnly,
               decoration: InputDecoration(
