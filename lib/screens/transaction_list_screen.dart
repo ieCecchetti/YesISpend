@@ -227,7 +227,7 @@ class _DayHeader extends StatelessWidget {
         DateFormat('yyyy-MM-dd').format(DateTime.now());
     final label = isToday ? 'Today' : DateFormat('EEE d').format(date);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 6),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
       child: Text(
         label,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
