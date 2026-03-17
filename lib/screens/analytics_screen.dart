@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:monthly_count/providers/settings_provider.dart';
 import 'package:monthly_count/widgets/in_out_item.dart';
@@ -23,6 +25,28 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   int _selectedIndex = 0;
   late PageController _pageController;
   PeriodType _statisticsPeriod = PeriodType.month;
+  static final Uri _buyMeCoffeeUrl =
+      Uri.parse('https://buymeacoffee.com/ececchetti');
+
+  Future<void> _openBuyMeCoffee() async {
+    try {
+      final opened =
+          await launchUrl(_buyMeCoffeeUrl, mode: LaunchMode.externalApplication);
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to open BuyMeACoffee link')),
+        );
+      }
+    } on PlatformException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Link plugin not ready. Please stop and run the app again.'),
+        ),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -135,6 +159,15 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
         title: const Text('YesISpend'),
         actions: [
           IconButton(
+            icon: Image.asset(
+              'assets/images/bmac-icon.png',
+              width: 22,
+              height: 22,
+            ),
+            tooltip: 'Support on BuyMeACoffee',
+            onPressed: _openBuyMeCoffee,
+          ),
+          IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
               Navigator.push(
@@ -215,7 +248,10 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .shadow
+                            .withOpacity(0.08),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -245,7 +281,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                             children: [
                               Icon(
                                 item['icon'] as IconData,
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onPrimary,
                                 size: 24,
                               ),
                               const SizedBox(width: 12),
@@ -256,7 +292,8 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                                       .textTheme
                                       .titleLarge
                                       ?.copyWith(
-                                        color: Colors.white,
+                                        color:
+                                            Theme.of(context).colorScheme.onPrimary,
                                         fontWeight: FontWeight.bold,
                                       ),
                                 ),
@@ -268,7 +305,10 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimary
+                                        .withOpacity(0.2),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: DropdownButton<PeriodType>(
@@ -280,11 +320,16 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                                         .textTheme
                                         .bodyMedium
                                         ?.copyWith(
-                                          color: Colors.white,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onPrimary,
                                           fontWeight: FontWeight.w600,
                                         ),
-                                    icon: const Icon(Icons.arrow_drop_down,
-                                        color: Colors.white),
+                                    icon: Icon(
+                                      Icons.arrow_drop_down,
+                                      color:
+                                          Theme.of(context).colorScheme.onPrimary,
+                                    ),
                                     items: const [
                                       DropdownMenuItem(
                                         value: PeriodType.month,
@@ -309,8 +354,10 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                                   ),
                                 ),
                               IconButton(
-                                icon: const Icon(Icons.info_outline,
-                                    color: Colors.white),
+                                icon: Icon(
+                                  Icons.info_outline,
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                ),
                                 onPressed: () {
                                   showDialog(
                                     context: context,
@@ -414,7 +461,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
               icon,
               size: 16,
               color: isSelected
-                  ? Colors.white
+                  ? Theme.of(context).colorScheme.onPrimary
                   : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 6),
@@ -423,7 +470,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                 title,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: isSelected
-                          ? Colors.white
+                          ? Theme.of(context).colorScheme.onPrimary
                           : Theme.of(context).colorScheme.onSurfaceVariant,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                       fontSize: 12,

@@ -62,8 +62,18 @@ class _OpeningScreenState extends State<OpeningScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final titleStyle = Theme.of(context).textTheme.headlineMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+        );
+    final subtitleStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+          fontStyle: FontStyle.italic,
+        );
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // Light gray-blue background
+      backgroundColor: colorScheme.surfaceContainerHighest,
       body: Stack(
         children: [
           // Decorative circles in the background
@@ -75,7 +85,7 @@ class _OpeningScreenState extends State<OpeningScreen>
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF0075FF).withOpacity(0.1), // Blue circle
+                color: colorScheme.primary.withOpacity(0.12),
               ),
             ),
           ),
@@ -87,7 +97,7 @@ class _OpeningScreenState extends State<OpeningScreen>
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.8), // White circle
+                color: colorScheme.surface.withOpacity(0.85),
               ),
             ),
           ),
@@ -99,7 +109,7 @@ class _OpeningScreenState extends State<OpeningScreen>
               height: 150,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF0075FF).withOpacity(0.15), // Blue circle
+                color: colorScheme.secondary.withOpacity(0.16),
               ),
             ),
           ),
@@ -119,8 +129,8 @@ class _OpeningScreenState extends State<OpeningScreen>
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
                             colors: [
-                              const Color(0xFF0075FF).withOpacity(0.8), // Blue
-                              Colors.white.withOpacity(0.9), // White
+                              colorScheme.primary.withOpacity(0.85),
+                              colorScheme.surface.withOpacity(0.9),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -145,12 +155,7 @@ class _OpeningScreenState extends State<OpeningScreen>
                     opacity: _opacityAnimation,
                     child: Text(
                       "YesISpend",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1A1A1A), // Dark text
-                        letterSpacing: 1.5,
-                      ),
+                      style: titleStyle,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -158,11 +163,7 @@ class _OpeningScreenState extends State<OpeningScreen>
                     opacity: _opacityAnimation,
                     child: Text(
                       "Find what's wrong with your spending habits",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: const Color(0xFF6C7A89), // Medium gray text
-                        fontStyle: FontStyle.italic,
-                      ),
+                      style: subtitleStyle,
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -179,12 +180,11 @@ class _OpeningScreenState extends State<OpeningScreen>
               opacity: _opacityAnimation,
               child: Text(
                 "created by LevelApp↑",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF6C7A89), // Medium gray text
-                  letterSpacing: 1.2,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurfaceVariant,
+                      letterSpacing: 1.2,
+                    ),
                 textAlign: TextAlign.center,
               ),
             ),

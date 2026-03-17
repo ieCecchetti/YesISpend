@@ -56,6 +56,12 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final expenseColor = colorScheme.error;
+    final incomeColor = colorScheme.secondary;
+    final accentColor = colorScheme.primary;
+    final supportColor = colorScheme.tertiary;
+
     final allTransactions = ref.watch(transactionsProvider);
     final validTransactions =
         _filterTransactionsByPeriod(allTransactions, _selectedPeriod);
@@ -246,14 +252,14 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                   'Total Expenses',
                   '€${totalExpenses.toStringAsFixed(2)}',
                   Icons.money_off,
-                  Colors.redAccent,
+                  expenseColor,
                 ),
                 _buildStatisticCard(
                   context,
                   'Total Income',
                   '€${totalIncome.toStringAsFixed(2)}',
                   Icons.attach_money,
-                  Colors.greenAccent,
+                  incomeColor,
                 ),
                 if (_selectedPeriod == PeriodType.month)
                   _buildStatisticCard(
@@ -261,7 +267,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Average Daily Expense',
                     '€${averageDailyExpense.toStringAsFixed(2)}',
                     Icons.bar_chart,
-                    Colors.orangeAccent,
+                    accentColor,
                   ),
                 if (_selectedPeriod == PeriodType.month)
                   _buildStatisticCard(
@@ -269,7 +275,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Projected Total Expense',
                     '€${projectedTotalExpense.toStringAsFixed(2)}',
                     Icons.trending_up,
-                    Colors.purpleAccent,
+                    supportColor,
                   ),
                 if (largestExpenseTransaction != null)
                   _buildStatisticCard(
@@ -277,7 +283,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Largest Expense',
                     '€${largestExpense.toStringAsFixed(2)} (${largestExpenseTransaction.title})',
                     Icons.arrow_downward,
-                    Colors.red,
+                    expenseColor,
                   ),
                 if (largestIncomeTransaction != null)
                   _buildStatisticCard(
@@ -285,21 +291,21 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Largest Income',
                     '€${largestIncome.toStringAsFixed(2)} (${largestIncomeTransaction.title})',
                     Icons.arrow_upward,
-                    Colors.green,
+                    incomeColor,
                   ),
                 _buildStatisticCard(
                   context,
                   'Number of Transactions',
                   transactionCount.toString(),
                   Icons.receipt_long,
-                  Colors.blueAccent,
+                  accentColor,
                 ),
                 _buildStatisticCard(
                   context,
                   'Balance',
                   '€${balance.toStringAsFixed(2)}',
                   Icons.account_balance_wallet,
-                  balance >= 0 ? Colors.green : Colors.red,
+                  balance >= 0 ? incomeColor : expenseColor,
                 ),
                 if (fixedExpenses > 0)
                   _buildStatisticCard(
@@ -307,7 +313,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Fixed Expenses',
                     '€${fixedExpenses.toStringAsFixed(2)}',
                     Icons.repeat,
-                    Colors.deepPurpleAccent,
+                    supportColor,
                   ),
                 if (sharedExpenses > 0)
                   _buildStatisticCard(
@@ -315,7 +321,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Shared Expenses',
                     '€${sharedExpenses.toStringAsFixed(2)}',
                     Icons.people,
-                    Colors.tealAccent,
+                    colorScheme.secondary,
                   ),
                 if (expenseCount > 0)
                   _buildStatisticCard(
@@ -323,7 +329,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Average Expense',
                     '€${averageExpense.toStringAsFixed(2)}',
                     Icons.calculate,
-                    Colors.orangeAccent,
+                    accentColor,
                   ),
                 if (incomeCount > 0)
                   _buildStatisticCard(
@@ -331,7 +337,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Average Income',
                     '€${averageIncome.toStringAsFixed(2)}',
                     Icons.trending_up,
-                    Colors.lightGreenAccent,
+                    incomeColor,
                   ),
                 if (totalIncome > 0)
                   _buildStatisticCard(
@@ -339,14 +345,14 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Savings Rate',
                     '${savingsRate.toStringAsFixed(1)}%',
                     Icons.savings,
-                    savingsRate >= 0 ? Colors.green : Colors.red,
+                    savingsRate >= 0 ? incomeColor : expenseColor,
                   ),
                 _buildStatisticCard(
                   context,
                   'Active Days',
                   '$activeDaysCount days',
                   Icons.calendar_today,
-                  Colors.indigoAccent,
+                  supportColor,
                 ),
                 if (daysWithExpensesCount > 0)
                   _buildStatisticCard(
@@ -354,7 +360,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Days with Expenses',
                     '$daysWithExpensesCount days',
                     Icons.event_busy,
-                    Colors.redAccent,
+                    expenseColor,
                   ),
                 if (mostExpensiveCategory != null)
                   _buildStatisticCard(
@@ -369,7 +375,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                   'Expense-to-Income Ratio',
                   '${expenseToIncomeRatio.toStringAsFixed(1)}%',
                   Icons.compare_arrows,
-                  expenseToIncomeRatio > 100 ? Colors.red : Colors.orangeAccent,
+                  expenseToIncomeRatio > 100 ? expenseColor : accentColor,
                 ),
                 if (recurringRatio > 0)
                   _buildStatisticCard(
@@ -377,7 +383,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Recurring Expenses',
                     '${recurringRatio.toStringAsFixed(1)}% of total',
                     Icons.repeat,
-                    Colors.deepPurpleAccent,
+                    supportColor,
                   ),
                 if (sharedRatio > 0)
                   _buildStatisticCard(
@@ -385,7 +391,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Shared Expenses',
                     '${sharedRatio.toStringAsFixed(1)}% of total',
                     Icons.people,
-                    Colors.tealAccent,
+                    colorScheme.secondary,
                   ),
                 if (_selectedPeriod == PeriodType.month)
                   _buildStatisticCard(
@@ -393,7 +399,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Days Remaining',
                     '$daysRemaining days',
                     Icons.calendar_today,
-                    Colors.indigoAccent,
+                    supportColor,
                   ),
                 if (_selectedPeriod == PeriodType.month)
                   _buildStatisticCard(
@@ -401,7 +407,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Projected Balance',
                     '€${projectedBalance.toStringAsFixed(2)}',
                     Icons.trending_down,
-                    projectedBalance >= 0 ? Colors.green : Colors.red,
+                    projectedBalance >= 0 ? incomeColor : expenseColor,
                   ),
                 if (monthlyObjective > 0)
                   _buildStatisticCard(
@@ -409,7 +415,7 @@ class _StatisticsViewState extends ConsumerState<StatisticsView> {
                     'Budget Remaining',
                     '€${budgetRemaining.toStringAsFixed(2)}',
                     Icons.account_balance,
-                    budgetRemaining >= 0 ? Colors.green : Colors.red,
+                    budgetRemaining >= 0 ? incomeColor : expenseColor,
                   ),
                 if (monthlyObjective > 0)
                   _buildBudgetCard(

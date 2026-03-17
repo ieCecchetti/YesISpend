@@ -9,6 +9,8 @@ Widget priceTextView({
   return Builder(
     builder: (context) {
       final isIncome = selectedType == '+';
+      final fillColor = Theme.of(context).colorScheme.surface;
+      final borderColor = Theme.of(context).colorScheme.surfaceContainerHighest;
       return Row(
         children: [
           // Tap-to-toggle +/− button (no dropdown, no arrow)
@@ -20,10 +22,10 @@ Widget priceTextView({
               width: 52,
               height: 56,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color: fillColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  color: borderColor,
                   width: 1,
                 ),
               ),
@@ -51,9 +53,18 @@ Widget priceTextView({
                 suffixText: '€',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: borderColor),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: borderColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: borderColor),
                 ),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surface,
+                fillColor: fillColor,
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {

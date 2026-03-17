@@ -77,8 +77,7 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
       // Generate line bars data
       final errorColor = Theme.of(context).colorScheme.error;
       final secondaryColor = Theme.of(context).colorScheme.secondary;
-      // Use a more visible color for balance - purple/violet
-      final balanceColor = Colors.purple;
+      final balanceColor = Theme.of(context).colorScheme.tertiary;
       final outcomeLineBarsData = getTransactionsLinebars(
           validTransactions.where((t) => t.price < 0).toList(), errorColor);
       final incomeLineBarsData = getTransactionsLinebars(
@@ -233,7 +232,7 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                       height: 40,
                       decoration: BoxDecoration(
                         color: showBalance
-                            ? Colors.purple.withOpacity(0.2)
+                            ? balanceColor.withOpacity(0.2)
                             : Theme.of(context)
                                 .colorScheme
                                 .surfaceContainerHighest
@@ -241,7 +240,7 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: showBalance
-                              ? Colors.purple
+                              ? balanceColor
                               : Theme.of(context)
                                   .colorScheme
                                   .onSurfaceVariant
@@ -253,7 +252,7 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                         Icons.account_balance,
                         size: 20,
                         color: showBalance
-                            ? Colors.purple
+                            ? balanceColor
                             : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
@@ -795,7 +794,8 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
             FlDotData(show: false));
       }
 
-      final lineColor = barData.gradient?.colors.first ?? Colors.blue;
+      final lineColor =
+          barData.gradient?.colors.first ?? Theme.of(context).colorScheme.primary;
       return TouchedSpotIndicatorData(
         FlLine(
           color: lineColor,
@@ -808,7 +808,7 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
             radius: 6,
             color: lineColor,
             strokeWidth: 3,
-            strokeColor: Colors.white,
+            strokeColor: Theme.of(context).colorScheme.surface,
           ),
         ),
       );

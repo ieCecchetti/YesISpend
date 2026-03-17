@@ -15,10 +15,34 @@ class AppMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final itemStyle = ButtonStyle(
+      foregroundColor: WidgetStatePropertyAll(colorScheme.onSurface),
+      overlayColor: WidgetStatePropertyAll(
+        colorScheme.primary.withOpacity(0.08),
+      ),
+      padding: const WidgetStatePropertyAll(
+        EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
+    );
+    final destructiveItemStyle = ButtonStyle(
+      foregroundColor: WidgetStatePropertyAll(colorScheme.error),
+      overlayColor: WidgetStatePropertyAll(
+        colorScheme.error.withOpacity(0.08),
+      ),
+      padding: const WidgetStatePropertyAll(
+        EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
+    );
+
     return MenuAnchor(
       style: MenuStyle(
-        backgroundColor: WidgetStateProperty.all(Colors.white),
+        backgroundColor:
+            WidgetStateProperty.all(colorScheme.surfaceContainerHighest),
         elevation: WidgetStateProperty.all(4),
+        shape: WidgetStateProperty.all(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
       ),
       builder:
           (BuildContext context, MenuController controller, Widget? child) {
@@ -36,6 +60,7 @@ class AppMenu extends ConsumerWidget {
       },
       menuChildren: [
         MenuItemButton(
+          style: itemStyle,
           onPressed: () {
             _exportToYiSj(context, ref);
           },
@@ -48,6 +73,7 @@ class AppMenu extends ConsumerWidget {
           ),
         ),
         MenuItemButton(
+          style: itemStyle,
           onPressed: () {
             _importFromYiSj(context, ref);
           },
@@ -60,6 +86,7 @@ class AppMenu extends ConsumerWidget {
           ),
         ),
         MenuItemButton(
+          style: itemStyle,
           onPressed: () {
             Navigator.push(
               context,
@@ -77,6 +104,7 @@ class AppMenu extends ConsumerWidget {
           ),
         ),
         MenuItemButton(
+          style: itemStyle,
           onPressed: () {
             Navigator.push(
               context,
@@ -94,6 +122,7 @@ class AppMenu extends ConsumerWidget {
           ),
         ),
         MenuItemButton(
+          style: destructiveItemStyle,
           onPressed: () {
             showDialog(
               context: context,
@@ -129,9 +158,9 @@ class AppMenu extends ConsumerWidget {
           },
           child: const Row(
             children: [
-              Icon(Icons.delete_forever, color: Colors.red),
+              Icon(Icons.delete_forever),
               SizedBox(width: 8),
-              Text("Clean Up", style: TextStyle(color: Colors.red)),
+              Text("Clean Up"),
             ],
           ),
         ),
@@ -139,12 +168,12 @@ class AppMenu extends ConsumerWidget {
     );
   }
 
-  Widget _loadingDialog(String message) => Dialog(
+  Widget _loadingDialog(BuildContext context, String message) => Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -152,7 +181,12 @@ class AppMenu extends ConsumerWidget {
             children: [
               const CircularProgressIndicator(),
               const SizedBox(height: 16),
-              Text(message),
+              Text(
+                message,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+              ),
             ],
           ),
         ),
@@ -172,7 +206,7 @@ class AppMenu extends ConsumerWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => _loadingDialog('Exporting transactions...'),
+      builder: (_) => _loadingDialog(context, 'Exporting transactions...'),
     );
 
     try {
@@ -211,7 +245,7 @@ class AppMenu extends ConsumerWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => _loadingDialog('Importing transactions...'),
+      builder: (_) => _loadingDialog(context, 'Importing transactions...'),
     );
 
     YiSjImportResult importResult;

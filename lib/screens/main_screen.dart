@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:monthly_count/providers/transactions_provider.dart';
 import 'package:monthly_count/models/transaction.dart';
 
@@ -27,6 +29,28 @@ class MainViewScreen extends ConsumerStatefulWidget {
 class _MainViewSampleState extends ConsumerState<MainViewScreen> {
   int _selectedIndex = 0;
   int _selectedTab = 0; // 0: All, 1: Shared, 2: Recurrent
+  static final Uri _buyMeCoffeeUrl =
+      Uri.parse('https://buymeacoffee.com/ececchetti');
+
+  Future<void> _openBuyMeCoffee() async {
+    try {
+      final opened =
+          await launchUrl(_buyMeCoffeeUrl, mode: LaunchMode.externalApplication);
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to open BuyMeACoffee link')),
+        );
+      }
+    } on PlatformException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Link plugin not ready. Please stop and run the app again.'),
+        ),
+      );
+    }
+  }
 
   Future<void> _onItemTapped(int index) async {
     if (index == 1) {
@@ -129,6 +153,10 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
       const AnalyticsScreen(),
     ];
 
+    final navTheme = Theme.of(context).bottomNavigationBarTheme;
+    final navBgColor =
+        navTheme.backgroundColor ?? Theme.of(context).colorScheme.primary;
+
     return Scaffold(
       body: _screens[_selectedIndex],
       bottomNavigationBar: ClipRRect(
@@ -138,12 +166,12 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
         ),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
-          color: Theme.of(context).colorScheme.primary,
+          color: navBgColor,
           child: MediaQuery.removePadding(
             context: context,
             removeBottom: true,
             child: BottomNavigationBar(
-              backgroundColor: Theme.of(context).colorScheme.primary,
+              backgroundColor: navBgColor,
                   currentIndex: _selectedIndex == 0 ? 0 : 2,
               onTap: _onItemTapped,
               type: BottomNavigationBarType.fixed,
@@ -203,6 +231,15 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
               forceElevated: innerBoxIsScrolled,
               title: const Text('YesISpend'),
               actions: [
+                IconButton(
+                  icon: Image.asset(
+                    'assets/images/bmac-icon.png',
+                    width: 22,
+                    height: 22,
+                  ),
+                  tooltip: 'Support on BuyMeACoffee',
+                  onPressed: _openBuyMeCoffee,
+                ),
                 IconButton(
                 icon: const Icon(Icons.search),
                 onPressed: () {
@@ -452,6 +489,8 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
   Widget _buildTabButton(
       BuildContext context, String label, int index, IconData icon) {
     final isSelected = _selectedTab == index;
+    final colorScheme = Theme.of(context).colorScheme;
+    final unselectedColor = colorScheme.onSurface;
     return GestureDetector(
       onTap: () => _onTabTapped(index),
       child: AnimatedContainer(
@@ -469,19 +508,14 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
             Icon(
               icon,
               size: 18,
-              color: isSelected
-                  ? Colors.white
-                  : Theme.of(context).colorScheme.onSurfaceVariant,
+              color: isSelected ? Colors.white : unselectedColor,
             ),
             const SizedBox(width: 6),
             Text(
               label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isSelected
-                        ? Colors.white
-                        : Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.normal,
+                    color: isSelected ? Colors.white : unselectedColor,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   ),
             ),
           ],

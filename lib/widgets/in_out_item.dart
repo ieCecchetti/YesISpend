@@ -11,6 +11,8 @@ class IncomeOutcomeWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final boxBg = Theme.of(context).inputDecorationTheme.fillColor ??
+        Theme.of(context).colorScheme.surfaceContainerHighest;
     final transactions = ref.watch(monthlyTransactionsProvider);
     final validTransactions =
         TransactionsNotifier.filterValidTransactions(transactions);
@@ -42,10 +44,7 @@ class IncomeOutcomeWidget extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: backgroundColor ??
-              Theme.of(context)
-                  .colorScheme
-                  .surfaceContainerHighest
-                  .withOpacity(0.3),
+              Theme.of(context).colorScheme.surface,
         ),
       child: SingleChildScrollView(
         child: Column(
@@ -55,7 +54,7 @@ class IncomeOutcomeWidget extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color: boxBg,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -64,7 +63,10 @@ class IncomeOutcomeWidget extends ConsumerWidget {
               child: Column(
                 children: [
                   Text('Total Balance',
-                      style: Theme.of(context).textTheme.bodyMedium),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          )),
                   const SizedBox(height: 8),
                   Text(
                     '${balance.toStringAsFixed(2)}€',
@@ -184,11 +186,14 @@ class IncomeOutcomeWidget extends ConsumerWidget {
 
 Widget _infoCard(String title, double amount, Color color, IconData icon) {
   return Builder(
-    builder: (context) => Expanded(
+    builder: (context) {
+      final boxBg = Theme.of(context).inputDecorationTheme.fillColor ??
+          Theme.of(context).colorScheme.surfaceContainerHighest;
+      return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: boxBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -212,7 +217,7 @@ Widget _infoCard(String title, double amount, Color color, IconData icon) {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurface,
+                    color: color,
                   ),
             ),
             const SizedBox(height: 4),
@@ -227,6 +232,7 @@ Widget _infoCard(String title, double amount, Color color, IconData icon) {
           ],
         ),
       ),
-    ),
+    );
+    },
   );
 }

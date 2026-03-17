@@ -710,9 +710,35 @@ class _CreateTransactionScreenState
                             labelText: 'Place',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(
+                                color: Theme.of(context)
+                                        .inputDecorationTheme
+                                        .enabledBorder
+                                        ?.borderSide
+                                        .color ??
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHighest,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(
+                                color: Theme.of(context)
+                                        .inputDecorationTheme
+                                        .enabledBorder
+                                        ?.borderSide
+                                        .color ??
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHighest,
+                              ),
                             ),
                             filled: true,
-                            fillColor: Theme.of(context).colorScheme.surface,
+                            fillColor: Theme.of(context)
+                                    .inputDecorationTheme
+                                    .fillColor ??
+                                Theme.of(context).colorScheme.surface,
                           ),
                           validator: (value) {
                             return null;

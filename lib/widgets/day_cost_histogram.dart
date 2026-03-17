@@ -224,7 +224,8 @@ class DayCostHistogram extends ConsumerWidget {
                             text:
                                 '${category?.title ?? "Unknown"}: ${amount.toStringAsFixed(2)}€\n',
                             style: TextStyle(
-                              color: category?.color ?? Colors.grey,
+                              color: category?.color ??
+                                  Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 12,
                             ),
                           );
