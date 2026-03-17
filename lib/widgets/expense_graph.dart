@@ -683,6 +683,11 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
       return [];
     }
 
+    LineTooltipItem emptyItem() => const LineTooltipItem(
+          '',
+          TextStyle(fontSize: 0, color: Colors.transparent),
+        );
+
     // Filter out non-touchable lines (projections, zero lines, target)
     final validSpots = touchedSpots.where((spot) {
       return _isLineTouchable(spot.bar);
@@ -690,12 +695,22 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
 
     // If we only touched non-touchable lines, don't show tooltip
     if (validSpots.isEmpty) {
-      return [];
+      return List<LineTooltipItem>.filled(
+        touchedSpots.length,
+        emptyItem(),
+      );
     }
+
+    // fl_chart requires tooltipItems length to match touchedSpots length.
+    final tooltipItems = List<LineTooltipItem>.filled(
+      touchedSpots.length,
+      emptyItem(),
+    );
 
     // Use the first valid spot's X coordinate to determine the day
     // All touchable lines should have consistent X coordinates for the same day
     final firstValidSpot = validSpots.first;
+    final firstValidIndex = touchedSpots.indexOf(firstValidSpot);
     final touchX = firstValidSpot.x;
     final touchedDay = _normalizeTouchXToDay(touchX);
 
@@ -703,68 +718,40 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
     final dayIncome = dailyIncome[touchedDay] ?? 0.0;
     final dayExpenses = dailyExpenses[touchedDay] ?? 0.0;
 
-    // Build tooltip text with day and all available daily values
-    final List<LineTooltipItem> tooltipItems = [];
-
-    // Always show the day
-    tooltipItems.add(
-      LineTooltipItem(
-        'Day $touchedDay',
+    // When we have daily values, show a single summary tooltip on first valid spot.
+    if (dayIncome > 0) {
+      final summary = StringBuffer('Day $touchedDay');
+      summary.writeln();
+      summary.write('Income: ${dayIncome.toStringAsFixed(2)}€');
+      if (dayExpenses > 0) {
+        summary.writeln();
+        summary.write('Expenses: ${dayExpenses.toStringAsFixed(2)}€');
+      }
+      tooltipItems[firstValidIndex] = LineTooltipItem(
+        summary.toString(),
         TextStyle(
           color: Theme.of(context).colorScheme.onSurface,
-          fontWeight: FontWeight.bold,
-          fontSize: 13,
-        ),
-      ),
-    );
-
-    // Show income if available
-    if (dayIncome > 0) {
-      final incomeColor = Theme.of(context).colorScheme.secondary;
-      tooltipItems.add(
-        LineTooltipItem(
-          'Income: ${dayIncome.toStringAsFixed(2)}€',
-          TextStyle(
-            color: incomeColor,
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-          ),
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
         ),
       );
-    }
-
-    // Show expenses if available
-    if (dayExpenses > 0) {
-      final expensesColor = Theme.of(context).colorScheme.error;
-      tooltipItems.add(
-        LineTooltipItem(
-          'Expenses: ${dayExpenses.toStringAsFixed(2)}€',
-          TextStyle(
-            color: expensesColor,
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-          ),
-        ),
-      );
+      return tooltipItems;
     }
 
     // If no daily values, show cumulative values from all touchable lines
     // Use the y value directly from touched spots (fl_chart interpolates the value)
-    if (dayIncome == 0 && dayExpenses == 0) {
-      for (final spot in validSpots) {
-        final lineColor = spot.bar.gradient?.colors.first ??
-            Theme.of(context).colorScheme.primary;
-        tooltipItems.add(
-          LineTooltipItem(
-            '${spot.y.toStringAsFixed(2)}€',
-            TextStyle(
-              color: lineColor,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
-          ),
-        );
-      }
+    for (final spot in validSpots) {
+      final lineColor =
+          spot.bar.gradient?.colors.first ?? Theme.of(context).colorScheme.primary;
+      final idx = touchedSpots.indexOf(spot);
+      tooltipItems[idx] = LineTooltipItem(
+        '${spot.y.toStringAsFixed(2)}€',
+        TextStyle(
+          color: lineColor,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+      );
     }
 
     return tooltipItems;

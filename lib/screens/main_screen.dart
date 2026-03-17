@@ -13,7 +13,7 @@ import 'package:monthly_count/screens/analytics_screen.dart';
 
 import 'package:monthly_count/widgets/transaction_item.dart';
 import 'package:monthly_count/widgets/animations/balance_emoji.dart';
-import 'package:monthly_count/widgets/menu/app_menu.dart';
+import 'package:monthly_count/widgets/header_bar.dart';
 
 import 'package:monthly_count/providers/montly_transactions_provider.dart';
 
@@ -226,44 +226,25 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
         return [
           SliverOverlapAbsorber(
             handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-            sliver: SliverAppBar(
-              floating: true,
+            sliver: YesISpendSliverAppBar(
               forceElevated: innerBoxIsScrolled,
-              title: const Text('YesISpend'),
-              actions: [
-                IconButton(
-                  icon: Image.asset(
-                    'assets/images/bmac-icon.png',
-                    width: 22,
-                    height: 22,
+              onOpenBuyMeCoffee: _openBuyMeCoffee,
+              onOpenSearch: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FilterTransactionScreen(),
                   ),
-                  tooltip: 'Support on BuyMeACoffee',
-                  onPressed: _openBuyMeCoffee,
-                ),
-                IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const FilterTransactionScreen(),
-                    ),
-                  );
-                },
-              ),
-              IconButton(
-                  icon: const Icon(Icons.apps),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CategoryDisplayScreen(),
-                    ),
-                  );
-                },
-              ),
-                const AppMenu(),
-            ],
+                );
+              },
+              onOpenCategories: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CategoryDisplayScreen(),
+                  ),
+                );
+              },
             ),
           ),
           // Summary Card with embedded month selector (swipe left/right)
@@ -286,7 +267,10 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                   bottom: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
+                  color: Theme.of(context).colorScheme.brightness ==
+                          Brightness.light
+                      ? Theme.of(context).colorScheme.surfaceContainerHighest
+                      : Theme.of(context).colorScheme.surface,
                   border: Border(
                     bottom: BorderSide(
                       color:

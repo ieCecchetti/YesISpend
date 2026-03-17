@@ -11,8 +11,6 @@ class IncomeOutcomeWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final boxBg = Theme.of(context).inputDecorationTheme.fillColor ??
-        Theme.of(context).colorScheme.surfaceContainerHighest;
     final transactions = ref.watch(monthlyTransactionsProvider);
     final validTransactions =
         TransactionsNotifier.filterValidTransactions(transactions);
@@ -44,7 +42,10 @@ class IncomeOutcomeWidget extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: backgroundColor ??
-              Theme.of(context).colorScheme.surface,
+              Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withOpacity(0.3),
         ),
       child: SingleChildScrollView(
         child: Column(
@@ -52,9 +53,9 @@ class IncomeOutcomeWidget extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: boxBg,
+                color: Colors.transparent,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -67,7 +68,7 @@ class IncomeOutcomeWidget extends ConsumerWidget {
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
                           )),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
                     '${balance.toStringAsFixed(2)}€',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -81,7 +82,7 @@ class IncomeOutcomeWidget extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Row(
               children: [
                 _infoCard(
@@ -95,7 +96,7 @@ class IncomeOutcomeWidget extends ConsumerWidget {
                     Icons.arrow_downward),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Row(
               children: [
                 _infoCard('Fixed Expenses', fixedExpenses,
@@ -187,13 +188,11 @@ class IncomeOutcomeWidget extends ConsumerWidget {
 Widget _infoCard(String title, double amount, Color color, IconData icon) {
   return Builder(
     builder: (context) {
-      final boxBg = Theme.of(context).inputDecorationTheme.fillColor ??
-          Theme.of(context).colorScheme.surfaceContainerHighest;
       return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: boxBg,
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,

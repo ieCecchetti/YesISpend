@@ -187,7 +187,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Light (default), Dark, Design, Olive, and Summer palettes.',
+          'Default, Dark, Design, Olive, and Summer palettes.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],

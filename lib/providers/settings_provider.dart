@@ -36,7 +36,7 @@ extension AppThemePreferenceX on AppThemePreference {
   String get label {
     switch (this) {
       case AppThemePreference.light:
-        return 'Light';
+        return 'Default';
       case AppThemePreference.dark:
         return 'Dark';
       case AppThemePreference.design:

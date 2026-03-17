@@ -12,7 +12,8 @@ import 'package:monthly_count/widgets/statistics_view.dart';
 import 'package:monthly_count/widgets/day_cost_histogram.dart';
 import 'package:monthly_count/screens/category_screen.dart';
 import 'package:monthly_count/screens/filter_screen.dart';
-import 'package:monthly_count/widgets/menu/app_menu.dart';
+import 'package:monthly_count/config/themes.dart';
+import 'package:monthly_count/widgets/header_bar.dart';
 
 class AnalyticsScreen extends ConsumerStatefulWidget {
   const AnalyticsScreen({super.key});
@@ -155,42 +156,24 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('YesISpend'),
-        actions: [
-          IconButton(
-            icon: Image.asset(
-              'assets/images/bmac-icon.png',
-              width: 22,
-              height: 22,
+      appBar: YesISpendAppBar(
+        onOpenBuyMeCoffee: _openBuyMeCoffee,
+        onOpenSearch: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const FilterTransactionScreen(),
             ),
-            tooltip: 'Support on BuyMeACoffee',
-            onPressed: _openBuyMeCoffee,
-          ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const FilterTransactionScreen(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.category_outlined),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CategoryDisplayScreen(),
-                ),
-              );
-            },
-          ),
-          const AppMenu(),
-        ],
+          );
+        },
+        onOpenCategories: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CategoryDisplayScreen(),
+            ),
+          );
+        },
       ),
       body: Column(
         children: [
@@ -241,10 +224,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .inversePrimary
-                        .withOpacity(0.5),
+                    color: AppThemes.lightBg,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -366,16 +346,24 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(12),
                                         ),
-                                        backgroundColor: Theme.of(context).colorScheme.surface,
+                                          backgroundColor: AppThemes.lightBg,
                                         title: Text(
                                           item['title'] as String,
                                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                                 fontWeight: FontWeight.bold,
+                                                color: AppThemes.lightTheme
+                                                    .colorScheme.onSurface,
                                               ),
                                         ),
                                         content: Text(
                                           item['description'] as String,
-                                          style: Theme.of(context).textTheme.bodyMedium,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.copyWith(
+                                                color: AppThemes.lightTheme
+                                                    .colorScheme.onSurface,
+                                              ),
                                         ),
                                         actions: [
                                           TextButton(
