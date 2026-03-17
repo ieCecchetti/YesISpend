@@ -42,8 +42,20 @@ Widget budgetChecker(BuildContext context, WidgetRef ref) {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: "€",
+                filled: true,
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                    Theme.of(context).colorScheme.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,

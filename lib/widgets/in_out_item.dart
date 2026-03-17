@@ -68,7 +68,6 @@ class IncomeOutcomeWidget extends ConsumerWidget {
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
                           )),
-                  const SizedBox(height: 4),
                   Text(
                     '${balance.toStringAsFixed(2)}€',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -82,7 +81,6 @@ class IncomeOutcomeWidget extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 4),
             Row(
               children: [
                 _infoCard(
@@ -96,7 +94,6 @@ class IncomeOutcomeWidget extends ConsumerWidget {
                     Icons.arrow_downward),
               ],
             ),
-            const SizedBox(height: 4),
             Row(
               children: [
                 _infoCard('Fixed Expenses', fixedExpenses,

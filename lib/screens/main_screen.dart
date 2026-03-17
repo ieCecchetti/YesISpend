@@ -9,6 +9,7 @@ import 'package:monthly_count/models/transaction.dart';
 import 'package:monthly_count/screens/category_screen.dart';
 import 'package:monthly_count/screens/create_transaction_screen.dart';
 import 'package:monthly_count/screens/filter_screen.dart';
+import 'package:monthly_count/screens/faq_screen.dart';
 import 'package:monthly_count/screens/analytics_screen.dart';
 
 import 'package:monthly_count/widgets/transaction_item.dart';
@@ -136,6 +137,11 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
 
     montlyTransactions.sort((a, b) => b.date.compareTo(a.date));
 
+    final allCount = montlyTransactions.length;
+    final sharedCount =
+        montlyTransactions.where((t) => t.splitInfo != null).length;
+    final recurrentCount = montlyTransactions.where((t) => t.recurrent).length;
+
     // Filter by tab
     List filteredTransactions = montlyTransactions;
     if (_selectedTab == 1) {
@@ -149,7 +155,12 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
 
     final List<Widget> _screens = [
       _buildTransactionsScreen(
-          context, filteredTransactions, montlyTransactions),
+          context,
+          filteredTransactions,
+          montlyTransactions,
+          allCount,
+          sharedCount,
+          recurrentCount),
       const AnalyticsScreen(),
     ];
 
@@ -206,8 +217,14 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
     );
   }
 
-  Widget _buildTransactionsScreen(BuildContext context,
-      List filteredTransactions, List allMonthlyTransactions) {
+  Widget _buildTransactionsScreen(
+    BuildContext context,
+    List filteredTransactions,
+    List allMonthlyTransactions,
+    int allCount,
+    int sharedCount,
+    int recurrentCount,
+  ) {
     // Build alternating [DateTime, List<Transaction>] groups
     final List<dynamic> rows = [];
     String? lastDayKey;
@@ -284,7 +301,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                     Expanded(
                       child: _buildTabButton(
                         context,
-                        'All',
+                        'All ($allCount)',
                         0,
                         Icons.list,
                       ),
@@ -293,7 +310,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                     Expanded(
                       child: _buildTabButton(
                         context,
-                        'Shared',
+                        'Shared ($sharedCount)',
                         1,
                         Icons.people,
                       ),
@@ -302,7 +319,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                     Expanded(
                       child: _buildTabButton(
                         context,
-                        'Recurrent',
+                        'Recurrent ($recurrentCount)',
                         2,
                         Icons.repeat,
                       ),
@@ -479,7 +496,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
       onTap: () => _onTabTapped(index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
         decoration: BoxDecoration(
           color: isSelected
               ? Theme.of(context).colorScheme.primary
@@ -491,16 +508,20 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
           children: [
             Icon(
               icon,
-              size: 18,
+              size: 16,
               color: isSelected ? Colors.white : unselectedColor,
             ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isSelected ? Colors.white : unselectedColor,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  ),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isSelected ? Colors.white : unselectedColor,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    ),
+              ),
             ),
           ],
         ),
@@ -527,14 +548,21 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
         .where((t) => t.price < 0)
         .fold(0.0, (sum, t) => sum + t.price.abs());
     final balance = totalIncome - totalExpenses;
-    final transactionCount = validTransactions.length;
-
     // Calculate expense projection
     final selectedMonth = ref.read(selectedMonthProvider);
     final now = DateTime.now();
     final daysPassed = now.day;
     final daysInMonth =
         DateTime(selectedMonth.year, selectedMonth.month + 1, 0).day;
+    final isCurrentMonth =
+        selectedMonth.year == now.year && selectedMonth.month == now.month;
+    final isPastMonth = DateTime(selectedMonth.year, selectedMonth.month + 1, 0)
+        .isBefore(DateTime(now.year, now.month, now.day));
+    final elapsedDaysInSelectedMonth =
+        isCurrentMonth ? now.day : (isPastMonth ? daysInMonth : 0);
+    final averagePerDay = elapsedDaysInSelectedMonth > 0
+        ? totalExpenses / elapsedDaysInSelectedMonth
+        : 0.0;
     final dailyExpense = daysPassed > 0 ? totalExpenses / daysPassed : 0.0;
     final expenseProjection = dailyExpense * daysInMonth;
 
@@ -597,14 +625,14 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
             ],
           ),
             const SizedBox(height: 2),
-            Text(
-              'Monthly Summary',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withOpacity(0.7),
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.5,
-                  ),
-            ),
+            // Text(
+            //   'Monthly Summary',
+            //   style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            //         color: Colors.white.withOpacity(0.7),
+            //         fontWeight: FontWeight.w500,
+            //         letterSpacing: 0.5,
+            //       ),
+            // ),
           const SizedBox(height: 16),
           // First row: Income and Expenses
           Row(
@@ -632,7 +660,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          // Second row: Expense Projection and Transactions
+          // Second row: Expense Projection and Average / Day
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -649,14 +677,43 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
               Expanded(
                 child: _buildSummaryItem(
                   context,
-                  'Transactions',
-                  transactionCount.toDouble(),
+                  'Average / Day',
+                  averagePerDay,
                   Icons.receipt_long,
                   Colors.white70,
                 ),
               ),
             ],
           ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.center,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const FaqScreen(),
+                    ),
+                  );
+                },
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 0),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'Any doubts? Check the Q&A',
+                  textAlign: TextAlign.right,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Colors.white,
+                      ),
+                ),
+              ),
+            ),
         ],
       ),
       ), // Container
@@ -670,7 +727,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
     IconData icon,
     Color color,
   ) {
-    final isCount = label == 'Transactions';
+    final isAverageDay = label == 'Average / Day';
     final isProjection = label == 'Expense Projection';
     return Container(
       padding: const EdgeInsets.all(12),
@@ -700,8 +757,8 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            isCount
-                ? value.toInt().toString()
+            isAverageDay
+                ? '${value.toStringAsFixed(2)}€'
                 : isProjection
                     ? '${value.toStringAsFixed(2)}€'
                     : '${value >= 0 ? '+' : ''}${value.toStringAsFixed(2)}€',
