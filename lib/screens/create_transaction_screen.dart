@@ -279,6 +279,9 @@ class _CreateTransactionScreenState
 
   @override
   Widget build(BuildContext context) {
+    final bgLight = Theme.of(context).inputDecorationTheme.fillColor ??
+        Theme.of(context).colorScheme.surface;
+
     final categoryList = ref.watch(categoriesProvider);
 
     return Scaffold(
@@ -287,8 +290,7 @@ class _CreateTransactionScreenState
           _isReadOnly
               ? 'Transaction Details'
               : (widget.transaction == null
-                  ? 'Create Transaction'
-                  : 'Edit Transaction'),
+                  ? 'Create' : 'Edit'),
         ),
         actions: [
           if (_isReadOnly)
@@ -394,9 +396,27 @@ class _CreateTransactionScreenState
                 labelText: 'Title',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                  ),
                 ),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surface,
+                fillColor: bgLight,
               ),
               validator: (value) {
                 if (!_isReadOnly && (value == null || value.isEmpty)) {
@@ -407,11 +427,112 @@ class _CreateTransactionScreenState
             ),
             const SizedBox(height: 20.0),
 
+            // Place Field
+            TextFormField(
+              controller: _placeController,
+              enabled: !_isReadOnly,
+              readOnly: _isReadOnly,
+              decoration: InputDecoration(
+                labelText: 'Place',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                  ),
+                ),
+                filled: true,
+                fillColor: bgLight,
+              ),
+              validator: (value) {
+                return null;
+              },
+            ),
+            const SizedBox(height: 20.0),
+
+            // Date Picker
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: bgLight,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isRecurrent ? 'Start date' : 'Date',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                        ),
+                        Text(
+                          DateFormat.yMMMd().format(_selectedDate),
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!_isReadOnly)
+                    ElevatedButton(
+                      onPressed: _pickDate,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                      ),
+                      child: const Text('Change'),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20.0),
+
+            // Price Field
+            priceTextView(
+              selectedType: _transactionType,
+              priceController: _priceController,
+              onTypeChanged: (String? newValue) {
+                setState(() {
+                  _transactionType = newValue!;
+                });
+              },
+              readOnly: _isReadOnly,
+            ),
+            const SizedBox(height: 20.0),
+
             // Categories Selection
             Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color: bgLight,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -500,72 +621,6 @@ class _CreateTransactionScreenState
             ),
             const SizedBox(height: 20.0),
 
-            // Price Field
-            priceTextView(
-              selectedType: _transactionType,
-              priceController: _priceController,
-              onTypeChanged: (String? newValue) {
-                setState(() {
-                  _transactionType = newValue!;
-                });
-              },
-              readOnly: _isReadOnly,
-            ),
-            const SizedBox(height: 20.0),
-
-            // Date Picker
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _isRecurrent ? 'Start date' : 'Date',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                              ),
-                        ),
-                        Text(
-                          DateFormat.yMMMd().format(_selectedDate),
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (!_isReadOnly)
-                    ElevatedButton(
-                      onPressed: _pickDate,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                      ),
-                      child: const Text('Change'),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20.0),
-
             // Receipt Images Section
             if (!_isReadOnly ||
                 _imagePaths.isNotEmpty ||
@@ -631,10 +686,7 @@ class _CreateTransactionScreenState
                                       width: 80,
                                       height: 80,
                                       decoration: BoxDecoration(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .surfaceContainerHighest
-                                            .withOpacity(0.5),
+                                        color: bgLight,
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: Theme.of(context)
@@ -661,10 +713,7 @@ class _CreateTransactionScreenState
                           width: double.infinity,
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest
-                                .withOpacity(0.3),
+                            color: bgLight,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: Theme.of(context)
@@ -699,60 +748,14 @@ class _CreateTransactionScreenState
               title: 'Advanced',
               icon: Icons.settings_outlined,
               initiallyExpanded: false,
+              showBottomBorder: false,
               child: Column(
                 children: [
-                        // Place Field
-                        TextFormField(
-                          controller: _placeController,
-                          enabled: !_isReadOnly,
-                          readOnly: _isReadOnly,
-                          decoration: InputDecoration(
-                            labelText: 'Place',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(
-                                color: Theme.of(context)
-                                        .inputDecorationTheme
-                                        .enabledBorder
-                                        ?.borderSide
-                                        .color ??
-                                    Theme.of(context)
-                                        .colorScheme
-                                        .surfaceContainerHighest,
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(
-                                color: Theme.of(context)
-                                        .inputDecorationTheme
-                                        .enabledBorder
-                                        ?.borderSide
-                                        .color ??
-                                    Theme.of(context)
-                                        .colorScheme
-                                        .surfaceContainerHighest,
-                              ),
-                            ),
-                            filled: true,
-                            fillColor: Theme.of(context)
-                                    .inputDecorationTheme
-                                    .fillColor ??
-                                Theme.of(context).colorScheme.surface,
-                          ),
-                          validator: (value) {
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 20.0),
                         // Split Toggle + Percentage (unified card)
                         Container(
                           padding: const EdgeInsets.all(16.0),
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest
-                                .withOpacity(0.3),
+                      color: bgLight,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: Theme.of(context)
@@ -891,9 +894,7 @@ class _CreateTransactionScreenState
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     filled: true,
-                                    fillColor: Theme.of(context)
-                                        .colorScheme
-                                        .surface,
+                              fillColor: bgLight,
                                   ),
                                   validator: (value) => null,
                                 ),
@@ -906,10 +907,7 @@ class _CreateTransactionScreenState
                         Container(
                           padding: const EdgeInsets.all(16.0),
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest
-                                .withOpacity(0.3),
+                      color: bgLight,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: Theme.of(context)

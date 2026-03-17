@@ -9,7 +9,8 @@ Widget priceTextView({
   return Builder(
     builder: (context) {
       final isIncome = selectedType == '+';
-      final fillColor = Theme.of(context).colorScheme.surface;
+      final fillColor = Theme.of(context).inputDecorationTheme.fillColor ??
+          Theme.of(context).colorScheme.surface;
       final borderColor = Theme.of(context).colorScheme.surfaceContainerHighest;
       return Row(
         children: [

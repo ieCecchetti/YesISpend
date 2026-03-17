@@ -70,6 +70,8 @@ class AppThemes {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: lightBg,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: lightSecondary),
@@ -128,6 +130,8 @@ class AppThemes {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: darkSurface,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: darkPrimary),
@@ -186,6 +190,8 @@ class AppThemes {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: designSurface,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: designPrimary),
@@ -245,6 +251,8 @@ class AppThemes {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFFF7F2D9),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: oliveSecondary),
@@ -304,6 +312,8 @@ class AppThemes {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: summerBg,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: summerWarm),

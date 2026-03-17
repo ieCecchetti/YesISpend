@@ -5,6 +5,7 @@ class ExpandPanel extends StatefulWidget {
   final IconData? icon;
   final Widget child;
   final bool initiallyExpanded;
+  final bool showBottomBorder;
   final Widget? trailing;
 
   const ExpandPanel({
@@ -13,6 +14,7 @@ class ExpandPanel extends StatefulWidget {
     this.icon,
     required this.child,
     this.initiallyExpanded = false,
+    this.showBottomBorder = true,
     this.trailing,
   });
 
@@ -36,6 +38,20 @@ class _ExpandPanelState extends State<ExpandPanel> {
         dividerColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       ),
       child: ExpansionTile(
+        shape: Border(
+          bottom: BorderSide(
+            color: widget.showBottomBorder
+                ? Theme.of(context).colorScheme.surfaceContainerHighest
+                : Colors.transparent,
+          ),
+        ),
+        collapsedShape: Border(
+          bottom: BorderSide(
+            color: widget.showBottomBorder
+                ? Theme.of(context).colorScheme.surfaceContainerHighest
+                : Colors.transparent,
+          ),
+        ),
         title: Text(
           widget.title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
