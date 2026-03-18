@@ -17,7 +17,7 @@ class AppMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final itemStyle = ButtonStyle(
-      foregroundColor: WidgetStatePropertyAll(colorScheme.onSurface),
+      foregroundColor: WidgetStatePropertyAll(colorScheme.onSurfaceVariant),
       overlayColor: WidgetStatePropertyAll(
         colorScheme.primary.withOpacity(0.08),
       ),

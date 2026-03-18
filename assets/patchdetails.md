@@ -1,5 +1,15 @@
 # YesISpend Changelog
 
+## Version 1.3.0 - March 2026
+
+- ❓ New Q&A Help Screen - Added a dedicated Q&A page with common anwer to common question. Quick access from Monthly Summary
+- 🎨 Expanded Theme System - Improved and refined theme support across the app (Default, Dark, Design, Olive, Summer) with better consistency in settings and UI surfaces
+- 🗂️ Better Transaction Grouping - Transactions are grouped by day with cleaner day headers and tighter spacing for easier reading
+- ☕ Buy Me a Coffee in Header - Added direct support action in the app header using the custom icon
+- 🔁 Recurrent Deletion Fix - Recurrent transactions can now be removed correctly from the list flow
+- 🧾 Better Receipt Import - You can now add receipts from the gallery, not only by taking a new photo
+- 📱 UI Polish Across Screens - Multiple layout and style refinements on main, create transaction, and settings screens for a cleaner and more consistent look
+
 ## Version 1.2.0 - December 2024
 
 - 📸 Receipt Photos - Attach photos of receipts to your transactions and swipe through them

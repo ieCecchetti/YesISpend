@@ -144,13 +144,8 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                                 .withOpacity(0.3),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: showIncome
-                              ? Theme.of(context).colorScheme.secondary
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant
-                                  .withOpacity(0.3),
-                          width: showIncome ? 2 : 1,
+                          color: Colors.transparent,
+                          width: 0,
                         ),
                       ),
                       child: Icon(
@@ -193,13 +188,8 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                                 .withOpacity(0.3),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: showOutcome
-                              ? Theme.of(context).colorScheme.error
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant
-                                  .withOpacity(0.3),
-                          width: showOutcome ? 2 : 1,
+                          color: Colors.transparent,
+                          width: 0,
                         ),
                       ),
                       child: Icon(
@@ -239,13 +229,8 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                                 .withOpacity(0.3),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: showBalance
-                              ? balanceColor
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant
-                                  .withOpacity(0.3),
-                          width: showBalance ? 2 : 1,
+                          color: Colors.transparent,
+                          width: 0,
                         ),
                       ),
                       child: Icon(
@@ -281,13 +266,8 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                                 .withOpacity(0.3),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: showTarget
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant
-                                  .withOpacity(0.3),
-                          width: showTarget ? 2 : 1,
+                          color: Colors.transparent,
+                          width: 0,
                         ),
                       ),
                       child: Icon(
@@ -411,18 +391,12 @@ class _ExpenseGraphScreenState extends ConsumerState<ExpenseGraphScreen> {
                     show: true,
                     border: Border(
                       left: BorderSide(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant
-                            .withOpacity(0.2),
-                        width: 1.5,
+                        color: Colors.transparent,
+                        width: 0,
                       ),
                       bottom: BorderSide(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant
-                            .withOpacity(0.2),
-                        width: 1.5,
+                        color: Colors.transparent,
+                        width: 0,
                       ),
                     ),
                   ),

@@ -443,6 +443,7 @@ Widget _buildStatisticCard(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.0),
+        side: const BorderSide(color: Colors.transparent, width: 0),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -481,6 +482,7 @@ Widget _buildStatisticCard(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.0),
+        side: const BorderSide(color: Colors.transparent, width: 0),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),

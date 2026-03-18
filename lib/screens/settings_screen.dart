@@ -196,8 +196,8 @@ class SettingsScreen extends ConsumerWidget {
 
   Color _themePrimaryColor(AppThemePreference theme) {
     switch (theme) {
-      case AppThemePreference.light:
-        return AppThemes.lightTheme.colorScheme.primary;
+      case AppThemePreference.defaultTheme:
+        return AppThemes.defaultTheme.colorScheme.primary;
       case AppThemePreference.dark:
         return AppThemes.darkTheme.colorScheme.primary;
       case AppThemePreference.design:
@@ -230,8 +230,8 @@ class SettingsScreen extends ConsumerWidget {
 
   Color _themeSecondaryColor(AppThemePreference theme) {
     switch (theme) {
-      case AppThemePreference.light:
-        return AppThemes.lightTheme.colorScheme.secondary;
+      case AppThemePreference.defaultTheme:
+        return AppThemes.defaultTheme.colorScheme.secondary;
       case AppThemePreference.dark:
         return AppThemes.darkTheme.colorScheme.secondary;
       case AppThemePreference.design:
@@ -245,8 +245,8 @@ class SettingsScreen extends ConsumerWidget {
 
   Color _themeSurfaceColor(AppThemePreference theme) {
     switch (theme) {
-      case AppThemePreference.light:
-        return AppThemes.lightTheme.colorScheme.surface;
+      case AppThemePreference.defaultTheme:
+        return AppThemes.defaultTheme.colorScheme.surface;
       case AppThemePreference.dark:
         return AppThemes.darkTheme.colorScheme.surface;
       case AppThemePreference.design:

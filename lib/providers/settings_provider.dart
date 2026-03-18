@@ -12,7 +12,7 @@ enum Settings {
 }
 
 enum AppThemePreference {
-  light,
+  defaultTheme,
   dark,
   design,
   olive,
@@ -22,7 +22,7 @@ enum AppThemePreference {
 extension AppThemePreferenceX on AppThemePreference {
   ThemeMode toThemeModeForMaterialApp() {
     switch (this) {
-      case AppThemePreference.light:
+      case AppThemePreference.defaultTheme:
         return ThemeMode.light;
       case AppThemePreference.dark:
         return ThemeMode.dark;
@@ -35,7 +35,7 @@ extension AppThemePreferenceX on AppThemePreference {
 
   String get label {
     switch (this) {
-      case AppThemePreference.light:
+      case AppThemePreference.defaultTheme:
         return 'Default';
       case AppThemePreference.dark:
         return 'Dark';
@@ -77,7 +77,7 @@ final settingsProvider =
         (ref) => SettingsNotifier());
 
 class ThemePreferenceNotifier extends StateNotifier<AppThemePreference> {
-  ThemePreferenceNotifier() : super(AppThemePreference.light);
+  ThemePreferenceNotifier() : super(AppThemePreference.defaultTheme);
 
   void setTheme(AppThemePreference preference) {
     state = preference;
@@ -97,8 +97,8 @@ final selectedThemeModeProvider = Provider<ThemeMode>((ref) {
 final selectedThemeDataProvider = Provider<ThemeData>((ref) {
   final themePreference = ref.watch(themePreferenceProvider);
   switch (themePreference) {
-    case AppThemePreference.light:
-      return AppThemes.lightTheme;
+    case AppThemePreference.defaultTheme:
+      return AppThemes.defaultTheme;
     case AppThemePreference.dark:
       return AppThemes.darkTheme;
     case AppThemePreference.design:

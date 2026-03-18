@@ -58,7 +58,7 @@ class IncomeOutcomeWidget extends ConsumerWidget {
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  color: Colors.transparent,
                 ),
               ),
               child: Column(
@@ -97,7 +97,7 @@ class IncomeOutcomeWidget extends ConsumerWidget {
             Row(
               children: [
                 _infoCard('Fixed Expenses', fixedExpenses,
-                    Theme.of(context).colorScheme.tertiary, Icons.repeat),
+                    Theme.of(context).colorScheme.primary, Icons.repeat),
                 const SizedBox(width: 12),
                 _infoCard('Shared Expenses', sharedExpenses,
                     Theme.of(context).colorScheme.primary, Icons.people),
@@ -192,8 +192,8 @@ Widget _infoCard(String title, double amount, Color color, IconData icon) {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            width: 1.5,
+              color: Colors.transparent,
+              width: 0,
           ),
         ),
         child: Column(

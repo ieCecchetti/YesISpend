@@ -184,16 +184,12 @@ class DayCostHistogram extends ConsumerWidget {
                   show: true,
                   border: Border(
                     left: BorderSide(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant
-                          .withOpacity(0.3),
+                      color: Colors.transparent,
+                      width: 0,
                     ),
                     bottom: BorderSide(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant
-                          .withOpacity(0.3),
+                      color: Colors.transparent,
+                      width: 0,
                     ),
                   ),
                 ),

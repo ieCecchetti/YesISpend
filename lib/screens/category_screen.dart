@@ -126,7 +126,8 @@ class _CategoryDisplayScreenState extends ConsumerState<CategoryDisplayScreen> {
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
                     decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
+                            color:
+                                Theme.of(context).colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: isDeletionMode

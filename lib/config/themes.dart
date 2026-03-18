@@ -10,14 +10,14 @@ class AppThemes {
   static const Color darkBg = Color(0xFF0D1B2A);
   static const Color darkSurface = Color(0xFF1B263B);
   static const Color darkPrimary = Color(0xFF415A77);
-  static const Color darkSecondary = Color(0xFF778DA9);
+  static const Color darkSecondary = Color(0xFF6096ba);
   static const Color darkOn = Color(0xFFE0E1DD);
 
   static const Color designBg = Color(0xFF22223B);
   static const Color designSurface = Color(0xFF4A4E69);
   static const Color designPrimary = Color(0xFF9A8C98);
-  static const Color designSecondary = Color(0xFFC9ADA7);
-  static const Color designOn = Color(0xFFF2E9E4);
+  static const Color designSecondary = Color(0xFFca8683);
+  static const Color designOn = Color(0xFFedf6f9);
   static const Color olivePrimary = Color(0xFF606C38);
   static const Color oliveDark = Color(0xFF283618);
   static const Color oliveBg = Color(0xFFFEFAE0);
@@ -29,7 +29,7 @@ class AppThemes {
   static const Color summerWarm = Color(0xFFFFF1E6);
   static const Color summerBg = Color(0xFFF9F9F9);
 
-  static ThemeData get lightTheme {
+  static ThemeData get defaultTheme {
     final base = ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
@@ -38,7 +38,7 @@ class AppThemes {
         primary: lightPrimary,
         secondary: lightSecondary,
         tertiary: const Color(0xFFFF6B6B),
-        error: const Color(0xFFFF3B30),
+        error: const Color(0xFFad2e24),
         surface: lightSurface,
         surfaceContainerHighest: lightBg,
         onPrimary: Colors.white,
@@ -109,7 +109,10 @@ class AppThemes {
         brightness: Brightness.dark,
         primary: darkPrimary,
         secondary: darkSecondary,
+        error: const Color(0xFFc44536),
         surface: darkSurface,
+        surfaceContainerHighest: const Color(0xFFedf2f4),
+        onSurfaceVariant: const Color(0xFFA3ABB3),
         onPrimary: darkOn,
         onSurface: darkOn,
       ),
@@ -117,7 +120,10 @@ class AppThemes {
     );
 
     return base.copyWith(
-      textTheme: GoogleFonts.interTextTheme(base.textTheme),
+      textTheme: GoogleFonts.interTextTheme(base.textTheme).apply(
+        bodyColor: darkSecondary,
+        displayColor: darkSecondary,
+      ),
       cardTheme: CardThemeData(
         elevation: 0,
         color: darkSurface,
@@ -169,15 +175,21 @@ class AppThemes {
         brightness: Brightness.dark,
         primary: designPrimary,
         secondary: designSecondary,
+        error: const Color(0xFFb66166),
         surface: designSurface,
+        surfaceContainerHighest: const Color(0xFFf2e9e4),
+        onSurfaceVariant: const Color(0xFFA3ABB3),
         onPrimary: designOn,
-        onSurface: designOn,
+        onSurface: designOn
       ),
       scaffoldBackgroundColor: designBg,
     );
 
     return base.copyWith(
-      textTheme: GoogleFonts.interTextTheme(base.textTheme),
+      textTheme: GoogleFonts.interTextTheme(base.textTheme).apply(
+        bodyColor: const Color(0xFFa69aa5),
+        displayColor: const Color(0xFFa69aa5),
+      ),
       cardTheme: CardThemeData(
         elevation: 0,
         color: designSurface,
@@ -231,6 +243,14 @@ class AppThemes {
         secondary: oliveSecondary,
         tertiary: oliveAccent,
         surface: oliveBg,
+        surfaceContainerHighest: ColorScheme.fromSeed(
+          seedColor: olivePrimary,
+          brightness: Brightness.light,
+        ).surfaceContainerHighest,
+        onSurfaceVariant: ColorScheme.fromSeed(
+          seedColor: olivePrimary,
+          brightness: Brightness.light,
+        ).onSurfaceVariant,
         onPrimary: Colors.white,
         onSurface: oliveDark,
       ),
@@ -292,6 +312,14 @@ class AppThemes {
         secondary: summerSecondary,
         tertiary: summerAccent,
         surface: summerBg,
+        surfaceContainerHighest: ColorScheme.fromSeed(
+          seedColor: summerPrimary,
+          brightness: Brightness.light,
+        ).surfaceContainerHighest,
+        onSurfaceVariant: ColorScheme.fromSeed(
+          seedColor: summerPrimary,
+          brightness: Brightness.light,
+        ).onSurfaceVariant,
         onPrimary: Colors.white,
         onSurface: const Color(0xFF1A1A1A),
       ),

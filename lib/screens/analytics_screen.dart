@@ -351,7 +351,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                                           item['title'] as String,
                                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                                 fontWeight: FontWeight.bold,
-                                                color: AppThemes.lightTheme
+                                                color: AppThemes.defaultTheme
                                                     .colorScheme.onSurface,
                                               ),
                                         ),
@@ -361,7 +361,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                                               .textTheme
                                               .bodyMedium
                                               ?.copyWith(
-                                                color: AppThemes.lightTheme
+                                                color: AppThemes.defaultTheme
                                                     .colorScheme.onSurface,
                                               ),
                                         ),
@@ -435,10 +435,8 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
               : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.surfaceContainerHighest,
-            width: 1.5,
+            color: Colors.transparent,
+            width: 0,
           ),
         ),
         child: Row(
