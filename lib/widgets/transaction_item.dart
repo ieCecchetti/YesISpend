@@ -33,6 +33,7 @@ class TransactionItem extends ConsumerWidget {
               item.splitInfo != null || item.recurrent
               ? Stack(
                   alignment: Alignment.center,
+                  clipBehavior: Clip.none,
                   children: [
                         // Multi-category icon widget
                         MultiCategoryIcon(

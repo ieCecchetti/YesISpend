@@ -2,22 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 
+import 'package:monthly_count/db/db_handler.dart';
 import 'package:monthly_count/providers/settings_provider.dart';
 import 'package:monthly_count/screens/opening_screen.dart';
 import 'package:monthly_count/screens/create_transaction_screen.dart';
 import 'package:monthly_count/services/transaction_share_service.dart';
 
-
 final _navigatorKey = GlobalKey<NavigatorState>();
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
+  await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
-  ]).then((_) {
-    runApp(const ProviderScope(child: MontlyCount()));
-  });
+  ]);
+
+  await DatabaseHelper.instance.database;
+  final String? storedThemeName =
+      await DatabaseHelper.instance.getThemePreferenceName();
+  final AppThemePreference initialTheme =
+      appThemePreferenceFromStoredName(storedThemeName);
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        themePreferenceProvider.overrideWith(
+          (ref) => ThemePreferenceNotifier(initialTheme),
+        ),
+      ],
+      child: const MontlyCount(),
+    ),
+  );
 }
 
 class MontlyCount extends StatefulWidget {

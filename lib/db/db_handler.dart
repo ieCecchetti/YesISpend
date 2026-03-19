@@ -23,7 +23,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-        version: 9,
+      version: 10,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -324,6 +324,15 @@ class DatabaseHelper {
         }
       }
     }
+    if (oldVersion < 10) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS app_setting (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL
+        )
+      ''');
+      print('Created app_setting table (migration 10)');
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -367,7 +376,46 @@ class DatabaseHelper {
     ''');
     print('Created transaction_categories table');
     
+    await db.execute('''
+      CREATE TABLE app_setting (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    ''');
+
     _insertDefaultCategories(db);
+  }
+
+  static const String _themePreferenceKey = 'theme_preference';
+
+  /// Stored value is [AppThemePreference.name] (e.g. `olive`, `defaultTheme`).
+  Future<String?> getThemePreferenceName() async {
+    return getAppSetting(_themePreferenceKey);
+  }
+
+  Future<void> setThemePreferenceName(String name) async {
+    await setAppSetting(_themePreferenceKey, name);
+  }
+
+  Future<String?> getAppSetting(String key) async {
+    final db = await database;
+    final rows = await db.query(
+      'app_setting',
+      where: 'key = ?',
+      whereArgs: [key],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return rows.first['value'] as String?;
+  }
+
+  Future<void> setAppSetting(String key, String value) async {
+    final db = await database;
+    await db.insert(
+      'app_setting',
+      {'key': key, 'value': value},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   Future<void> _insertDefaultCategories(Database db) async {

@@ -28,7 +28,7 @@ class SettingsScreen extends ConsumerWidget {
             SectionCard(
               title: 'Expense Budget',
               description: 'Set your monthly expense budget limit',
-              child: budgetChecker(context, ref),
+              child: const BudgetChecker(),
             ),
             const SizedBox(height: 4),
 
@@ -130,15 +130,15 @@ class SettingsScreen extends ConsumerWidget {
     final selectedTheme = ref.watch(themePreferenceProvider);
     final allThemes = AppThemePreference.values;
     final colorScheme = Theme.of(context).colorScheme;
-    final inputFill =
-        Theme.of(context).inputDecorationTheme.fillColor ?? colorScheme.surface;
+    final cardSurface = Theme.of(context).cardTheme.color ??
+        colorScheme.surfaceContainerHighest;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         DropdownButtonFormField<AppThemePreference>(
           value: selectedTheme,
-          dropdownColor: inputFill,
+          dropdownColor: cardSurface,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurface,
               ),
@@ -152,7 +152,7 @@ class SettingsScreen extends ConsumerWidget {
                   color: colorScheme.onSurface,
                 ),
             filled: true,
-            fillColor: inputFill,
+            fillColor: Colors.transparent,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -187,7 +187,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Default, Dark, Design, Olive, and Summer palettes.',
+          'Default, Dark, Design, Olive, Summer, Peachy, and Rose palettes.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
@@ -206,6 +206,10 @@ class SettingsScreen extends ConsumerWidget {
         return AppThemes.oliveTheme.colorScheme.primary;
       case AppThemePreference.summer:
         return AppThemes.summerTheme.colorScheme.primary;
+      case AppThemePreference.peachy:
+        return AppThemes.peachyTheme.colorScheme.primary;
+      case AppThemePreference.rose:
+        return AppThemes.roseTheme.colorScheme.primary;
     }
   }
 
@@ -240,6 +244,10 @@ class SettingsScreen extends ConsumerWidget {
         return AppThemes.oliveTheme.colorScheme.secondary;
       case AppThemePreference.summer:
         return AppThemes.summerTheme.colorScheme.secondary;
+      case AppThemePreference.peachy:
+        return AppThemes.peachyTheme.colorScheme.secondary;
+      case AppThemePreference.rose:
+        return AppThemes.roseTheme.colorScheme.secondary;
     }
   }
 
@@ -255,6 +263,10 @@ class SettingsScreen extends ConsumerWidget {
         return AppThemes.oliveTheme.colorScheme.surface;
       case AppThemePreference.summer:
         return AppThemes.summerTheme.colorScheme.surface;
+      case AppThemePreference.peachy:
+        return AppThemes.peachyTheme.colorScheme.surface;
+      case AppThemePreference.rose:
+        return AppThemes.roseTheme.colorScheme.surface;
     }
   }
 

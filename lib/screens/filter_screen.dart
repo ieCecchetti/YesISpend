@@ -60,27 +60,77 @@ class _FilterTransactionScreenState
   @override
   Widget build(BuildContext context) {
     final List<TransactionCategory> categories = ref.watch(categoriesProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    final bgLight =
+        Theme.of(context).inputDecorationTheme.fillColor ?? colorScheme.surface;
+    // Match SectionCard / chips — not input fill (olive input fill ≠ card, looks like wrong layer).
+    final Color sliderPanelBg = colorScheme.surfaceContainerHighest;
+    final Color sliderInactiveTrack = Color.alphaBlend(
+      colorScheme.onSurfaceVariant.withOpacity(0.35),
+      sliderPanelBg,
+    );
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search Transaction'),
+        title: const Text('Search'),
       ),
-      body: SingleChildScrollView(
+      body: Theme(
+        data: Theme.of(context).copyWith(
+          chipTheme: Theme.of(context).chipTheme.copyWith(
+                backgroundColor: bgLight,
+                surfaceTintColor: Colors.transparent,
+                selectedColor: colorScheme.primary.withOpacity(0.22),
+                checkmarkColor: colorScheme.primary,
+                deleteIconColor: colorScheme.onSurface,
+                labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: colorScheme.onSurface,
+                    ),
+                secondaryLabelStyle:
+                    Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+        ),
+        child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Search Field
             Card(
+                color: bgLight,
+                elevation: 0,
+                surfaceTintColor: Colors.transparent,
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide.none,
+                ),
               child: TextField(
-                style: Theme.of(context).textTheme.bodyLarge,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: colorScheme.onSurface,
+                      ),
                 decoration: InputDecoration(
-                  hintText: 'Item or Place contains your text',
+                    hintText: 'Search title or place',
+                    hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                        ),
+                    filled: true,
+                    fillColor: bgLight,
                   prefixIcon: Icon(
                     Icons.search,
-                    color: Theme.of(context).colorScheme.primary,
+                      color: colorScheme.primary,
                   ),
                   border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 16,
@@ -122,10 +172,6 @@ class _FilterTransactionScreenState
                                       .indexWhere((element) => element)];
                             });
                           },
-                          selectedColor:
-                              Theme.of(context).colorScheme.primaryContainer,
-                          checkmarkColor:
-                              Theme.of(context).colorScheme.onPrimaryContainer,
                         ),
                       ),
                     ),
@@ -162,10 +208,6 @@ class _FilterTransactionScreenState
                                   selectedText;
                             });
                           },
-                          selectedColor:
-                              Theme.of(context).colorScheme.primaryContainer,
-                          checkmarkColor:
-                              Theme.of(context).colorScheme.onPrimaryContainer,
                         ),
                       ),
                     ),
@@ -225,11 +267,6 @@ class _FilterTransactionScreenState
                                     _selectedCategories;
                               });
                             },
-                            selectedColor:
-                                Theme.of(context).colorScheme.primaryContainer,
-                            checkmarkColor: Theme.of(context)
-                                .colorScheme
-                                .onPrimaryContainer,
                           ),
                         ),
                       ),
@@ -243,35 +280,94 @@ class _FilterTransactionScreenState
               title: 'Price Range',
               description: priceRangeFilterDescription,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                    RangeSlider(
-                      values: _priceRange,
-                      min: 0,
-                      max: 2000,
-                      divisions: 100,
-                      labels: RangeLabels(
-                        "€${_priceRange.start.toInt()}",
-                        "€${_priceRange.end.toInt()}",
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                      decoration: BoxDecoration(
+                        color: sliderPanelBg,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      activeColor: Theme.of(context).colorScheme.primary,
-                      inactiveColor:
-                          Theme.of(context).colorScheme.surfaceContainerHighest,
-                      onChanged: (RangeValues values) {
-                        setState(() {
-                          _priceRange = values;
-                          _filters[FilterStyle.amountFilter] = _priceRange;
-                        });
-                      },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Min €0',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                              ),
+                              Text(
+                                'Max €2000',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              trackHeight: 8,
+                              activeTrackColor: colorScheme.primary,
+                              inactiveTrackColor: sliderInactiveTrack,
+                              thumbColor: colorScheme.primary,
+                              rangeThumbShape: const RoundRangeSliderThumbShape(
+                                enabledThumbRadius: 11,
+                                elevation: 0,
+                                pressedElevation: 0,
+                              ),
+                              rangeTrackShape:
+                                  const RoundedRectRangeSliderTrackShape(),
+                              valueIndicatorColor: Colors.transparent,
+                              valueIndicatorStrokeColor: Colors.transparent,
+                              valueIndicatorTextStyle: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                    color: colorScheme.onSurface,
+                                  ),
+                              showValueIndicator:
+                                  ShowValueIndicator.onlyForDiscrete,
+                            ),
+                            child: RangeSlider(
+                              values: _priceRange,
+                              min: 0,
+                              max: 2000,
+                              divisions: 100,
+                              labels: RangeLabels(
+                                '€${_priceRange.start.toInt()}',
+                                '€${_priceRange.end.toInt()}',
+                              ),
+                              onChanged: (RangeValues values) {
+                                setState(() {
+                                  _priceRange = values;
+                                  _filters[FilterStyle.amountFilter] =
+                                      _priceRange;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   const SizedBox(height: 4),
                     Center(
                       child: Text(
-                        "€${_priceRange.start.toInt()} - €${_priceRange.end.toInt()}",
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        '€${_priceRange.start.toInt()} - €${_priceRange.end.toInt()}',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.w400,
+                            ),
                       ),
                     ),
                 ],
@@ -298,10 +394,6 @@ class _FilterTransactionScreenState
                                   selected ? true : null;
                             });
                           },
-                          selectedColor:
-                              Theme.of(context).colorScheme.primaryContainer,
-                          checkmarkColor:
-                              Theme.of(context).colorScheme.onPrimaryContainer,
                         ),
                         FilterChip(
                           label: const Text('No'),
@@ -312,10 +404,6 @@ class _FilterTransactionScreenState
                                   selected ? false : null;
                             });
                           },
-                          selectedColor:
-                              Theme.of(context).colorScheme.primaryContainer,
-                          checkmarkColor:
-                              Theme.of(context).colorScheme.onPrimaryContainer,
                         ),
                       ],
                     ),
@@ -355,6 +443,7 @@ class _FilterTransactionScreenState
             ),
             const SizedBox(height: 16),
           ],
+        ),
         ),
       ),
     );

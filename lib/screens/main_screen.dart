@@ -387,7 +387,7 @@ class _MainViewSampleState extends ConsumerState<MainViewScreen> {
                                   horizontal: 16, vertical: 2),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),
-                              clipBehavior: Clip.hardEdge,
+                              clipBehavior: Clip.none,
                               child: Column(
                                 children: [
                                   for (int i = 0; i < group.length; i++) ...[

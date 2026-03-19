@@ -117,6 +117,7 @@ class _MultiCategoryIconState extends ConsumerState<MultiCategoryIcon>
       ),
       child: Stack(
         alignment: Alignment.center,
+        clipBehavior: Clip.none,
         children: [
           Icon(
             category.icon,
@@ -167,6 +168,7 @@ class _MultiCategoryIconState extends ConsumerState<MultiCategoryIcon>
       width: widget.size + (categories.length - 1) * offset,
       height: widget.size,
       child: Stack(
+        clipBehavior: Clip.none,
         children: orderedCategories.map((entry) {
           final index = entry.key;
           final category = entry.value;
@@ -198,6 +200,7 @@ class _MultiCategoryIconState extends ConsumerState<MultiCategoryIcon>
               ),
               child: Stack(
                 alignment: Alignment.center,
+                clipBehavior: Clip.none,
                 children: [
                   Icon(
                     category.icon,
