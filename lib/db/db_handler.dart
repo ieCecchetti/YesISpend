@@ -504,9 +504,10 @@ class DatabaseHelper {
     _database = await _initDB('monthly_count.db');
   }
 
-  Future<int> insert(String table, Map<String, Object> data) async {
+  Future<int> insert(String table, Map<String, Object> data,
+      {ConflictAlgorithm? conflictAlgorithm}) async {
     final db = await instance.database;
-    return await db.insert(table, data);
+    return await db.insert(table, data, conflictAlgorithm: conflictAlgorithm);
   }
 
   Future<List<Map<String, Object?>>> queryAll(String table) async {

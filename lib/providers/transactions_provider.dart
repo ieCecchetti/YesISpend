@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:monthly_count/models/transaction.dart';
 import 'package:monthly_count/db/db_handler.dart';
 import 'package:monthly_count/services/image_service.dart';
+import 'package:sqflite/sqflite.dart' hide Transaction;
+import 'package:monthly_count/services/import_service.dart';
 
 
 class TransactionsNotifier extends StateNotifier<List<Transaction>> {
@@ -143,6 +145,25 @@ class TransactionsNotifier extends StateNotifier<List<Transaction>> {
     state = [...state, transaction];
     // Check if we need to create recurrent transactions
     _checkAndCreateRecurrentTransactions(state);
+  }
+
+  /// Bulk, idempotent import. Rows whose deterministic id already exists are
+  /// skipped (INSERT OR IGNORE). Returns counts of added vs skipped.
+  Future<ImportResult> addImportedTransactions(
+      List<Transaction> transactions) async {
+    var added = 0;
+    final newlyAdded = <Transaction>[];
+    for (final t in transactions) {
+      final rowId = await _dbHelper.insert('financial_record', t.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.ignore);
+      if (rowId != 0) {
+        await _dbHelper.setTransactionCategories(t.id, t.category_ids);
+        newlyAdded.add(t);
+        added++;
+      }
+    }
+    state = [...state, ...newlyAdded];
+    return ImportResult(added, transactions.length - added);
   }
 
   /// Removes a single transaction (instance or non-recurrent). For recurrence
