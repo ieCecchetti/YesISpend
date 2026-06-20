@@ -23,7 +23,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 10,
+      version: 11,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -333,6 +333,11 @@ class DatabaseHelper {
       ''');
       print('Created app_setting table (migration 10)');
     }
+    if (oldVersion < 11) {
+      await _createImportProfileTable(db);
+      await _insertSeedProfiles(db);
+      print('Created import_profile table (migration 11)');
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -382,6 +387,9 @@ class DatabaseHelper {
         value TEXT NOT NULL
       )
     ''');
+
+    await _createImportProfileTable(db);
+    await _insertSeedProfiles(db);
 
     _insertDefaultCategories(db);
   }
@@ -437,6 +445,52 @@ class DatabaseHelper {
       ('9', 'Other', ${availableIcons[8].codePoint}, 0xFF616161)
   ''');
     print('Inserted default categories into transaction_category table');
+  }
+
+  Future<void> _createImportProfileTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS import_profile (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        amountMode TEXT NOT NULL,
+        nameHeader TEXT NOT NULL,
+        dateHeader TEXT NOT NULL,
+        amountHeader TEXT,
+        entrateHeader TEXT,
+        usciteHeader TEXT,
+        dateFormat TEXT NOT NULL,
+        decimalSeparator TEXT NOT NULL
+      )
+    ''');
+  }
+
+  Future<void> _insertSeedProfiles(Database db) async {
+    final existing = await db.query('import_profile', limit: 1);
+    if (existing.isNotEmpty) return;
+    await db.insert('import_profile', {
+      'id': 'seed_revolut',
+      'name': 'Revolut',
+      'amountMode': 'single',
+      'nameHeader': 'Descrizione',
+      'dateHeader': 'Data di completamento',
+      'amountHeader': 'Importo',
+      'entrateHeader': '',
+      'usciteHeader': '',
+      'dateFormat': 'yyyy-MM-dd HH:mm:ss',
+      'decimalSeparator': '.',
+    });
+    await db.insert('import_profile', {
+      'id': 'seed_mediobanca',
+      'name': 'Mediobanca',
+      'amountMode': 'split',
+      'nameHeader': 'Tipologia',
+      'dateHeader': 'Data contabile',
+      'amountHeader': '',
+      'entrateHeader': 'Entrate',
+      'usciteHeader': 'Uscite',
+      'dateFormat': 'dd/MM/yyyy',
+      'decimalSeparator': '.',
+    });
   }
 
   // Delete all records and drop the database
