@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:monthly_count/config/themes.dart';
 import 'package:monthly_count/providers/settings_provider.dart';
-import 'package:monthly_count/screens/import_screen.dart';
 import 'package:monthly_count/widgets/settings/budget_checker.dart';
 import 'package:monthly_count/widgets/section_card.dart';
 
@@ -37,21 +36,6 @@ class SettingsScreen extends ConsumerWidget {
               title: 'Appearance',
               description: 'Choose your app theme',
               child: _buildThemeSelector(context, ref),
-            ),
-            const SizedBox(height: 4),
-
-            SectionCard(
-              title: 'Import',
-              description: 'Import payments from a bank statement (CSV/XLSX)',
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.file_upload),
-                title: const Text('Import payments'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ImportScreen()),
-                ),
-              ),
             ),
             const SizedBox(height: 4),
 

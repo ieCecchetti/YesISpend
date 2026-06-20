@@ -5,15 +5,19 @@ import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:monthly_count/models/import_profile.dart';
+import 'package:monthly_count/providers/categories_provider.dart';
 import 'package:monthly_count/providers/import_profiles_provider.dart';
 import 'package:monthly_count/providers/transactions_provider.dart';
 import 'package:monthly_count/services/bank_file_parser.dart';
+import 'package:monthly_count/services/transaction_share_service.dart';
 import 'package:monthly_count/services/field_mapping.dart';
 import 'package:monthly_count/services/import_service.dart';
 import 'package:monthly_count/services/table_detector.dart';
 import 'package:monthly_count/widgets/grid_table_preview.dart';
 import 'package:monthly_count/widgets/info_card.dart';
 import 'package:monthly_count/widgets/section_card.dart';
+
+enum _Source { none, bank, yisj }
 
 class ImportScreen extends ConsumerStatefulWidget {
   const ImportScreen({super.key});
@@ -23,6 +27,9 @@ class ImportScreen extends ConsumerStatefulWidget {
 }
 
 class _ImportScreenState extends ConsumerState<ImportScreen> {
+  _Source _source = _Source.none;
+  String? _yisjSummary;
+
   List<List<String>>? _grid;
   DetectedTable? _table;
   String? _error;
@@ -41,6 +48,59 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     _profileNameCtrl.dispose();
     _dateFormatCtrl.dispose();
     super.dispose();
+  }
+
+  void _selectSource(_Source s) {
+    setState(() {
+      _source = s;
+      _error = null;
+      _grid = null;
+      _table = null;
+      _result = null;
+      _yisjSummary = null;
+    });
+  }
+
+  Future<void> _pickAndImportYisj() async {
+    setState(() {
+      _error = null;
+      _yisjSummary = null;
+    });
+    try {
+      final res = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['yisj'],
+      );
+      if (res == null || res.files.single.path == null) return;
+      final imported =
+          await TransactionShareService.fromYiSj(res.files.single.path!);
+      if (imported.transactions.isEmpty) {
+        setState(() => _error = 'No transactions found in file.');
+        return;
+      }
+      // Categories first (dedup by id and by name), then transactions.
+      final catNotifier = ref.read(categoriesProvider.notifier);
+      final existingCats = ref.read(categoriesProvider);
+      var addedCats = 0;
+      for (final cat in imported.categories) {
+        final byId = existingCats.any((c) => c.id == cat.id);
+        final byName = existingCats
+            .any((c) => c.title.toLowerCase() == cat.title.toLowerCase());
+        if (!byId && !byName) {
+          catNotifier.addCategory(cat);
+          addedCats++;
+        }
+      }
+      final txNotifier = ref.read(transactionsProvider.notifier);
+      for (final tx in imported.transactions) {
+        txNotifier.addTransaction(tx);
+      }
+      setState(() => _yisjSummary =
+          'Imported ${imported.transactions.length} transactions'
+          '${addedCats > 0 ? ', $addedCats new categories' : ''}');
+    } catch (e) {
+      setState(() => _error = 'Failed to import: $e');
+    }
   }
 
   Future<void> _pickFile() async {
@@ -176,37 +236,78 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         (table != null && mapping != null) ? applyMapping(table, mapping) : null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Import payments')),
+      appBar: AppBar(title: const Text('Import')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SectionCard(
-              title: '1. File',
-              description: 'Pick a CSV or XLSX bank statement',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  FilledButton.icon(
-                    onPressed: _pickFile,
-                    icon: const Icon(Icons.upload_file),
-                    label: const Text('Choose file'),
+              title: '1. Format',
+              description: 'What are you importing?',
+              child: SegmentedButton<_Source>(
+                segments: const [
+                  ButtonSegment(
+                    value: _Source.bank,
+                    label: Text('CSV / XLSX'),
+                    icon: Icon(Icons.table_chart),
                   ),
-                  if (_error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(_error!,
-                          style: TextStyle(
-                              color: Theme.of(context).colorScheme.error)),
-                    ),
+                  ButtonSegment(
+                    value: _Source.yisj,
+                    label: Text('YesISpend backup'),
+                    icon: Icon(Icons.backup),
+                  ),
                 ],
+                selected: _source == _Source.none ? <_Source>{} : {_source},
+                emptySelectionAllowed: true,
+                onSelectionChanged: (s) =>
+                    _selectSource(s.isEmpty ? _Source.none : s.first),
               ),
             ),
             const SizedBox(height: 4),
-            if (table != null) ...[
+            if (_error != null)
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                child: Text(_error!,
+                    style:
+                        TextStyle(color: Theme.of(context).colorScheme.error)),
+              ),
+            if (_source == _Source.yisj)
               SectionCard(
-                title: '2. Detected table',
+                title: '2. Backup file',
+                description:
+                    'Pick a .yisj backup — no mapping needed, it already has the right fields.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: _pickAndImportYisj,
+                      icon: const Icon(Icons.upload_file),
+                      label: const Text('Choose .yisj & import'),
+                    ),
+                    if (_yisjSummary != null) ...[
+                      const SizedBox(height: 12),
+                      InfoCard(
+                          title: 'Import complete', items: [_yisjSummary!]),
+                    ],
+                  ],
+                ),
+              ),
+            if (_source == _Source.bank) ...[
+              SectionCard(
+                title: '2. File',
+                description: 'Pick a CSV or XLSX bank statement',
+                child: FilledButton.icon(
+                  onPressed: _pickFile,
+                  icon: const Icon(Icons.upload_file),
+                  label: const Text('Choose file'),
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (table != null) ...[
+                SectionCard(
+                  title: '3. Detected table',
                 description:
                     'Header row ${table.headerRowIndex + 1}. Adjust if wrong.',
                 child: Column(
@@ -238,14 +339,14 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
               ),
               const SizedBox(height: 4),
               SectionCard(
-                title: '3. Mapping',
+                title: '4. Mapping',
                 description: 'Use a saved profile or map columns manually',
                 child: _buildMappingForm(table, profiles),
               ),
               const SizedBox(height: 4),
               if (preview != null)
                 SectionCard(
-                  title: '4. Review & import',
+                  title: '5. Review & import',
                   description:
                       '${preview.payments.length} payments, ${preview.invalidRows.length} skipped (unparseable)',
                   child: Column(
@@ -281,6 +382,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                     ],
                   ),
                 ),
+              ],
             ],
           ],
         ),
