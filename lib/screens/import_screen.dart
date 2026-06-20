@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_breadcrumb/flutter_breadcrumb.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
@@ -28,6 +29,7 @@ class ImportScreen extends ConsumerStatefulWidget {
 
 class _ImportScreenState extends ConsumerState<ImportScreen> {
   _Source _source = _Source.none;
+  int _step = 0;
   String? _yisjSummary;
 
   List<List<String>>? _grid;
@@ -50,9 +52,21 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     super.dispose();
   }
 
+  List<String> get _steps {
+    switch (_source) {
+      case _Source.bank:
+        return const ['Format', 'File', 'Map', 'Review'];
+      case _Source.yisj:
+        return const ['Format', 'File'];
+      case _Source.none:
+        return const ['Format'];
+    }
+  }
+
   void _selectSource(_Source s) {
     setState(() {
       _source = s;
+      _step = s == _Source.none ? 0 : 1;
       _error = null;
       _grid = null;
       _table = null;
@@ -123,6 +137,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         _grid = grid;
         _table = detectTable(grid);
         _result = null;
+        _step = 2;
       });
     } catch (e) {
       setState(() => _error = 'Failed to read file: $e');
@@ -229,163 +244,217 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final table = _table;
-    final profiles = ref.watch(importProfilesProvider);
-    final mapping = _currentMapping();
-    final preview =
-        (table != null && mapping != null) ? applyMapping(table, mapping) : null;
-
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Import')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SectionCard(
-              title: '1. Format',
-              description: 'What are you importing?',
-              child: SegmentedButton<_Source>(
-                segments: const [
-                  ButtonSegment(
-                    value: _Source.bank,
-                    label: Text('CSV / XLSX'),
-                    icon: Icon(Icons.table_chart),
+            BreadCrumb.builder(
+              itemCount: _steps.length,
+              builder: (index) {
+                final active = index == _step;
+                return BreadCrumbItem(
+                  content: GestureDetector(
+                    onTap: index <= _step
+                        ? () => setState(() => _step = index)
+                        : null,
+                    child: Text(
+                      _steps[index],
+                      style: TextStyle(
+                        color: active
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurfaceVariant,
+                        fontWeight:
+                            active ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
                   ),
-                  ButtonSegment(
-                    value: _Source.yisj,
-                    label: Text('YesISpend backup'),
-                    icon: Icon(Icons.backup),
-                  ),
-                ],
-                selected: _source == _Source.none ? <_Source>{} : {_source},
-                emptySelectionAllowed: true,
-                onSelectionChanged: (s) =>
-                    _selectSource(s.isEmpty ? _Source.none : s.first),
-              ),
+                );
+              },
+              divider: Icon(Icons.chevron_right,
+                  size: 18, color: theme.colorScheme.onSurfaceVariant),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 12),
             if (_error != null)
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.only(bottom: 8),
                 child: Text(_error!,
-                    style:
-                        TextStyle(color: Theme.of(context).colorScheme.error)),
+                    style: TextStyle(color: theme.colorScheme.error)),
               ),
-            if (_source == _Source.yisj)
-              SectionCard(
-                title: '2. Backup file',
-                description:
-                    'Pick a .yisj backup — no mapping needed, it already has the right fields.',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    FilledButton.icon(
-                      onPressed: _pickAndImportYisj,
-                      icon: const Icon(Icons.upload_file),
-                      label: const Text('Choose .yisj & import'),
-                    ),
-                    if (_yisjSummary != null) ...[
-                      const SizedBox(height: 12),
-                      InfoCard(
-                          title: 'Import complete', items: [_yisjSummary!]),
-                    ],
-                  ],
-                ),
-              ),
-            if (_source == _Source.bank) ...[
-              SectionCard(
-                title: '2. File',
-                description: 'Pick a CSV or XLSX bank statement',
-                child: FilledButton.icon(
-                  onPressed: _pickFile,
-                  icon: const Icon(Icons.upload_file),
-                  label: const Text('Choose file'),
-                ),
-              ),
-              const SizedBox(height: 4),
-              if (table != null) ...[
-                SectionCard(
-                  title: '3. Detected table',
-                description:
-                    'Header row ${table.headerRowIndex + 1}. Adjust if wrong.',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Text('Header row: '),
-                        IconButton(
-                          onPressed: table.headerRowIndex > 0
-                              ? () => _setHeaderRow(table.headerRowIndex - 1)
-                              : null,
-                          icon: const Icon(Icons.remove),
-                        ),
-                        Text('${table.headerRowIndex + 1}'),
-                        IconButton(
-                          onPressed: (_grid != null &&
-                                  table.headerRowIndex < _grid!.length - 1)
-                              ? () => _setHeaderRow(table.headerRowIndex + 1)
-                              : null,
-                          icon: const Icon(Icons.add),
-                        ),
-                      ],
-                    ),
-                    GridTablePreview(
-                        headers: table.headers, rows: table.dataRows),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 4),
-              SectionCard(
-                title: '4. Mapping',
-                description: 'Use a saved profile or map columns manually',
-                child: _buildMappingForm(table, profiles),
-              ),
-              const SizedBox(height: 4),
-              if (preview != null)
-                SectionCard(
-                  title: '5. Review & import',
-                  description:
-                      '${preview.payments.length} payments, ${preview.invalidRows.length} skipped (unparseable)',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      GridTablePreview(
-                        headers: const ['Date', 'Title', 'Amount'],
-                        rows: [
-                          for (final p in preview.payments)
-                            [
-                              p.date.toIso8601String().split('T').first,
-                              p.title,
-                              p.price.toStringAsFixed(2),
-                            ],
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      FilledButton.icon(
-                        onPressed: _runImport,
-                        icon: const Icon(Icons.download_done),
-                        label: const Text('Import'),
-                      ),
-                      if (_result != null) ...[
-                        const SizedBox(height: 12),
-                        InfoCard(
-                          title: 'Import complete',
-                          items: [
-                            '${_result!.added} added',
-                            '${_result!.skipped} skipped (already present)',
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ],
+            _buildStepBody(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStepBody() {
+    if (_step == 0) return _buildFormatStep();
+    if (_source == _Source.yisj) return _buildYisjStep();
+    switch (_step) {
+      case 1:
+        return _buildBankFileStep();
+      case 2:
+        return _buildBankMapStep();
+      case 3:
+        return _buildBankReviewStep();
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildFormatStep() {
+    return SectionCard(
+      title: 'Format',
+      description: 'What are you importing?',
+      child: SegmentedButton<_Source>(
+        segments: const [
+          ButtonSegment(
+              value: _Source.bank,
+              label: Text('CSV / XLSX'),
+              icon: Icon(Icons.table_chart)),
+          ButtonSegment(
+              value: _Source.yisj,
+              label: Text('YesISpend backup'),
+              icon: Icon(Icons.backup)),
+        ],
+        selected: _source == _Source.none ? <_Source>{} : {_source},
+        emptySelectionAllowed: true,
+        onSelectionChanged: (s) =>
+            _selectSource(s.isEmpty ? _Source.none : s.first),
+      ),
+    );
+  }
+
+  Widget _buildYisjStep() {
+    return SectionCard(
+      title: 'Backup file',
+      description: 'Pick a .yisj backup — no mapping needed.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FilledButton.icon(
+            onPressed: _pickAndImportYisj,
+            icon: const Icon(Icons.upload_file),
+            label: const Text('Choose .yisj & import'),
+          ),
+          if (_yisjSummary != null) ...[
+            const SizedBox(height: 12),
+            InfoCard(title: 'Import complete', items: [_yisjSummary!]),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBankFileStep() {
+    return SectionCard(
+      title: 'File',
+      description: 'Pick a CSV or XLSX bank statement',
+      child: FilledButton.icon(
+        onPressed: _pickFile,
+        icon: const Icon(Icons.upload_file),
+        label: const Text('Choose file'),
+      ),
+    );
+  }
+
+  Widget _buildBankMapStep() {
+    final table = _table;
+    if (table == null) return _buildBankFileStep();
+    final profiles = ref.watch(importProfilesProvider);
+    final mapping = _currentMapping();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionCard(
+          title: 'Detected table',
+          description:
+              'Header row ${table.headerRowIndex + 1}. Adjust if wrong.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text('Header row: '),
+                  IconButton(
+                    onPressed: table.headerRowIndex > 0
+                        ? () => _setHeaderRow(table.headerRowIndex - 1)
+                        : null,
+                    icon: const Icon(Icons.remove),
+                  ),
+                  Text('${table.headerRowIndex + 1}'),
+                  IconButton(
+                    onPressed: (_grid != null &&
+                            table.headerRowIndex < _grid!.length - 1)
+                        ? () => _setHeaderRow(table.headerRowIndex + 1)
+                        : null,
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
+              ),
+              GridTablePreview(headers: table.headers, rows: table.dataRows),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        SectionCard(
+          title: 'Mapping',
+          description: 'Use a saved profile or map columns manually',
+          child: _buildMappingForm(table, profiles),
+        ),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          onPressed: mapping == null ? null : () => setState(() => _step = 3),
+          icon: const Icon(Icons.arrow_forward),
+          label: const Text('Review'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBankReviewStep() {
+    final table = _table;
+    final mapping = _currentMapping();
+    if (table == null || mapping == null) return _buildBankMapStep();
+    final preview = applyMapping(table, mapping);
+    return SectionCard(
+      title: 'Review & import',
+      description:
+          '${preview.payments.length} payments, ${preview.invalidRows.length} skipped (unparseable)',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GridTablePreview(
+            headers: const ['Date', 'Title', 'Amount'],
+            rows: [
+              for (final p in preview.payments)
+                [
+                  p.date.toIso8601String().split('T').first,
+                  p.title,
+                  p.price.toStringAsFixed(2),
+                ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: _runImport,
+            icon: const Icon(Icons.download_done),
+            label: const Text('Import'),
+          ),
+          if (_result != null) ...[
+            const SizedBox(height: 12),
+            InfoCard(
+              title: 'Import complete',
+              items: [
+                '${_result!.added} added',
+                '${_result!.skipped} skipped (already present)',
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }
