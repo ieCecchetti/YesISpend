@@ -46,3 +46,6 @@ app.*.map.json
 
 # Local planning docs — not for the repo
 docs/superpowers/
+
+# SDD workflow scratch
+.superpowers/
