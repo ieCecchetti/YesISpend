@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:excel/excel.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:monthly_count/services/bank_file_parser.dart';
 
@@ -24,5 +27,18 @@ void main() {
         ['Pay, "x"\nnext', '10'],
       ]);
     });
+  });
+
+  test('parseXlsx reads first sheet rows', () {
+    final ex = Excel.createExcel();
+    final sheet = ex[ex.getDefaultSheet()!];
+    sheet.appendRow([TextCellValue('A'), TextCellValue('B')]);
+    sheet.appendRow([TextCellValue('1'), TextCellValue('2')]);
+    final bytes = Uint8List.fromList(ex.encode()!);
+
+    expect(parseXlsx(bytes), [
+      ['A', 'B'],
+      ['1', '2'],
+    ]);
   });
 }
