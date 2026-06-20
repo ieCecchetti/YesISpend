@@ -87,7 +87,7 @@ MappingResult applyMapping(DetectedTable table, FieldMapping m) {
     } else {
       final ent = entC >= 0 ? parseAmount(at(entC), m.decimalSeparator) : null;
       final usc = uscC >= 0 ? parseAmount(at(uscC), m.decimalSeparator) : null;
-      price = (ent != null && ent != 0) ? ent : usc;
+      price = (ent != null && ent != 0) ? ent.abs() : (usc == null ? null : -usc.abs());
     }
 
     if (date == null || price == null) {

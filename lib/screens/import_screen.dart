@@ -30,15 +30,16 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   // mapping form state
   AmountMode _amountMode = AmountMode.split;
   String? _nameHeader, _dateHeader, _amountHeader, _entrateHeader, _usciteHeader;
-  String _dateFormat = 'dd/MM/yyyy';
   String _decimalSeparator = '.';
   final _profileNameCtrl = TextEditingController();
+  final _dateFormatCtrl = TextEditingController(text: 'dd/MM/yyyy');
 
   ImportResult? _result;
 
   @override
   void dispose() {
     _profileNameCtrl.dispose();
+    _dateFormatCtrl.dispose();
     super.dispose();
   }
 
@@ -71,7 +72,16 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   void _setHeaderRow(int index) {
     final grid = _grid;
     if (grid == null) return;
-    setState(() => _table = tableFromHeaderRow(grid, index));
+    setState(() {
+      _table = tableFromHeaderRow(grid, index);
+      final headers = _table!.headers;
+      String? pick(String? h) => (h != null && headers.contains(h)) ? h : null;
+      _nameHeader = pick(_nameHeader);
+      _dateHeader = pick(_dateHeader);
+      _amountHeader = pick(_amountHeader);
+      _entrateHeader = pick(_entrateHeader);
+      _usciteHeader = pick(_usciteHeader);
+    });
   }
 
   void _applyProfile(ImportProfile p) {
@@ -84,7 +94,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       _amountHeader = pick(p.amountHeader);
       _entrateHeader = pick(p.entrateHeader);
       _usciteHeader = pick(p.usciteHeader);
-      _dateFormat = p.dateFormat;
+      _dateFormatCtrl.text = p.dateFormat;
       _decimalSeparator = p.decimalSeparator;
       _profileNameCtrl.text = p.name;
     });
@@ -109,7 +119,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       amountHeader: _amountHeader,
       entrateHeader: _entrateHeader,
       usciteHeader: _usciteHeader,
-      dateFormat: _dateFormat,
+      dateFormat: _dateFormatCtrl.text,
       decimalSeparator: _decimalSeparator,
     );
   }
@@ -347,12 +357,11 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           children: [
             Expanded(
               child: TextFormField(
-                initialValue: _dateFormat,
+                controller: _dateFormatCtrl,
                 decoration: const InputDecoration(
                   labelText: 'Date format',
                   border: OutlineInputBorder(),
                 ),
-                onChanged: (v) => _dateFormat = v,
               ),
             ),
             const SizedBox(width: 12),

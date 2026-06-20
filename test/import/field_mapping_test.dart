@@ -53,6 +53,54 @@ void main() {
       expect(r.invalidRows, [2]); // bad date
     });
 
+    test('split: positive uscite magnitude is forced negative', () {
+      // Source CSV has Uscite as a positive magnitude (e.g. "10.29")
+      final tablePositiveUsc = DetectedTable(
+        headerRowIndex: 0,
+        columnIndexes: [0, 1, 2, 3],
+        headers: ['Tipologia', 'Data', 'Entrate', 'Uscite'],
+        dataRows: [
+          ['POS', '28/05/2026', '', '10.29'],   // positive uscita
+        ],
+      );
+      final m = FieldMapping(
+        amountMode: AmountMode.split,
+        nameHeader: 'Tipologia',
+        dateHeader: 'Data',
+        entrateHeader: 'Entrate',
+        usciteHeader: 'Uscite',
+        dateFormat: 'dd/MM/yyyy',
+        decimalSeparator: '.',
+      );
+      final r = applyMapping(tablePositiveUsc, m);
+      expect(r.payments.length, 1);
+      expect(r.payments[0].price, -10.29); // must be negative
+    });
+
+    test('split: negative-looking entrate is normalized positive', () {
+      // Source CSV has Entrate as a negative magnitude (e.g. "-8027.94")
+      final tableNegativeEnt = DetectedTable(
+        headerRowIndex: 0,
+        columnIndexes: [0, 1, 2, 3],
+        headers: ['Tipologia', 'Data', 'Entrate', 'Uscite'],
+        dataRows: [
+          ['Bonifico', '28/05/2026', '-8027.94', ''],  // negative entrata
+        ],
+      );
+      final m = FieldMapping(
+        amountMode: AmountMode.split,
+        nameHeader: 'Tipologia',
+        dateHeader: 'Data',
+        entrateHeader: 'Entrate',
+        usciteHeader: 'Uscite',
+        dateFormat: 'dd/MM/yyyy',
+        decimalSeparator: '.',
+      );
+      final r = applyMapping(tableNegativeEnt, m);
+      expect(r.payments.length, 1);
+      expect(r.payments[0].price, 8027.94); // must be positive
+    });
+
     test('single signed column', () {
       final t2 = DetectedTable(
         headerRowIndex: 0,
