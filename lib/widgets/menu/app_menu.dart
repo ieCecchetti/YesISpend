@@ -68,7 +68,7 @@ class AppMenu extends ConsumerWidget {
             children: [
               Icon(Icons.download),
               SizedBox(width: 8),
-              Text("Export .yisj"),
+              Text("Export"),
             ],
           ),
         ),
