@@ -470,6 +470,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           padding: const EdgeInsets.only(bottom: 12),
           child: DropdownButtonFormField<String>(
             initialValue: value,
+            isExpanded: true,
             decoration: InputDecoration(
               labelText: label,
               border: const OutlineInputBorder(),
@@ -486,6 +487,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: DropdownButtonFormField<String>(
+              isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Use existing profile',
                 border: OutlineInputBorder(),
@@ -537,9 +539,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
             ),
             const SizedBox(width: 12),
             SizedBox(
-              width: 120,
+              width: 140,
               child: DropdownButtonFormField<String>(
                 initialValue: _decimalSeparator,
+                isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Decimal',
                   border: OutlineInputBorder(),
