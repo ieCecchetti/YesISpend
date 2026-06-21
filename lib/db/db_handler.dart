@@ -21,12 +21,16 @@ class DatabaseHelper {
     // !! Comment this line for development
     // await deleteDatabase(path); // Add this for testing
 
-    return await openDatabase(
+    final db = await openDatabase(
       path,
-      version: 12,
+      version: 11,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
+    // Built-in profiles are ensured on every open (insert-if-missing), so adding
+    // a new one never needs a schema version bump.
+    await _ensureSeedProfiles(db);
+    return db;
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -335,14 +339,7 @@ class DatabaseHelper {
     }
     if (oldVersion < 11) {
       await _createImportProfileTable(db);
-      await _insertSeedProfiles(db);
       print('Created import_profile table (migration 11)');
-    }
-    if (oldVersion < 12) {
-      // Ensure the built-in profiles (incl. Intesa Sanpaolo) exist.
-      await _createImportProfileTable(db);
-      await _insertSeedProfiles(db);
-      print('Ensured built-in import profiles (migration 12)');
     }
   }
 
@@ -395,7 +392,6 @@ class DatabaseHelper {
     ''');
 
     await _createImportProfileTable(db);
-    await _insertSeedProfiles(db);
 
     _insertDefaultCategories(db);
   }
@@ -470,9 +466,10 @@ class DatabaseHelper {
     ''');
   }
 
-  /// Inserts the built-in profiles. Idempotent: existing ids are left untouched
-  /// (ConflictAlgorithm.ignore), so every install ends up with at least these.
-  Future<void> _insertSeedProfiles(Database db) async {
+  /// Ensures the built-in profiles exist. Runs on every DB open; idempotent —
+  /// existing ids are left untouched (ConflictAlgorithm.ignore), so every
+  /// install always has at least these, with no schema version bump needed.
+  Future<void> _ensureSeedProfiles(Database db) async {
     const seeds = [
       {
         'id': 'seed_revolut',
