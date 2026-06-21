@@ -23,7 +23,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 11,
+      version: 12,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -338,6 +338,12 @@ class DatabaseHelper {
       await _insertSeedProfiles(db);
       print('Created import_profile table (migration 11)');
     }
+    if (oldVersion < 12) {
+      // Ensure the built-in profiles (incl. Intesa Sanpaolo) exist.
+      await _createImportProfileTable(db);
+      await _insertSeedProfiles(db);
+      print('Ensured built-in import profiles (migration 12)');
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -464,33 +470,51 @@ class DatabaseHelper {
     ''');
   }
 
+  /// Inserts the built-in profiles. Idempotent: existing ids are left untouched
+  /// (ConflictAlgorithm.ignore), so every install ends up with at least these.
   Future<void> _insertSeedProfiles(Database db) async {
-    final existing = await db.query('import_profile', limit: 1);
-    if (existing.isNotEmpty) return;
-    await db.insert('import_profile', {
-      'id': 'seed_revolut',
-      'name': 'Revolut',
-      'amountMode': 'single',
-      'nameHeader': 'Descrizione',
-      'dateHeader': 'Data di completamento',
-      'amountHeader': 'Importo',
-      'entrateHeader': '',
-      'usciteHeader': '',
-      'dateFormat': 'yyyy-MM-dd HH:mm:ss',
-      'decimalSeparator': '.',
-    });
-    await db.insert('import_profile', {
-      'id': 'seed_mediobanca',
-      'name': 'Mediobanca',
-      'amountMode': 'split',
-      'nameHeader': 'Tipologia',
-      'dateHeader': 'Data contabile',
-      'amountHeader': '',
-      'entrateHeader': 'Entrate',
-      'usciteHeader': 'Uscite',
-      'dateFormat': 'dd/MM/yyyy',
-      'decimalSeparator': '.',
-    });
+    const seeds = [
+      {
+        'id': 'seed_revolut',
+        'name': 'Revolut',
+        'amountMode': 'single',
+        'nameHeader': 'Descrizione',
+        'dateHeader': 'Data di completamento',
+        'amountHeader': 'Importo',
+        'entrateHeader': '',
+        'usciteHeader': '',
+        'dateFormat': 'yyyy-MM-dd HH:mm:ss',
+        'decimalSeparator': '.',
+      },
+      {
+        'id': 'seed_mediobanca',
+        'name': 'Mediobanca',
+        'amountMode': 'split',
+        'nameHeader': 'Tipologia',
+        'dateHeader': 'Data contabile',
+        'amountHeader': '',
+        'entrateHeader': 'Entrate',
+        'usciteHeader': 'Uscite',
+        'dateFormat': 'dd/MM/yyyy',
+        'decimalSeparator': '.',
+      },
+      {
+        'id': 'seed_intesa',
+        'name': 'Intesa Sanpaolo',
+        'amountMode': 'single',
+        'nameHeader': 'Operazione',
+        'dateHeader': 'Data',
+        'amountHeader': 'Importo',
+        'entrateHeader': '',
+        'usciteHeader': '',
+        'dateFormat': 'yyyy-MM-dd HH:mm:ss',
+        'decimalSeparator': '.',
+      },
+    ];
+    for (final seed in seeds) {
+      await db.insert('import_profile', seed,
+          conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
   }
 
   // Delete all records and drop the database

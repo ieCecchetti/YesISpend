@@ -79,5 +79,14 @@ String _cellToString(Data? cell) {
   if (v is IntCellValue) return v.value.toString();
   if (v is DoubleCellValue) return v.value.toString();
   if (v is BoolCellValue) return v.value.toString();
+  if (v is DateCellValue) return _fmtDate(v.asDateTimeLocal());
+  if (v is DateTimeCellValue) return _fmtDate(v.asDateTimeLocal());
   return v.toString().trim();
+}
+
+/// Formats a date cell as `yyyy-MM-dd HH:mm:ss` so it parses with that pattern.
+String _fmtDate(DateTime d) {
+  String p2(int n) => n.toString().padLeft(2, '0');
+  return '${d.year.toString().padLeft(4, '0')}-${p2(d.month)}-${p2(d.day)} '
+      '${p2(d.hour)}:${p2(d.minute)}:${p2(d.second)}';
 }

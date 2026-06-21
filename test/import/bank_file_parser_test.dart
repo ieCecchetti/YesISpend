@@ -41,4 +41,18 @@ void main() {
       ['1', '2'],
     ]);
   });
+
+  test('parseXlsx formats date cells as yyyy-MM-dd HH:mm:ss', () {
+    final ex = Excel.createExcel();
+    final sheet = ex[ex.getDefaultSheet()!];
+    sheet.appendRow([
+      DateTimeCellValue(year: 2026, month: 6, day: 8, hour: 0, minute: 0),
+      DoubleCellValue(-63.2),
+    ]);
+    final bytes = Uint8List.fromList(ex.encode()!);
+
+    final grid = parseXlsx(bytes);
+    expect(grid.first[0], '2026-06-08 00:00:00');
+    expect(grid.first[1], '-63.2');
+  });
 }
